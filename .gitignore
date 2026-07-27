@@ -1,0 +1,8 @@
+.env
+.venv/
+vault/
+cache/
+notes/
+__pycache__/
+*.db
+*.pyc
