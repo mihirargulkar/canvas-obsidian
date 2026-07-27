@@ -1,2 +1,5 @@
 canvasapi
 python-dotenv
+google-genai
+chromadb
+sentence-transformers
