@@ -10,7 +10,7 @@ function switchView(v){
     const on = b.dataset.view===v; b.classList.toggle('on',on); b.setAttribute('aria-selected',on);});
   $('#view-chat').classList.toggle('hidden', v!=='chat');
   $('#view-graph').classList.toggle('hidden', v!=='graph');
-  if(v==='graph' && !graphLoaded){ loadGraph(); graphLoaded = true; }
+  if(v==='graph' && !graphLoaded){ loadGraph().then(ok=>{ if(ok) graphLoaded = true; }); }
 }
 document.querySelectorAll('.seg-btn').forEach(b=>b.onclick=()=>switchView(b.dataset.view));
 
@@ -18,6 +18,7 @@ async function loadDue(){
   try{
     const r = await fetch('/api/due?days=14'); const rows = await r.json();
     const box = $('#upcoming');
+    if(rows && rows.warning){ box.innerHTML='<div class="recent">Deadlines unavailable</div>'; return; }
     if(!Array.isArray(rows) || rows.length===0){ box.innerHTML='<div class="recent">Nothing due</div>'; return; }
     const today = new Date().toDateString();
     box.innerHTML = rows.map(x=>{
@@ -77,10 +78,17 @@ function renderRecents(){
 // ---- Graph: force-graph + concept panel (Task 8) ----
 let fg;
 async function loadGraph(){
-  const r = await fetch('/api/graph'); const g = await r.json();
+  const el = $('#graph');
+  let g;
+  try {
+    const r = await fetch('/api/graph'); g = await r.json();
+    if(!g.nodes || !g.nodes.length) throw new Error('empty');
+  } catch(e){
+    el.innerHTML = '<div style="color:var(--dim);padding:24px">Graph unavailable — run extract.py, then reload.</div>';
+    return false;   // not latched: retry on next Graph click
+  }
   const data = { nodes: g.nodes.map(n=>({...n})),
                  links: g.edges.map(e=>({source:e.s, target:e.t})) };
-  const el = $('#graph');
   fg = ForceGraph()(el)
     .width(el.clientWidth).height(el.clientHeight)   // explicit: auto-size measures 0 before layout flushes
     .backgroundColor('#141417')
@@ -102,6 +110,7 @@ async function loadGraph(){
     })
     .onNodeClick(n=>openConcept(n.id, n.lect));
   addEventListener('resize', ()=>{ if(fg) fg.width(el.clientWidth).height(el.clientHeight); });
+  return true;
 }
 async function openConcept(name, lect){
   const r = await fetch('/api/concept/'+encodeURIComponent(name));

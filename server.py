@@ -22,8 +22,9 @@ def api_due(days: int = 7):
         rows = canvas.upcoming(days)
         return [{"due": d.isoformat(), "course": c, "name": n, "points": p}
                 for d, c, n, p in rows]
-    except Exception as e:
-        return JSONResponse(content={"items": [], "warning": str(e)[:120]})
+    except Exception:
+        # generic message — don't echo raw Canvas-client exception text to the client
+        return JSONResponse(content={"warning": "Canvas is unavailable right now."})
 
 class Ask(BaseModel):
     q: str
