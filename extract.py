@@ -161,6 +161,47 @@ def pass2(per_lecture: dict):
     return nodes
 
 
+def _parse_concept(path):
+    t = path.read_text()
+    name = re.search(r"^#\s+(.+)$", t, re.M)
+    name = name.group(1).strip() if name else path.stem
+    lects = re.search(r"lectures: \[(.*?)\]", t)
+    lects = [x for x in (lects.group(1).split(", ") if lects else []) if x]
+    defn = ""
+    body = t.split("---", 2)[-1]
+    for line in body.splitlines():
+        line = line.strip()
+        if line and not line.startswith(("#", "-", "lectures")):
+            defn = line; break
+    links = re.findall(r"\[\[(.+?)\]\]", t.split("## Related")[1].split("## Appears in")[0]) \
+        if "## Related" in t else []
+    return name, {"lects": lects, "definition": defn, "links": links}
+
+def graph_data():
+    files = list((VAULT / "concepts").glob("*.md"))
+    parsed = dict(_parse_concept(f) for f in files)
+    deg = {}
+    edges = []
+    seen = set()
+    for name, d in parsed.items():
+        for l in d["links"]:
+            if l in parsed:
+                key = frozenset((name, l))
+                if key not in seen:
+                    seen.add(key); edges.append({"s": name, "t": l})
+                    deg[name] = deg.get(name, 0) + 1; deg[l] = deg.get(l, 0) + 1
+    nodes = [{"id": n, "lect": (d["lects"] or ["?"])[0], "degree": deg.get(n, 0)}
+             for n, d in parsed.items()]
+    return {"nodes": nodes, "edges": edges}
+
+def concept_data(name):
+    f = VAULT / "concepts" / f"{safe_filename(name)}.md"
+    if not f.exists():
+        return None
+    n, d = _parse_concept(f)
+    return {"name": n, "definition": d["definition"],
+            "links": [l for l in d["links"]], "lectures": d["lects"]}
+
 def main():
     per = pass1()
     if per:
