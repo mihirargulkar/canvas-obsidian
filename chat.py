@@ -67,25 +67,25 @@ def cmd_index(_):
     print(f"indexed {len(ids)} chunks from {len(list(NOTES.glob('*.md')))} notes into {DB}/")
 
 
+def route(query):
+    return "deadline" if DATE_INTENT.search(query) else "semantic"
+
+
 def answer_structured(query):
-    """Deterministic deadline answer from live Canvas (Phase 1 logic reused)."""
-    from canvas import get_client, current_courses, in_window, parse_due, course_label, LOCAL_TZ
+    import canvas
+    from canvas import LOCAL_TZ
     days = 7
     m = re.search(r"(\d+)\s*day", query)
     if m: days = int(m.group(1))
     elif re.search(r"next week|two weeks|2 weeks", query, re.I): days = 14
-    now = datetime.now(timezone.utc)
-    rows = []
-    for c in current_courses(get_client()):
-        for a in c.get_assignments():
-            if in_window(getattr(a, "due_at", None), now, days):
-                rows.append((parse_due(a.due_at), course_label(c).split()[0], a.name))
-    rows.sort()
-    print(f"[deadline question -> deterministic Canvas data, next {days} days]\n")
+    rows = canvas.upcoming(days)
     if not rows:
-        print("Nothing due in that window."); return
-    for due, course, name in rows:
-        print(f"  {due.astimezone(LOCAL_TZ):%a %b %d %I:%M %p}  {course}  {name}")
+        return {"mode": "deadline", "answer": f"Nothing due in the next {days} days.", "sources": []}
+    lines = [f"- **{n}** — {d.astimezone(LOCAL_TZ):%a %b %d, %I:%M %p}  ({c})"
+             for d, c, n, _p in rows]
+    return {"mode": "deadline",
+            "answer": f"Due in the next {days} days:\n\n" + "\n".join(lines),
+            "sources": []}
 
 
 def answer_semantic(query, k=5):
@@ -96,27 +96,41 @@ def answer_semantic(query, k=5):
     res = col.query(query_texts=[query], n_results=k)
     docs, metas = res["documents"][0], res["metadatas"][0]
     if not docs:
-        print("No indexed material — run `python chat.py index` first."); return
-    context = "\n\n".join(
-        f"[{m['source']} · {m['section']}]\n{d}" for d, m in zip(docs, metas))
+        return {"mode": "semantic",
+                "answer": "No indexed material yet — run `python chat.py index`.", "sources": []}
+    context = "\n\n".join(f"[{m['source']} · {m['section']}]\n{d}" for d, m in zip(docs, metas))
     prompt = (
         "Answer the student's question using ONLY the course material below. "
-        "Cite the lecture and section in parentheses after each claim, e.g. "
-        "(Lecture4-DS4400-new · Gradient Descent). If the answer is not in the "
-        "material, say you don't find it in their notes.\n\n"
+        "Cite the lecture and section in parentheses after each claim. If the answer "
+        "is not in the material, say you don't find it in their notes.\n\n"
         f"MATERIAL:\n{context}\n\nQUESTION: {query}")
-    client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
-    r = client.models.generate_content(model=ANSWER_MODEL, contents=prompt)
-    print("[conceptual question -> semantic search over your slides]\n")
-    print(r.text)
-    print("\nsources:")
-    for m in dict.fromkeys((f"  - {m['source']} · {m['section']}" for m in metas)):
-        print(m)
+    try:
+        client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+        r = client.models.generate_content(model=ANSWER_MODEL, contents=prompt)
+        text = r.text or ""
+    except Exception as e:
+        msg = str(e)
+        friendly = ("The model is rate-limited right now — try again shortly."
+                    if "429" in msg or "RESOURCE_EXHAUSTED" in msg
+                    else f"Model error: {msg[:120]}")
+        return {"mode": "semantic", "answer": friendly, "sources": []}
+    sources = list(dict.fromkeys((m["source"], m["section"]) for m in metas))
+    return {"mode": "semantic", "answer": text,
+            "sources": [{"source": s, "section": sec} for s, sec in sources]}
+
+
+def answer(query):
+    return answer_structured(query) if route(query) == "deadline" else answer_semantic(query)
 
 
 def cmd_ask(a):
-    q = " ".join(a.query)
-    (answer_structured if DATE_INTENT.search(q) else answer_semantic)(q)
+    res = answer(" ".join(a.query))
+    tag = "deadline -> Canvas" if res["mode"] == "deadline" else "conceptual -> slides"
+    print(f"[{tag}]\n\n{res['answer']}")
+    if res["sources"]:
+        print("\nsources:")
+        for s in res["sources"]:
+            print(f"  - {s['source']} · {s['section']}")
 
 
 def main():
