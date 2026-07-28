@@ -6,3 +6,4 @@ sentence-transformers
 fastapi
 uvicorn
 pytest
+mcp[cli]

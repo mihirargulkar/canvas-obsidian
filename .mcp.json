@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "canvas-ds4400": {
+      "command": ".venv/bin/python",
+      "args": ["mcp_server.py"]
+    }
+  }
+}
