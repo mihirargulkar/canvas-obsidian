@@ -30,8 +30,9 @@ from canvas import upcoming
 from datetime import timedelta
 
 class _FakeA:
-    def __init__(self, due_at, name): self.due_at, self.name = due_at, name
-    def __getattr__(self, k): return None            # points_possible etc.
+    def __init__(self, due_at, name, points_possible=None):
+        self.due_at, self.name, self.points_possible = due_at, name, points_possible
+    def __getattr__(self, k): return None            # other attributes
 class _FakeC:
     def __init__(self, name, assigns): self.name, self._a = name, assigns
     def get_assignments(self): return self._a
@@ -46,5 +47,7 @@ def test_upcoming_filters_and_sorts():
     rows = upcoming(14, courses=courses)
     assert [r[2] for r in rows] == ["Near"]          # far + undated excluded
     assert rows[0][1] == "DS4400"                     # course code = first token
+    assert len(rows[0]) == 4                          # (due, course, name, points)
 
+test_upcoming_filters_and_sorts()
 print("test_upcoming_filters_and_sorts passed")
