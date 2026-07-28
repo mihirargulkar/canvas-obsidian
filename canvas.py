@@ -70,6 +70,20 @@ def course_label(c):
 
 # --- commands ---------------------------------------------------------------
 
+def upcoming(days, courses=None):
+    """Sorted (due_utc, course_code, name) for assignments due within `days`."""
+    now = datetime.now(timezone.utc)
+    if courses is None:
+        courses = current_courses(get_client())
+    rows = []
+    for c in courses:
+        for a in c.get_assignments():
+            if in_window(getattr(a, "due_at", None), now, days):
+                rows.append((parse_due(a.due_at), course_label(c).split()[0], a.name))
+    rows.sort(key=lambda r: r[0])
+    return rows
+
+
 def cmd_list(args):
     canvas = get_client()
     courses = current_courses(canvas, include_all=args.all)
@@ -81,28 +95,16 @@ def cmd_list(args):
 
 
 def cmd_due(args):
-    canvas = get_client()
-    now = datetime.now(timezone.utc)
-    courses = current_courses(canvas, include_all=args.all)
-
-    rows = []
-    for c in courses:
-        for a in c.get_assignments():
-            if in_window(getattr(a, "due_at", None), now, args.days):
-                rows.append((parse_due(a.due_at), course_label(c), a.name,
-                             getattr(a, "points_possible", None)))
-    rows.sort(key=lambda r: r[0])
-
+    rows = upcoming(args.days, None if not args.all else
+                    [c for c in current_courses(get_client(), include_all=True)])
     print(f"Due in the next {args.days} day(s) — {len(rows)} item(s):\n")
     last_day = None
-    for due, course, name, pts in rows:
+    for due, course, name in rows:
         local = due.astimezone(LOCAL_TZ)
         day = local.strftime("%a %b %d")
         if day != last_day:
-            print(f"{day}")
-            last_day = day
-        pts_s = f" ({pts:g} pts)" if pts else ""
-        print(f"   {local:%I:%M %p}  {course.split()[0]:<12} {name}{pts_s}")
+            print(day); last_day = day
+        print(f"   {local:%I:%M %p}  {course:<12} {name}")
     if not rows:
         print("   (nothing due)")
 

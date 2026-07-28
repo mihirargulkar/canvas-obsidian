@@ -24,3 +24,27 @@ assert in_window("2026-07-01T00:00:00Z", now, 7) is False     # already past
 assert in_window(None, now, 7) is False                       # undated excluded
 
 print("test_canvas.py: all asserts passed")
+
+# --- test upcoming() helper
+from canvas import upcoming
+from datetime import timedelta
+
+class _FakeA:
+    def __init__(self, due_at, name): self.due_at, self.name = due_at, name
+    def __getattr__(self, k): return None            # points_possible etc.
+class _FakeC:
+    def __init__(self, name, assigns): self.name, self._a = name, assigns
+    def get_assignments(self): return self._a
+    def __getattr__(self, k): return None            # for id, term, etc.
+
+def test_upcoming_filters_and_sorts():
+    now = datetime.now(timezone.utc).replace(microsecond=0)
+    soon = (now + timedelta(days=2)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    later = (now + timedelta(days=40)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    courses = [_FakeC("DS4400 Machine Learning", [
+        _FakeA(later, "Far"), _FakeA(soon, "Near"), _FakeA(None, "Undated")])]
+    rows = upcoming(14, courses=courses)
+    assert [r[2] for r in rows] == ["Near"]          # far + undated excluded
+    assert rows[0][1] == "DS4400"                     # course code = first token
+
+print("test_upcoming_filters_and_sorts passed")
