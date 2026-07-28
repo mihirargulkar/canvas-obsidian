@@ -80,7 +80,9 @@ async function loadGraph(){
   const r = await fetch('/api/graph'); const g = await r.json();
   const data = { nodes: g.nodes.map(n=>({...n})),
                  links: g.edges.map(e=>({source:e.s, target:e.t})) };
-  fg = ForceGraph()($('#graph'))
+  const el = $('#graph');
+  fg = ForceGraph()(el)
+    .width(el.clientWidth).height(el.clientHeight)   // explicit: auto-size measures 0 before layout flushes
     .backgroundColor('#141417')
     .graphData(data)
     .nodeLabel('id')
@@ -99,6 +101,7 @@ async function loadGraph(){
       }
     })
     .onNodeClick(n=>openConcept(n.id, n.lect));
+  addEventListener('resize', ()=>{ if(fg) fg.width(el.clientWidth).height(el.clientHeight); });
 }
 async function openConcept(name, lect){
   const r = await fetch('/api/concept/'+encodeURIComponent(name));
