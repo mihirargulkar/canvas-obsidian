@@ -9,10 +9,12 @@ Local-first: everything lands as plain markdown you own, on your machine.
 
 ![Concept graph auto-extracted from one course's lectures](docs/concept-graph.svg)
 
-<sub>A real vault: 135 concepts and 221 links extracted from 16 machine-learning
-lectures, coloured by source lecture. Concepts are merged **across** lectures, so
-"Gradient Descent" links to every lecture that touches it. The same vault opens
-directly in Obsidian for graph view and backlinks.</sub>
+<sub>**Example output** — 135 concepts and 221 links auto-extracted from one course's
+16 lectures, coloured by source lecture. You get a graph of **your own** classes,
+whatever they are; nothing here is subject-specific. Concepts are merged **across**
+lectures, so a concept links to every lecture that touches it. The same vault opens
+directly in Obsidian for graph view and backlinks — or regenerate this image for any
+of your courses with `tools/graph_svg.py`.</sub>
 
 ## Why this, when Canvas AI tools already exist?
 
