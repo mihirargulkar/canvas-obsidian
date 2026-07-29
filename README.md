@@ -7,6 +7,13 @@ material with citations.
 
 Local-first: everything lands as plain markdown you own, on your machine.
 
+![Concept graph auto-extracted from one course's lectures](docs/concept-graph.svg)
+
+<sub>A real vault: 135 concepts and 221 links extracted from 16 machine-learning
+lectures, coloured by source lecture. Concepts are merged **across** lectures, so
+"Gradient Descent" links to every lecture that touches it. The same vault opens
+directly in Obsidian for graph view and backlinks.</sub>
+
 ## Why this, when Canvas AI tools already exist?
 
 Honest positioning — several mature tools already overlap with parts of this:
