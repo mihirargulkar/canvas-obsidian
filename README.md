@@ -205,6 +205,14 @@ answer. And when it's wrong, the citation tells you exactly which slide to check
 .venv/bin/python -m pytest -q
 ```
 
+Render a course's concept graph as a standalone SVG (this is how the image above
+was made — the layout is seeded, so regenerating produces no diff churn):
+
+```bash
+.venv/bin/python tools/graph_svg.py DS4400
+.venv/bin/python tools/graph_svg.py DS4400 --size 2000x1100 --label-degree 8 --out docs/ml.svg
+```
+
 Tests that need a built vault skip automatically. `eval_graph.py` is a **development**
 tool: it scores concept-graph quality against a hand-labelled gold set for one specific
 course, so it is not meaningful for other courses as-is.
