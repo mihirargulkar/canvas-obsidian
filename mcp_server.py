@@ -9,7 +9,13 @@ claude_desktop_config.json — see README. The Canvas token is read from .env
 by canvas.get_client(); it is never passed through MCP.
 """
 import logging
+import os
 import sys
+from pathlib import Path
+
+# A client (Claude Desktop) launches us from an arbitrary CWD; anchor to the repo
+# so .env, notes/, vault/, and chroma_db/ (all relative) resolve.
+os.chdir(Path(__file__).resolve().parent)
 
 # MCP stdio uses stdout for JSON-RPC — force all library logging to stderr and
 # silence canvasapi's INFO request logs so they can't corrupt the protocol.
