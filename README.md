@@ -89,6 +89,36 @@ course-tagged search index.
 Individual steps still work: `ingest.py <course_id>`, `extract.py <SLUG>`,
 `updates.py <course_id>`, `dashboard.py`, `chat.py index`.
 
+### Keeping up with the term
+
+Courses change daily — announcements, new slides, new assignments. Re-running
+`sync.py` is the incremental update: unchanged files aren't re-downloaded, cached
+files don't re-hit the model, and the search index only re-embeds what changed. It
+finishes by telling you what's new:
+
+```
+What's new:
+  DS4400
+    - announcement: 2026-07-28 — Dan Office Hours 7/28
+    - new assignment: Homework #4
+  index: 3 chunk(s) updated
+```
+
+Two ways to stay current, and they work together:
+
+```bash
+tools/install-daily-sync.sh          # macOS: sync every morning at 07:30 (launchd)
+tools/install-daily-sync.sh 18 00    # ...or a different time
+tools/install-daily-sync.sh --uninstall
+```
+
+The scheduled job runs `sync.py --quiet`, which writes to `cache/sync.log` **only
+when something actually changed** — no daily noise. On Linux, the same effect with
+cron: `30 7 * * * cd /path/to/repo && .venv/bin/python sync.py --quiet`.
+
+Or just ask your LLM — the MCP `refresh` tool syncs on demand: *"check my courses
+for anything new."*
+
 ### Layout
 
 ```
@@ -104,7 +134,8 @@ Open the `vault/` folder as an Obsidian vault for the graph, backlinks and dashb
 `mcp_server.py` exposes your classes + live Canvas to any MCP client (Claude Desktop,
 Claude Code, Gemini CLI): `list_courses`, `upcoming_assignments`, `announcements`,
 `syllabus`, `search_notes` (semantic search over your slides, homework and notebooks),
-and `concept`. Every tool takes an optional `course` slug — omit it to span all classes.
+`concept`, and `refresh` (pull anything new from Canvas on demand). Every tool takes
+an optional `course` slug — omit it to span all classes.
 
 ### Connecting a client
 

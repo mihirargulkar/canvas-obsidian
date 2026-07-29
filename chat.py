@@ -49,23 +49,63 @@ def chunks_from_note(text, source, course):
     return out
 
 
-def cmd_index(_=None):
-    import chromadb
-    client = chromadb.PersistentClient(path=DB)
-    if COLLECTION in [c.name for c in client.list_collections()]:
-        client.delete_collection(COLLECTION)     # rebuild from scratch, no drift
-    col = _collection()
+def _collect_chunks():
+    """All chunks across every course: (ids, docs, metas, course_names)."""
     ids, docs, metas = [], [], []
     courses = [d for d in sorted(NOTES_ROOT.glob("*")) if d.is_dir()]
     for cdir in courses:
         for p in sorted(cdir.glob("*.md")):
             for cid, text, meta in chunks_from_note(p.read_text(), p.stem, cdir.name):
                 ids.append(cid); docs.append(text); metas.append(meta)
+    return ids, docs, metas, [c.name for c in courses]
+
+
+def index(rebuild=False, quiet=False):
+    """Sync the vector index with notes/ and return the number of chunks changed.
+
+    Incremental by default: embedding 1,200+ unchanged chunks takes ~18s, which is
+    pure waste on a daily sync where nothing moved. Only added/changed/removed
+    chunks are touched. `rebuild=True` forces a full re-embed (escape hatch if the
+    chunker or embedding model changes).
+    """
+    import chromadb
+    client = chromadb.PersistentClient(path=DB)
+    if rebuild and COLLECTION in [c.name for c in client.list_collections()]:
+        client.delete_collection(COLLECTION)
+    col = _collection()
+
+    ids, docs, metas, courses = _collect_chunks()
     if not ids:
         sys.exit("no notes to index — run ingest.py first")
-    col.add(ids=ids, documents=docs, metadatas=metas)
-    print(f"indexed {len(ids)} chunks from {len(courses)} course(s): "
-          f"{', '.join(c.name for c in courses)}")
+
+    existing = col.get(include=["documents"])
+    have = dict(zip(existing["ids"], existing["documents"]))
+    want = dict(zip(ids, docs))
+
+    new = [i for i in ids if i not in have]
+    changed = [i for i in ids if i in have and have[i] != want[i]]
+    gone = [i for i in have if i not in want]
+
+    if gone:
+        col.delete(ids=gone)
+    upsert = new + changed
+    if upsert:
+        pos = {i: n for n, i in enumerate(ids)}
+        col.upsert(ids=upsert,
+                   documents=[docs[pos[i]] for i in upsert],
+                   metadatas=[metas[pos[i]] for i in upsert])
+
+    if not quiet:
+        if upsert or gone:
+            print(f"index: +{len(new)} new, ~{len(changed)} changed, -{len(gone)} removed "
+                  f"({len(ids)} chunks, {len(courses)} course(s))")
+        else:
+            print(f"index: up to date ({len(ids)} chunks, {len(courses)} course(s))")
+    return len(new) + len(changed) + len(gone)
+
+
+def cmd_index(a=None):
+    index(rebuild=getattr(a, "rebuild", False))
 
 
 def route(query):
@@ -136,7 +176,10 @@ def cmd_ask(a):
 def main():
     p = argparse.ArgumentParser(description="RAG chat across your course materials")
     sub = p.add_subparsers(dest="cmd", required=True)
-    sub.add_parser("index", help="build/rebuild the vector index").set_defaults(func=cmd_index)
+    pi = sub.add_parser("index", help="sync the vector index with notes/ (incremental)")
+    pi.add_argument("--rebuild", action="store_true",
+                    help="force a full re-embed (use if the chunker or model changed)")
+    pi.set_defaults(func=cmd_index)
     pa = sub.add_parser("ask", help="ask a question")
     pa.add_argument("query", nargs="+")
     pa.add_argument("--course", default=None, help="restrict to one course slug")

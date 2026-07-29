@@ -141,5 +141,23 @@ class Course:
                 print(f"  ! {step} skipped — {reason}")
         return failed
 
+    def changes_since_last_sync(self):
+        """What appeared on Canvas since the previous sync (see changes.py).
+
+        Re-reads announcements/assignments rather than caching them on the
+        instance — Course is frozen, and both reads are TTL-cached anyway.
+        """
+        import changes
+        import updates as updates_mod
+        try:
+            anns = updates_mod.fetch_updates(self.id).get("announcements", [])
+        except Exception:
+            anns = []
+        try:
+            names = [a.name for a in self._api.get_assignments()]
+        except Exception:
+            names = []
+        return changes.diff_course(self.slug, anns, names)
+
     def __str__(self):
         return f"{self.slug} ({self.id})"
