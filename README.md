@@ -132,9 +132,53 @@ that supports custom providers (Continue, Cline, LibreChat, Goose) at them; the 
 definition above is unchanged. The zero-extra-cost paths are Claude (Pro/Max
 subscription) and the Gemini CLI free tier.
 
-Then ask *"what's due this week?"*, *"what's on the midterm 2 study guide?"*, or
-*"explain gradient descent from my lecture notes"* — the client picks the right tool
-and cites your material.
+### What to actually ask it
+
+The client picks the right tool on its own — you just talk normally. Answers about
+course content are grounded in *your* material and cite the lecture and section they
+came from, so you can go read the source.
+
+**Staying on top of the term**
+
+- "What's due this week across all my classes?"
+- "Did I miss any announcements? Anything change about the exam?"
+- "What's the late policy in my ML class?" *(reads the syllabus)*
+
+**Understanding something**
+
+- "Explain gradient descent the way my professor did, not the textbook version."
+- "I don't follow slide 12 of Lecture 8 — walk me through it."
+- "My notes mention KL divergence in two different lectures. Are they saying the
+  same thing?"
+
+**Exam prep** — this is where it earns its keep:
+
+- "Here's the topic list from the midterm 2 announcement. For each topic, pull what
+  my lectures actually say and tell me which ones I have thin coverage on."
+- "Make me a one-page cheat sheet for midterm 2 using only my course material."
+- "Quiz me on entropy and cross-entropy. Ask one question at a time, check my answer
+  against the lecture, and tell me what I got wrong."
+- "Which topics on the study guide appear in the fewest of my notes?" *(finds the
+  gaps you'd otherwise discover during the exam)*
+
+**Following the thread between ideas** — the concept graph makes this possible:
+
+- "What do I need to understand *before* MLE makes sense? Trace the prerequisites."
+- "Which lectures does regularization show up in, and how does the treatment differ?"
+- "Show me everything connected to the bias–variance tradeoff in my course."
+
+**Homework and code**
+
+- "What is homework 3 actually asking for? Break it into steps." *(reads the prompt PDF)*
+- "Which lecture covers the method I need for problem 2?"
+- "Find the notebook where we implemented gradient descent from scratch and explain
+  how the epoch loop works."
+
+If something isn't in your synced material, it'll tell you rather than invent an
+answer. And when it's wrong, the citation tells you exactly which slide to check.
+
+> Aimed at understanding your own material — how you use it on graded work is between
+> you and your course's academic-integrity policy.
 
 ## Privacy, cost and terms
 
