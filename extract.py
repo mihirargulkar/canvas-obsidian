@@ -72,7 +72,8 @@ def safe_filename(name: str) -> str:
 
 def _client():
     load_dotenv(str(Path(__file__).parent / ".env"))
-    return genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+    from canvas import gemini_key
+    return genai.Client(api_key=gemini_key())
 
 
 def extract_note(client, text: str) -> list:

@@ -233,7 +233,8 @@ def ingest_assignments(course, slug, client, counts):
 def ingest_course(course_id: int, limit=None):
     load_dotenv(str(Path(__file__).parent / ".env"))
     canvas = get_client()
-    client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+    from canvas import gemini_key
+    client = genai.Client(api_key=gemini_key())
 
     course = canvas.get_course(course_id)
     slug = course_label(course).split()[0]

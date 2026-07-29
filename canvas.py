@@ -91,8 +91,19 @@ def get_client():
     load_dotenv()
     url, token = os.getenv("CANVAS_URL"), os.getenv("CANVAS_TOKEN")
     if not url or not token:
-        sys.exit("Missing CANVAS_URL / CANVAS_TOKEN in .env")
+        sys.exit("Missing CANVAS_URL / CANVAS_TOKEN in .env — copy .env.example to "
+                 ".env and fill it in (Canvas -> Account -> Settings -> New Access Token).")
     return Canvas(url, token)
+
+
+def gemini_key():
+    """Fail with instructions rather than a library traceback when unset."""
+    load_dotenv()
+    key = os.getenv("GEMINI_API_KEY")
+    if not key:
+        sys.exit("Missing GEMINI_API_KEY in .env — get a free key at "
+                 "https://aistudio.google.com/app/apikey (used to transcribe slides).")
+    return key
 
 
 def current_courses(canvas, include_all=False):
