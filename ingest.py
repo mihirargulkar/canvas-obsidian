@@ -99,14 +99,27 @@ def extract_text(path: Path) -> str:
     return path.read_text(errors="ignore")
 
 
-def _sectioned(title: str, text: str, max_lines: int = 45) -> str:
-    """Wrap raw text into '## ' sections so chat.chunks_from_note can chunk it."""
-    lines = text.splitlines() or [""]
-    body = [f"# {title}", ""]
-    for n, i in enumerate(range(0, len(lines), max_lines), 1):
-        body.append(f"## {title} — part {n}")
-        body += lines[i:i + max_lines]
-        body.append("")
+def _sectioned(title: str, text: str, max_chars: int = 1200) -> str:
+    """Wrap raw text into size-bounded '## ' sections so chat.chunks_from_note can
+    chunk it. Caps by chars (not lines) and hard-wraps giant lines, so a single
+    huge line (e.g. a data literal in a notebook) can't create a massive chunk."""
+    lines = []
+    for line in text.splitlines():
+        while len(line) > max_chars:
+            lines.append(line[:max_chars]); line = line[max_chars:]
+        lines.append(line)
+    body, buf, size, n = [f"# {title}", ""], [], 0, 1
+    def flush():
+        nonlocal buf, size, n
+        if buf:
+            body.extend([f"## {title} — part {n}", *buf, ""]); n += 1; buf, size = [], 0
+    for line in lines:
+        if size + len(line) > max_chars:
+            flush()
+        buf.append(line); size += len(line) + 1
+    flush()
+    if n == 1:
+        body += [f"## {title}", ""]
     return "\n".join(body)
 
 
@@ -116,7 +129,7 @@ def ingest_bytes(name, raw: Path, slug, client, out_name=None) -> str:
     h = sha256(raw.read_bytes())
     md_cache = MD / f"{h}.md"
     out = NOTES / slug / ((out_name or Path(name).stem) + ".md")
-    if md_cache.exists():
+    if ext not in TEXT_EXT and md_cache.exists():   # text extraction is free — always re-chunk
         out.write_text(md_cache.read_text())
         return "cached"
     header = f"---\nsource: {name}\ncourse: {slug}\nsha256: {h}\n---\n\n"

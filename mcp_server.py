@@ -69,7 +69,8 @@ def search_notes(query: str, k: int = 5) -> list[dict]:
     import chat
     res = chat._collection().query(query_texts=[query], n_results=k)
     docs, metas = res["documents"][0], res["metadatas"][0]
-    return [{"source": m["source"], "section": m["section"], "text": d}
+    # cap per-chunk text so the tool result can't blow the client's 1MB limit
+    return [{"source": m["source"], "section": m["section"], "text": d[:2000]}
             for d, m in zip(docs, metas)]
 
 
