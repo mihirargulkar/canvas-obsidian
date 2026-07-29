@@ -50,7 +50,7 @@ Claude subscription or the free Gemini CLI, this costs nothing extra — no API 
 ```json
 {
   "mcpServers": {
-    "canvas-ds4400": {
+    "canvas": {
       "command": "/Users/mihirargulkar/Documents/PROJECTS/canvas-obsidian/.venv/bin/python",
       "args": ["/Users/mihirargulkar/Documents/PROJECTS/canvas-obsidian/mcp_server.py"]
     }

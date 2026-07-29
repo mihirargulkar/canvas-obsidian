@@ -31,7 +31,7 @@ import updates
 COURSE_ID = 253025  # DS4400 — single-course scope for now
 
 server = MCPServer(
-    name="canvas-ds4400",
+    name="canvas",
     version="0.1.0",
     instructions=("Live Canvas data and the student's DS4400 machine-learning "
                   "concept vault. Use upcoming_assignments for deadlines "
