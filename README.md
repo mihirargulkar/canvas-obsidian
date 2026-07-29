@@ -9,13 +9,15 @@ Local-first: everything lands as plain markdown you own, on your machine.
 
 ## Why this, when Canvas AI tools already exist?
 
-Honest positioning — several mature tools overlap with parts of this:
+Honest positioning — several mature tools already overlap with parts of this:
 
-- [`vishalsachdev/canvas-mcp`](https://github.com/vishalsachdev/canvas-mcp) is a far
-  more complete **Canvas API** MCP server (90+ tools). If you only want to *talk to
-  Canvas* from an LLM, use that — this repo's live-Canvas tools are deliberately thin.
-- Hosted assistants (CanvasGPT and friends) do RAG over course files, and tools like
-  StudyPDF generate concept maps from PDFs — both as **cloud SaaS**.
+- **Canvas API MCP servers** exist that wrap the Canvas API far more completely
+  (90+ tools, including grading and instructor features). If all you want is to
+  *talk to Canvas* from an LLM, use one of those — the live-Canvas tools here are
+  deliberately thin.
+- **Hosted study assistants** do RAG over your course files, and **concept-map
+  generators** turn uploaded PDFs into diagrams. Both are cloud SaaS: your material
+  lives on their servers.
 
 What this does that they don't:
 
