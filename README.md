@@ -1,41 +1,82 @@
 # Canvas Knowledge Graph & Study Assistant
 
-Local, single-user tool that syncs Canvas course materials, builds an Obsidian-style
-concept graph from lecture slides, and lets you study them with an LLM — grounded in
-your own notes, deadlines, and announcements.
+Turn your Canvas courses into a **local Obsidian vault** — lecture slides transcribed
+to markdown, a cross-lecture concept graph, homework prompts, announcements and
+syllabus — then study it with Claude or Gemini through MCP, grounded in your own
+material with citations.
+
+Local-first: everything lands as plain markdown you own, on your machine.
+
+## Why this, when Canvas AI tools already exist?
+
+Honest positioning — several mature tools overlap with parts of this:
+
+- [`vishalsachdev/canvas-mcp`](https://github.com/vishalsachdev/canvas-mcp) is a far
+  more complete **Canvas API** MCP server (90+ tools). If you only want to *talk to
+  Canvas* from an LLM, use that — this repo's live-Canvas tools are deliberately thin.
+- Hosted assistants (CanvasGPT and friends) do RAG over course files, and tools like
+  StudyPDF generate concept maps from PDFs — both as **cloud SaaS**.
+
+What this does that they don't:
+
+- **Builds a real Obsidian vault** — plain `.md` with `[[wikilinks]]`, a concept graph
+  merged **across lectures** (a concept links to every lecture it appears in), plus
+  backlinks and graph view for free.
+- **Local-first, you own the data.** Nothing is hosted; the markdown outlives this tool.
+- **Free on a subscription you already have** — the vault is exposed over MCP, so
+  Claude (Pro/Max) or the free Gemini CLI is the chat layer. No per-query API metering.
+- **One index across all your classes**, with homework prompts and code notebooks in it.
+
+If you want a polished hosted product, use the SaaS. If you want your course knowledge
+as files you keep, this.
+
+## Requirements
+
+- Python 3.10+
+- **LibreOffice** — converts `.pptx`/`.docx` to PDF for transcription
+  (macOS `brew install --cask libreoffice`, Debian/Ubuntu `apt install libreoffice`).
+  Auto-detected on `$PATH`; override with `SOFFICE=/path/to/soffice`.
+- A **Canvas API token** (Canvas → Account → Settings → New Access Token)
+- A **Gemini API key** ([free tier](https://aistudio.google.com/app/apikey)) — used only
+  to transcribe slides and extract concepts
 
 ## Setup
 
 ```bash
 python3 -m venv .venv
 .venv/bin/pip install -r requirements.txt
+cp .env.example .env      # then fill it in
 ```
 
-Create `.env` (gitignored):
+`.env` (gitignored — never commit it):
 
 ```
 CANVAS_URL=https://<your-school>.instructure.com
 CANVAS_TOKEN=<your Canvas access token>
-GEMINI_API_KEY=<your Gemini API key>     # ingestion only; free tier is fine
+GEMINI_API_KEY=<your Gemini API key>
+# CANVAS_TZ=America/New_York   # optional; defaults to your Canvas account timezone
 ```
 
-## Sync all your classes
-
-One command syncs every class you're enrolled in this term:
+## Sync your classes
 
 ```bash
-.venv/bin/python sync.py               # all current classes
+.venv/bin/python sync.py               # every class you're taking this term
 .venv/bin/python sync.py --list        # show detected classes, change nothing
-.venv/bin/python sync.py --only DS4400 # just one class
+.venv/bin/python sync.py --only CS101  # just one class
 ```
 
-Per class it runs: **ingest** (files + homework → markdown via Gemini vision) →
-**updates** (announcements + syllabus) → **extract** (concept graph) →
-**dashboard**, then builds one course-tagged search index. Everything is
-content-hash cached, so re-runs are cheap and resumable after a rate-limit.
+Per class: **ingest** (files + homework → markdown via Gemini vision) → **updates**
+(announcements + syllabus) → **extract** (concept graph) → **dashboard**, then one
+course-tagged search index.
 
-Individual steps are still available (`ingest.py <id>`, `extract.py <SLUG>`,
-`updates.py <id>`, `dashboard.py`, `chat.py index`).
+> **First run takes a while** (tens of MB of slide decks through a vision model) and
+> may hit Gemini's free-tier daily quota. It is resumable — everything is content-hash
+> cached, so just run it again; finished files cost nothing and aren't re-downloaded.
+> A class whose Files tab the instructor disabled degrades to assignments-only rather
+> than failing.
+
+Individual steps still work: `ingest.py <course_id>`, `extract.py <SLUG>`,
+`updates.py <course_id>`, `dashboard.py`, `chat.py index`.
 
 ### Layout
 
@@ -45,37 +86,58 @@ vault/Dashboard.md     deadlines across ALL classes
 vault/<SLUG>/          concepts/ lectures/ updates/ Dashboard.md   <- open in Obsidian
 ```
 
-`Course` (in `course.py`) is the domain object — it owns a class's id, slug and
-paths and exposes the pipeline as `course.sync()`, so nothing threads a slug
-through by hand.
+Open the `vault/` folder as an Obsidian vault for the graph, backlinks and dashboards.
 
-## Study with an LLM — Vault + MCP (recommended)
+## Study with an LLM — Vault + MCP
 
-`mcp_server.py` exposes your classes + **live** Canvas to any MCP client (Claude
-Desktop, Claude Code, Gemini CLI) as tools: `list_courses`, `upcoming_assignments`,
-`announcements`, `syllabus`, `search_notes` (semantic search over your slides,
-homework and notebooks), and `concept`. Every tool takes an optional `course` slug —
-omit it to span all your classes. With a Claude subscription or the free Gemini CLI,
-this costs nothing extra — no API metering.
+`mcp_server.py` exposes your classes + live Canvas to any MCP client (Claude Desktop,
+Claude Code, Gemini CLI): `list_courses`, `upcoming_assignments`, `announcements`,
+`syllabus`, `search_notes` (semantic search over your slides, homework and notebooks),
+and `concept`. Every tool takes an optional `course` slug — omit it to span all classes.
 
-**Claude Code** (this repo): `.mcp.json` is already here — Claude Code picks it up.
+**Claude Code** (this repo): `.mcp.json` is already here — it's picked up automatically.
 
-**Claude Desktop:** add to `~/Library/Application Support/Claude/claude_desktop_config.json`
-(use absolute paths — Claude Desktop doesn't run in the repo dir):
+**Claude Desktop:** add to your `claude_desktop_config.json`
+(macOS `~/Library/Application Support/Claude/`, Windows `%APPDATA%\Claude\`), using
+**absolute paths** — Claude Desktop doesn't run in the repo directory:
 
 ```json
 {
   "mcpServers": {
     "canvas": {
-      "command": "/Users/mihirargulkar/Documents/PROJECTS/canvas-obsidian/.venv/bin/python",
-      "args": ["/Users/mihirargulkar/Documents/PROJECTS/canvas-obsidian/mcp_server.py"]
+      "command": "/absolute/path/to/canvas-obsidian/.venv/bin/python",
+      "args": ["/absolute/path/to/canvas-obsidian/mcp_server.py"]
     }
   }
 }
 ```
 
-Restart Claude Desktop, then ask e.g. *"what's due this week?"*, *"what's on the
-midterm 2 study guide?"*, or *"explain gradient descent from my lecture notes"* — it
-routes to the right tool and cites your material. The Canvas token stays in `.env`;
-it is never passed through MCP.
+Restart Claude Desktop, then ask *"what's due this week?"*, *"what's on the midterm 2
+study guide?"*, or *"explain gradient descent from my lecture notes"* — it picks the
+right tool and cites your material.
 
+## Privacy, cost and terms
+
+- **Your Canvas token stays in `.env`**, is read only by this tool, and is never sent
+  through MCP or to any model.
+- **Course content is sent to Google's Gemini API** during ingestion (slides, homework
+  prompts) to transcribe it. If that's not acceptable for your material, don't ingest it.
+- **Self-hosted, single-user by design.** Instructure's API terms prohibit sharing your
+  token with third parties — running this yourself with your own token is fine; offering
+  it as a hosted service for other students is not.
+- Ingestion costs $0 on Gemini's free tier (slower); chat costs $0 on a Claude
+  subscription or the free Gemini CLI.
+
+## Development
+
+```bash
+.venv/bin/python -m pytest -q
+```
+
+Tests that need a built vault skip automatically. `eval_graph.py` is a **development**
+tool: it scores concept-graph quality against a hand-labelled gold set for one specific
+course, so it is not meaningful for other courses as-is.
+
+## License
+
+MIT — see [LICENSE](LICENSE).

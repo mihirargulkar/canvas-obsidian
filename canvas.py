@@ -15,7 +15,7 @@ from zoneinfo import ZoneInfo
 from canvasapi import Canvas
 from dotenv import load_dotenv
 
-LOCAL_TZ = ZoneInfo("America/New_York")  # ponytail: hardcoded to user's zone; read from Canvas profile if it ever differs
+DEFAULT_TZ = "America/New_York"   # only used if Canvas and the OS both stay silent
 
 
 def ttl_cache(seconds=300):
@@ -47,9 +47,27 @@ def ttl_cache(seconds=300):
 # --- pure logic (unit-tested in test_canvas.py) -----------------------------
 
 def term_code(term_name):
-    """Leading 6-digit Northeastern term code, or None (advising/group terms)."""
-    m = re.search(r"\d{6}", term_name or "")
-    return m.group(0) if m else None
+    """Longest digit-run in a term name, used to group concurrent terms.
+
+    Institutions encode terms differently ('202650_2B Summer 2026', 'Fall 2026',
+    '2026FA'). Taking the longest digit run groups sessions of the same term
+    together (202650_2A and _2B -> '202650'; 'Spring 2026'/'Fall 2026' -> '2026'),
+    which is what we want: a student can be enrolled in two concurrent sessions.
+    Returns None for undated terms ('Default Term'), which fall back to term id.
+    """
+    runs = re.findall(r"\d+", term_name or "")
+    return max(runs, key=len) if runs else None
+
+
+def _term_ended(term, now):
+    """True if this term has a known end date that has passed."""
+    end = (term or {}).get("end_at")
+    if not end:
+        return False
+    try:
+        return datetime.fromisoformat(end.replace("Z", "+00:00")) < now
+    except ValueError:
+        return False
 
 
 def parse_due(due_at):
@@ -78,16 +96,54 @@ def get_client():
 
 
 def current_courses(canvas, include_all=False):
-    """Courses in the most-recent coded term (or all active, if include_all)."""
+    """The classes you're taking now (or every active course, if include_all).
+
+    `enrollment_state=active` is not enough on its own: many institutions never
+    set term end dates, so Canvas keeps returning years of old courses. Layered:
+      1. drop terms with a known end date in the past (correct where dates exist);
+      2. group the rest by term code and keep the newest group (handles schools
+         that run concurrent sessions, e.g. Summer A + Summer B);
+      3. if no term names carry digits, fall back to the highest term id
+         (Canvas term ids increase over time).
+    """
     courses = list(canvas.get_courses(enrollment_state="active", include=["term"]))
-    coded = [(term_code(getattr(c, "term", {}).get("name")), c) for c in courses]
     if include_all:
-        return [c for _, c in coded]
-    codes = [code for code, _ in coded if code]
-    if not codes:
         return courses
-    latest = max(codes)
-    return [c for code, c in coded if code == latest]
+
+    now = datetime.now(timezone.utc)
+    live = [c for c in courses if not _term_ended(getattr(c, "term", {}), now)] or courses
+
+    coded = [(term_code((getattr(c, "term", {}) or {}).get("name")), c) for c in live]
+    codes = [code for code, _ in coded if code]
+    if codes:
+        latest = max(codes, key=lambda s: (len(s), s))   # numeric-ish, longest wins ties
+        return [c for code, c in coded if code == latest]
+
+    ids = [(getattr(c, "term", {}) or {}).get("id") or 0 for c in live]
+    if any(ids):
+        newest = max(ids)
+        return [c for c in live if ((getattr(c, "term", {}) or {}).get("id") or 0) == newest]
+    return live
+
+
+@ttl_cache(3600)
+def local_tz():
+    """The timezone to render due dates in.
+
+    CANVAS_TZ env override -> the Canvas account's own timezone (what the LMS
+    shows you) -> this machine's timezone -> DEFAULT_TZ. Deadlines displayed in
+    the wrong zone are worse than useless, so this is worth getting right.
+    """
+    name = os.getenv("CANVAS_TZ")
+    if name:
+        return ZoneInfo(name)
+    try:
+        tz = get_client().get_current_user().get_profile().get("time_zone")
+        if tz:
+            return ZoneInfo(tz)
+    except Exception:
+        pass
+    return datetime.now().astimezone().tzinfo or ZoneInfo(DEFAULT_TZ)
 
 
 @ttl_cache(300)
@@ -139,7 +195,7 @@ def cmd_due(args):
     print(f"Due in the next {args.days} day(s) — {len(rows)} item(s):\n")
     last_day = None
     for due, course, name, pts in rows:
-        local = due.astimezone(LOCAL_TZ)
+        local = due.astimezone(local_tz())
         day = local.strftime("%a %b %d")
         if day != last_day:
             print(day); last_day = day

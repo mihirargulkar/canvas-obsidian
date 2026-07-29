@@ -74,7 +74,8 @@ def route(query):
 
 def answer_structured(query):
     import canvas
-    from canvas import LOCAL_TZ
+    from canvas import local_tz
+    LOCAL_TZ = local_tz()
     days = 7
     m = re.search(r"(\d+)\s*day", query)
     if m: days = int(m.group(1))

@@ -12,12 +12,13 @@ from pathlib import Path
 
 import canvas
 import updates
-from canvas import LOCAL_TZ
+from canvas import local_tz
 
 
 def overview(days=14):
     """Top-level vault/Dashboard.md — every class's upcoming deadlines."""
     rows = canvas.upcoming(days)
+    LOCAL_TZ = local_tz()
     md = ["# Dashboard — all classes", "",
           f"_Updated {datetime.now(LOCAL_TZ):%a %b %d, %I:%M %p}_", "",
           f"## Due in the next {days} days", ""]
@@ -38,6 +39,7 @@ def course_dashboard(course, days=14, data=None):
     slug = course.slug
     rows = course.upcoming(days)          # scoped: one course's assignments only
     data = data or updates.fetch_updates(course.id)
+    LOCAL_TZ = local_tz()
     md = [f"# {slug} — Dashboard", "", f"_Updated {datetime.now(LOCAL_TZ):%a %b %d, %I:%M %p}_", "",
           f"## Due in the next {days} days", ""]
     md += [f"- **{d.astimezone(LOCAL_TZ):%a %b %d, %I:%M %p}** — {n}" + (f" ({p:g} pts)" if p else "")

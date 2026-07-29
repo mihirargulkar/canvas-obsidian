@@ -18,7 +18,6 @@ import json
 import os
 import re
 import subprocess
-import sys
 import time
 from pathlib import Path
 
@@ -32,7 +31,24 @@ IMAGE_EXT = {".png", ".jpg", ".jpeg", ".webp"}   # -> straight to Gemini (reads 
 TEXT_EXT = {".ipynb", ".txt", ".md"}             # -> extracted directly, no model
 INGEST_EXT = VISION_EXT | IMAGE_EXT | TEXT_EXT
 MODEL = os.getenv("GEMINI_MODEL", "gemini-flash-latest")
-SOFFICE = "/Applications/LibreOffice.app/Contents/MacOS/soffice"
+SOFFICE_CANDIDATES = [                                   # checked after $PATH
+    "/Applications/LibreOffice.app/Contents/MacOS/soffice",          # macOS
+    "/usr/bin/soffice", "/usr/bin/libreoffice",                      # Linux
+    "/snap/bin/libreoffice",                                         # Linux (snap)
+    r"C:\Program Files\LibreOffice\program\soffice.exe",             # Windows
+]
+
+
+def find_soffice():
+    """Locate LibreOffice (used to convert pptx/docx -> pdf). $SOFFICE wins."""
+    import shutil
+    env = os.getenv("SOFFICE")
+    if env and Path(env).exists():
+        return env
+    on_path = shutil.which("soffice") or shutil.which("libreoffice")
+    if on_path:
+        return on_path
+    return next((p for p in SOFFICE_CANDIDATES if Path(p).exists()), None)
 
 PROMPT = (
     "Transcribe this document into clean, faithful study-note markdown.\n"
@@ -74,10 +90,14 @@ def to_pdf(src: Path, out_dir: Path) -> Path:
     """Convert pptx/docx -> pdf via LibreOffice headless."""
     if src.suffix.lower() == ".pdf":
         return src
-    if not Path(SOFFICE).exists():
-        sys.exit(f"LibreOffice not found at {SOFFICE} — needed to convert {src.name}")
+    soffice = find_soffice()
+    if not soffice:
+        raise RuntimeError(
+            f"LibreOffice not found — needed to convert {src.name}. Install it "
+            "(macOS: brew install --cask libreoffice; Debian/Ubuntu: apt install "
+            "libreoffice) or set SOFFICE=/path/to/soffice.")
     out_dir.mkdir(parents=True, exist_ok=True)
-    subprocess.run([SOFFICE, "--headless", "--convert-to", "pdf",
+    subprocess.run([soffice, "--headless", "--convert-to", "pdf",
                     "--outdir", str(out_dir), str(src)],
                    check=True, capture_output=True, timeout=180)
     pdf = out_dir / (src.stem + ".pdf")
