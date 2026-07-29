@@ -20,7 +20,7 @@ import dashboard
 from course import Course
 
 
-def run_sync(only=None, limit=None, do_index=True) -> tuple[list, str]:
+def run_sync(only=None, limit=None, do_index=True, deep=True) -> tuple[list, str]:
     """Sync courses and return (courses, human-readable what's-new summary).
 
     Shared by the CLI and the MCP `refresh` tool so both behave identically.
@@ -34,7 +34,7 @@ def run_sync(only=None, limit=None, do_index=True) -> tuple[list, str]:
     per_course = {}
     for c in courses:
         before = c.changes_since_last_sync()   # diff BEFORE syncing overwrites state
-        c.sync(limit)
+        c.sync(limit, deep=deep)
         per_course[c.slug] = before
 
     dashboard.overview()

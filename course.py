@@ -118,7 +118,7 @@ class Course:
 
     # --- orchestration ----------------------------------------------------
 
-    def sync(self, limit=None) -> list[str]:
+    def sync(self, limit=None, deep=True) -> list[str]:
         """Full pipeline for this one class. Safe to re-run (content-hash cached).
 
         Each step is isolated: a course with Files disabled (Canvas 403) or a
@@ -127,10 +127,15 @@ class Course:
         """
         print(f"\n=== {self.slug} — {self.name} ===")
         failed = []
-        for step, fn in (("ingest", lambda: self.ingest(limit)),
-                         ("updates", self.refresh_updates),
-                         ("extract", self.extract),
-                         ("dashboard", self.dashboard)):
+        # deep=False skips the slow model work (file transcription, concept
+        # extraction) and only re-reads Canvas metadata. That's what an
+        # interactive "anything new?" check needs — a full sync takes minutes and
+        # will blow an MCP client's request timeout.
+        steps = (("updates", self.refresh_updates), ("dashboard", self.dashboard))
+        if deep:
+            steps = (("ingest", lambda: self.ingest(limit)), ("updates", self.refresh_updates),
+                     ("extract", self.extract), ("dashboard", self.dashboard))
+        for step, fn in steps:
             try:
                 fn()
             except Exception as e:

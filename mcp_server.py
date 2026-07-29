@@ -98,19 +98,21 @@ def concept(name: str, course: str) -> dict | None:
 
 @server.tool()
 def refresh(course: str | None = None) -> str:
-    """Pull anything new from Canvas — announcements, assignments, files — and
-    update the notes, concept graph and search index. Returns a summary of what
-    changed since the last sync. Use when the student asks whether anything new
-    was posted, or when an answer may be out of date.
+    """Re-read announcements, assignments and the syllabus from Canvas, then
+    report what's new since the last check. Takes a few seconds. Use it when the
+    student asks whether anything was posted recently, or when an answer might be
+    stale.
 
-    Slow (seconds to minutes if new lecture files need transcribing), so don't
-    call it to answer ordinary questions — only when freshness is the point.
+    Does NOT transcribe newly-posted lecture files — that needs a vision model
+    and takes minutes, which would exceed this request's timeout. New slides are
+    picked up by the scheduled daily sync (or `python sync.py` in a terminal).
     """
     import io, contextlib, sync
     buf = io.StringIO()
     with contextlib.redirect_stdout(buf):        # keep sync logs off MCP stdout
-        courses, summary = sync.run_sync(only=course)
-    return f"Synced {', '.join(c.slug for c in courses)}.\n{summary}"
+        courses, summary = sync.run_sync(only=course, deep=False)
+    return (f"Checked {', '.join(c.slug for c in courses)} "
+            f"(announcements/assignments only).\n{summary}")
 
 
 if __name__ == "__main__":
