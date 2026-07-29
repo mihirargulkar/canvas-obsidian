@@ -107,12 +107,27 @@ def refresh(course: str | None = None) -> str:
     and takes minutes, which would exceed this request's timeout. New slides are
     picked up by the scheduled daily sync (or `python sync.py` in a terminal).
     """
-    import io, contextlib, sync
+    import io, contextlib, sync, updates as updates_mod
     buf = io.StringIO()
     with contextlib.redirect_stdout(buf):        # keep sync logs off MCP stdout
         courses, summary = sync.run_sync(only=course, deep=False)
+
+    # Always report the CURRENT latest items, not just the diff. "Nothing new
+    # since last sync" is only meaningful to a caller who already knows the
+    # current state — one with stale context would otherwise conclude its old
+    # view is still current and confidently report an outdated announcement as
+    # the most recent.
+    latest = []
+    for c in courses:
+        try:
+            anns = updates_mod.fetch_updates(c.id).get("announcements", [])[:3]
+        except Exception:
+            continue
+        if anns:
+            latest.append(f"{c.slug} — most recent announcements now:")
+            latest += [f"  {a['date']}  {a['title']}" for a in anns]
     return (f"Checked {', '.join(c.slug for c in courses)} "
-            f"(announcements/assignments only).\n{summary}")
+            f"(announcements/assignments only).\n{summary}\n\n" + "\n".join(latest))
 
 
 if __name__ == "__main__":
