@@ -19,28 +19,44 @@ CANVAS_TOKEN=<your Canvas access token>
 GEMINI_API_KEY=<your Gemini API key>     # ingestion only; free tier is fine
 ```
 
-## Build the vault (run per course; re-run to refresh)
+## Sync all your classes
+
+One command syncs every class you're enrolled in this term:
 
 ```bash
-.venv/bin/python ingest.py 253025      # course files -> markdown notes (Gemini vision)
-.venv/bin/python extract.py            # notes -> concept graph -> vault/
-.venv/bin/python updates.py 253025     # announcements + syllabus -> vault/updates/ + notes/
-.venv/bin/python dashboard.py 253025   # vault/Dashboard.md: upcoming + recent announcements
-.venv/bin/python chat.py index         # build the semantic search index
+.venv/bin/python sync.py               # all current classes
+.venv/bin/python sync.py --list        # show detected classes, change nothing
+.venv/bin/python sync.py --only DS4400 # just one class
 ```
 
-`ingest.py`, `extract.py`, and `updates.py` cache by content hash / write idempotently,
-so re-runs are cheap and resumable (safe after a Gemini rate-limit).
+Per class it runs: **ingest** (files + homework → markdown via Gemini vision) →
+**updates** (announcements + syllabus) → **extract** (concept graph) →
+**dashboard**, then builds one course-tagged search index. Everything is
+content-hash cached, so re-runs are cheap and resumable after a rate-limit.
 
-The result is a real **Obsidian vault** in `vault/` — open the folder in Obsidian for
-the graph, backlinks, `Dashboard.md`, and full announcement/syllabus text.
+Individual steps are still available (`ingest.py <id>`, `extract.py <SLUG>`,
+`updates.py <id>`, `dashboard.py`, `chat.py index`).
+
+### Layout
+
+```
+notes/<SLUG>/          transcribed markdown (lectures, hw-*, code-*, announcements)
+vault/Dashboard.md     deadlines across ALL classes
+vault/<SLUG>/          concepts/ lectures/ updates/ Dashboard.md   <- open in Obsidian
+```
+
+`Course` (in `course.py`) is the domain object — it owns a class's id, slug and
+paths and exposes the pipeline as `course.sync()`, so nothing threads a slug
+through by hand.
 
 ## Study with an LLM — Vault + MCP (recommended)
 
-`mcp_server.py` exposes your vault + **live** Canvas to any MCP client (Claude
-Desktop, Claude Code, Gemini CLI) as tools: `upcoming_assignments`, `announcements`,
-`syllabus`, `search_notes` (semantic search over your slides), and `concept`. With a
-Claude subscription or the free Gemini CLI, this costs nothing extra — no API metering.
+`mcp_server.py` exposes your classes + **live** Canvas to any MCP client (Claude
+Desktop, Claude Code, Gemini CLI) as tools: `list_courses`, `upcoming_assignments`,
+`announcements`, `syllabus`, `search_notes` (semantic search over your slides,
+homework and notebooks), and `concept`. Every tool takes an optional `course` slug —
+omit it to span all your classes. With a Claude subscription or the free Gemini CLI,
+this costs nothing extra — no API metering.
 
 **Claude Code** (this repo): `.mcp.json` is already here — Claude Code picks it up.
 

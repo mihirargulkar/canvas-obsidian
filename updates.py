@@ -13,6 +13,8 @@ import html
 import re
 from pathlib import Path
 
+from canvas import ttl_cache
+
 NOTES = Path("notes")
 VAULT = Path("vault")
 
@@ -32,8 +34,11 @@ def strip_html(s):
     return s.strip()
 
 
+@ttl_cache(300)
 def fetch_updates(course_id):
-    """Live from Canvas -> {'syllabus': str, 'announcements': [{date,title,body}]}."""
+    """Live from Canvas -> {'syllabus': str, 'announcements': [{date,title,body}]}.
+    Cached briefly: sync() and the MCP announcements/syllabus tools each ask for
+    this within seconds of one another."""
     from canvas import get_client
     course = get_client().get_course(course_id, include=["syllabus_body"])
     syllabus = strip_html(getattr(course, "syllabus_body", "") or "")
@@ -69,7 +74,7 @@ def write_notes(slug, data):
         syl_md += [f"## Syllabus (part {i})", ch, ""]
     syl_md = "\n".join(syl_md)
 
-    for base in (NOTES / slug, VAULT / "updates"):
+    for base in (NOTES / slug, VAULT / slug / "updates"):
         _write(base / "announcements.md", ann_md)
         _write(base / "syllabus.md", syl_md)
 
@@ -77,12 +82,16 @@ def write_notes(slug, data):
 def main():
     p = argparse.ArgumentParser(description="Fetch Canvas announcements + syllabus")
     p.add_argument("course_id", type=int)
-    p.add_argument("--slug", default="DS4400")
+    p.add_argument("--slug", default=None)
     a = p.parse_args()
+    slug = a.slug
+    if not slug:
+        from canvas import get_client, slug_of
+        slug = slug_of(get_client().get_course(a.course_id))
     data = fetch_updates(a.course_id)
-    write_notes(a.slug, data)
-    print(f"{a.slug}: {len(data['announcements'])} announcements, "
-          f"syllabus {len(data['syllabus'])} chars -> notes/{a.slug}/ + vault/updates/")
+    write_notes(slug, data)
+    print(f"{slug}: {len(data['announcements'])} announcements, "
+          f"syllabus {len(data['syllabus'])} chars -> notes/{slug}/ + vault/{slug}/updates/")
 
 
 if __name__ == "__main__":

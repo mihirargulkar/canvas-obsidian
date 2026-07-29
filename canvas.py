@@ -18,6 +18,32 @@ from dotenv import load_dotenv
 LOCAL_TZ = ZoneInfo("America/New_York")  # ponytail: hardcoded to user's zone; read from Canvas profile if it ever differs
 
 
+def ttl_cache(seconds=300):
+    """Memoize a function for `seconds`. Canvas data changes on the order of
+    hours, but a single sync/conversation hits these endpoints repeatedly.
+    ponytail: process-local dict; swap for real caching only if this ever runs
+    as a long-lived multi-user service."""
+    import functools
+    import time as _t
+
+    def deco(fn):
+        store = {}
+
+        @functools.wraps(fn)
+        def wrap(*args):
+            hit = store.get(args)
+            if hit and _t.monotonic() - hit[0] < seconds:
+                return hit[1]
+            val = fn(*args)
+            store[args] = (_t.monotonic(), val)
+            return val
+
+        wrap.cache_clear = store.clear
+        return wrap
+
+    return deco
+
+
 # --- pure logic (unit-tested in test_canvas.py) -----------------------------
 
 def term_code(term_name):
@@ -64,8 +90,20 @@ def current_courses(canvas, include_all=False):
     return [c for code, c in coded if code == latest]
 
 
+@ttl_cache(300)
+def get_course(course_id):
+    """Fetch (and briefly cache) one canvasapi Course. Shared across Course
+    instances so repeated MCP tool calls don't re-fetch the same course."""
+    return get_client().get_course(course_id, include=["syllabus_body"])
+
+
 def course_label(c):
     return getattr(c, "name", f"course {c.id}")
+
+
+def slug_of(c):
+    """Short course key, e.g. 'DS4400' — first token of the course name."""
+    return course_label(c).split()[0]
 
 
 # --- commands ---------------------------------------------------------------

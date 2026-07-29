@@ -27,9 +27,10 @@ from dotenv import load_dotenv
 
 from canvas import get_client, course_label
 
-VISION_EXT = {".pdf", ".pptx", ".docx"}      # -> pdf -> Gemini vision
-TEXT_EXT = {".ipynb", ".txt", ".md"}         # -> extracted directly, no model
-INGEST_EXT = VISION_EXT | TEXT_EXT
+VISION_EXT = {".pdf", ".pptx", ".docx"}          # -> pdf -> Gemini vision
+IMAGE_EXT = {".png", ".jpg", ".jpeg", ".webp"}   # -> straight to Gemini (reads images natively)
+TEXT_EXT = {".ipynb", ".txt", ".md"}             # -> extracted directly, no model
+INGEST_EXT = VISION_EXT | IMAGE_EXT | TEXT_EXT
 MODEL = os.getenv("GEMINI_MODEL", "gemini-flash-latest")
 SOFFICE = "/Applications/LibreOffice.app/Contents/MacOS/soffice"
 
@@ -47,8 +48,26 @@ RAW, PDF, MD = CACHE / "raw", CACHE / "pdf", CACHE / "md"
 NOTES = Path("notes")
 
 
+MANIFEST = CACHE / "files.json"      # canvas file identity -> content hash
+
+
 def sha256(b: bytes) -> str:
     return hashlib.sha256(b).hexdigest()
+
+
+def _load_manifest() -> dict:
+    return json.loads(MANIFEST.read_text()) if MANIFEST.exists() else {}
+
+
+def _save_manifest(m: dict):
+    MANIFEST.parent.mkdir(parents=True, exist_ok=True)
+    MANIFEST.write_text(json.dumps(m, indent=0, sort_keys=True))
+
+
+def _file_key(f) -> str:
+    """Canvas-side identity of a file. If this is unchanged the bytes are
+    unchanged, so we can skip the download entirely (slide decks are 9-17MB)."""
+    return f"{f.id}:{getattr(f, 'updated_at', '')}:{getattr(f, 'size', '')}"
 
 
 def to_pdf(src: Path, out_dir: Path) -> Path:
@@ -123,32 +142,35 @@ def _sectioned(title: str, text: str, max_chars: int = 1200) -> str:
     return "\n".join(body)
 
 
-def ingest_bytes(name, raw: Path, slug, client, out_name=None) -> str:
-    """Process one downloaded file -> notes/<slug>/<out>.md. Returns new|cached|fail."""
+def ingest_bytes(name, raw: Path, slug, client, out_name=None) -> tuple[str, str]:
+    """Process one downloaded file -> notes/<slug>/<out>.md.
+    Returns (status, content_hash) where status is new|cached|fail."""
     ext = raw.suffix.lower()
     h = sha256(raw.read_bytes())
     md_cache = MD / f"{h}.md"
     out = NOTES / slug / ((out_name or Path(name).stem) + ".md")
     if ext not in TEXT_EXT and md_cache.exists():   # text extraction is free — always re-chunk
         out.write_text(md_cache.read_text())
-        return "cached"
+        return "cached", h
     header = f"---\nsource: {name}\ncourse: {slug}\nsha256: {h}\n---\n\n"
     try:
         if ext in TEXT_EXT:
             body = _sectioned(Path(name).stem, extract_text(raw))
+        elif ext in IMAGE_EXT:
+            body = gemini_markdown(client, raw)      # no conversion — Gemini reads images
         else:
             pdf = to_pdf(raw, PDF) if ext != ".pdf" else raw
             if ext != ".pdf":
                 pdf = pdf.rename(PDF / f"{h}.pdf")
             body = gemini_markdown(client, pdf)
             if body.strip() == "UNREADABLE" or not body.strip():
-                return "fail"
+                return "fail", h
         md_cache.write_text(header + body)
         out.write_text(header + body)
-        return "new"
+        return "new", h
     except Exception as e:
         print(f"          FAILED {name}: {type(e).__name__} {str(e)[:70]}")
-        return "fail"
+        return "fail", h
 
 
 def ingest_assignments(course, slug, client, counts):
@@ -156,7 +178,12 @@ def ingest_assignments(course, slug, client, counts):
     linked in each description -> ingested via the vision path (prefixed 'hw-')."""
     print("homework (assignment prompts):")
     desc_md, seen = [f"# {slug} Assignments", ""], set()
-    for a in course.get_assignments():
+    try:
+        assignments = list(course.get_assignments())
+    except Exception as e:
+        print(f"  assignments unavailable ({type(e).__name__}) — skipped")
+        return
+    for a in assignments:
         desc = getattr(a, "description", "") or ""
         text = " ".join(html.unescape(re.sub(r"<[^>]+>", " ", desc)).split())
         if text:
@@ -169,13 +196,15 @@ def ingest_assignments(course, slug, client, counts):
                 f = course.get_file(int(fid))
             except Exception:
                 continue
+            if Path(f.display_name).suffix.lower() not in INGEST_EXT:
+                continue                      # skip .zip/.xlsx/etc linked in prompts
             raw = RAW / slug / f.display_name
             f.download(str(raw))
-            st = ingest_bytes(f.display_name, raw, slug, client,
-                              out_name="hw-" + Path(f.display_name).stem)
+            st, _h = ingest_bytes(f.display_name, raw, slug, client,
+                                  out_name="hw-" + Path(f.display_name).stem)
             counts[st] += 1
             print(f"  {st:6} (prompt) {f.display_name}")
-    for base in (NOTES / slug, Path("vault") / "updates"):
+    for base in (NOTES / slug, Path("vault") / slug / "updates"):
         base.mkdir(parents=True, exist_ok=True)
         (base / "assignments.md").write_text("\n".join(desc_md))
     print("  wrote assignments.md")
@@ -191,21 +220,43 @@ def ingest_course(course_id: int, limit=None):
     for d in (RAW / slug, PDF, MD, NOTES / slug):
         d.mkdir(parents=True, exist_ok=True)
 
-    files = [f for f in course.get_files()
-             if Path(f.display_name).suffix.lower() in INGEST_EXT]
+    try:
+        files = [f for f in course.get_files()
+                 if Path(f.display_name).suffix.lower() in INGEST_EXT]
+    except Exception as e:
+        # Files tab is often disabled by the instructor — keep going, the
+        # assignment prompts below are usually still readable.
+        print(f"{slug}: files unavailable ({type(e).__name__}) — assignments only")
+        files = []
     if limit:
         files = files[:limit]
     print(f"{slug}: {len(files)} ingestible file(s)")
 
     counts = {"new": 0, "cached": 0, "fail": 0}
+    manifest = _load_manifest()
     for f in files:
         ext = Path(f.display_name).suffix.lower()
+        out_name = "code-" + Path(f.display_name).stem if ext in TEXT_EXT else None
+        out = NOTES / slug / ((out_name or Path(f.display_name).stem) + ".md")
+
+        # Unchanged on Canvas + already transcribed -> skip the download entirely.
+        # (Text files still re-download: they're small and re-chunking is free.)
+        key = _file_key(f)
+        known = manifest.get(key)
+        if ext not in TEXT_EXT and known and (MD / f"{known}.md").exists():
+            out.write_text((MD / f"{known}.md").read_text())
+            counts["cached"] += 1
+            print(f"  cached {f.display_name} (no download)")
+            continue
+
         raw = RAW / slug / f.display_name
         f.download(str(raw))
-        out_name = "code-" + Path(f.display_name).stem if ext in TEXT_EXT else None
-        st = ingest_bytes(f.display_name, raw, slug, client, out_name)
+        st, h = ingest_bytes(f.display_name, raw, slug, client, out_name)
+        if st != "fail":
+            manifest[key] = h
         counts[st] += 1
         print(f"  {st:6} {f.display_name}")
+    _save_manifest(manifest)
 
     if not limit:
         ingest_assignments(course, slug, client, counts)
