@@ -5,7 +5,7 @@ or just to see the shape of a course).
     python tools/graph_svg.py DS4400
     python tools/graph_svg.py DS4400 --out docs/ml.svg --size 2000x1100
 
-Reads vault/<SLUG>/concepts/ — run `extract.py <SLUG>` first. Layout is a seeded
+Reads vault/<SLUG>/concepts/ — run `python -m canvas_vault.extract <SLUG>` first. Layout is a seeded
 spring embedder, so the same graph always renders identically (no diff churn).
 No JavaScript and no extra dependencies: the output is a plain static SVG.
 """
@@ -15,8 +15,8 @@ import random
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-import extract  # noqa: E402
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))  # repo root on path
+import canvas_vault.extract as extract  # noqa: E402
 
 # colour-blind-friendly categorical ramp (Tableau 10 + extensions), one per lecture
 PALETTE = ["#4C78A8", "#F58518", "#54A24B", "#E45756", "#72B7B2",
@@ -62,7 +62,7 @@ def render(slug, out, width, height, label_degree, title=None):
     g = extract.graph_data(slug)
     nodes = {n["id"]: n for n in g["nodes"]}
     if not nodes:
-        sys.exit(f"no concepts in vault/{slug}/concepts — run: python extract.py {slug}")
+        sys.exit(f"no concepts in vault/{slug}/concepts — run: python -m canvas_vault.extract {slug}")
     edges = [(e["s"], e["t"]) for e in g["edges"] if e["s"] in nodes and e["t"] in nodes]
 
     color = {l: PALETTE[i % len(PALETTE)]

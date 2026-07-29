@@ -2,8 +2,8 @@
 """Phase 1: deterministic Canvas due-date CLI. No LLM, no DB — live API only.
 
 Usage:
-    python canvas.py list [--all]
-    python canvas.py due  [--days N] [--all]
+    python -m canvas_vault.canvas list [--all]
+    python -m canvas_vault.canvas due  [--days N] [--all]
 """
 import argparse
 import os
@@ -217,6 +217,7 @@ def cmd_due(args):
 
 
 def main():
+    chdir_root()      # data paths are relative to the repo root
     p = argparse.ArgumentParser(description="Canvas due-date CLI (Phase 1)")
     sub = p.add_subparsers(dest="cmd", required=True)
 

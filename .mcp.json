@@ -2,7 +2,7 @@
   "mcpServers": {
     "canvas": {
       "command": ".venv/bin/python",
-      "args": ["mcp_server.py"]
+      "args": ["-m", "canvas_vault.mcp_server"]
     }
   }
 }

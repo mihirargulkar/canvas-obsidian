@@ -71,9 +71,9 @@ GEMINI_API_KEY=<your Gemini API key>
 ## Sync your classes
 
 ```bash
-.venv/bin/python sync.py               # every class you're taking this term
-.venv/bin/python sync.py --list        # show detected classes, change nothing
-.venv/bin/python sync.py --only CS101  # just one class
+.venv/bin/python -m canvas_vault.sync               # every class you're taking this term
+.venv/bin/python -m canvas_vault.sync --list        # show detected classes, change nothing
+.venv/bin/python -m canvas_vault.sync --only CS101  # just one class
 ```
 
 Per class: **ingest** (files + homework → markdown via Gemini vision) → **updates**
@@ -86,13 +86,14 @@ course-tagged search index.
 > A class whose Files tab the instructor disabled degrades to assignments-only rather
 > than failing.
 
-Individual steps still work: `ingest.py <course_id>`, `extract.py <SLUG>`,
-`updates.py <course_id>`, `dashboard.py`, `chat.py index`.
+Individual steps still work: `python -m canvas_vault.ingest <course_id>`,
+`python -m canvas_vault.extract <SLUG>`, `python -m canvas_vault.updates <course_id>`,
+`python -m canvas_vault.dashboard`, `python -m canvas_vault.chat index`.
 
 ### Keeping up with the term
 
 Courses change daily — announcements, new slides, new assignments. Re-running
-`sync.py` is the incremental update: unchanged files aren't re-downloaded, cached
+the sync is the incremental update: unchanged files aren't re-downloaded, cached
 files don't re-hit the model, and the search index only re-embeds what changed. It
 finishes by telling you what's new:
 
@@ -112,9 +113,9 @@ tools/install-daily-sync.sh 18 00    # ...or a different time
 tools/install-daily-sync.sh --uninstall
 ```
 
-The scheduled job runs `sync.py --quiet`, which writes to `cache/sync.log` **only
+The scheduled job runs the sync with `--quiet`, which writes to `cache/sync.log` **only
 when something actually changed** — no daily noise. On Linux, the same effect with
-cron: `30 7 * * * cd /path/to/repo && .venv/bin/python sync.py --quiet`.
+cron: `30 7 * * * cd /path/to/repo && .venv/bin/python -m canvas_vault.sync --quiet`.
 
 Or just ask your LLM — the MCP `refresh` tool syncs on demand: *"check my courses
 for anything new."*
@@ -131,7 +132,7 @@ Open the `vault/` folder as an Obsidian vault for the graph, backlinks and dashb
 
 ## Study with an LLM — Vault + MCP
 
-`mcp_server.py` exposes your classes + live Canvas to any MCP client (Claude Desktop,
+`canvas_vault/mcp_server.py` exposes your classes + live Canvas to any MCP client (Claude Desktop,
 Claude Code, Gemini CLI): `list_courses`, `upcoming_assignments`, `announcements`,
 `syllabus`, `search_notes` (semantic search over your slides, homework and notebooks),
 `concept`, and `refresh` (pull anything new from Canvas on demand). Every tool takes
@@ -147,7 +148,8 @@ differs. Use **absolute paths**: clients don't run in the repo directory.
   "mcpServers": {
     "canvas": {
       "command": "/absolute/path/to/canvas-obsidian/.venv/bin/python",
-      "args": ["/absolute/path/to/canvas-obsidian/mcp_server.py"]
+      "args": ["-m", "canvas_vault.mcp_server"],
+      "cwd": "/absolute/path/to/canvas-obsidian"
     }
   }
 }
@@ -252,8 +254,8 @@ Two **development** tools evaluate output quality against hand-labelled gold set
 Both are written for one specific course — swap in your own cases to use them:
 
 ```bash
-.venv/bin/python eval_graph.py       # concept graph: link recall + noise-node exclusion
-.venv/bin/python eval_retrieval.py   # RAG: recall@k and MRR for realistic questions
+.venv/bin/python tools/eval_graph.py       # concept graph: link recall + noise-node exclusion
+.venv/bin/python tools/eval_retrieval.py   # RAG: recall@k and MRR for realistic questions
 ```
 
 They exist because "the output looks fine" is not a measurement: a prompt tweak, a

@@ -2,10 +2,10 @@
 """RAG chat over your own course materials, across ALL classes, with a
 deterministic due-date path for deadline questions.
 
-    python chat.py index                 # index every notes/<slug>/ course
-    python chat.py ask "what's due this week"                 # -> deadlines (all classes)
-    python chat.py ask "explain the bias-variance tradeoff"   # -> semantic + cites
-    python chat.py ask "..." --course DS4400                  # restrict to one class
+    python -m canvas_vault.chat index                 # index every notes/<slug>/ course
+    python -m canvas_vault.chat ask "what's due this week"                 # -> deadlines (all classes)
+    python -m canvas_vault.chat ask "explain the bias-variance tradeoff"   # -> semantic + cites
+    python -m canvas_vault.chat ask "..." --course DS4400                  # restrict to one class
 
 Embeds SOURCE note text (local sentence-transformers, no API quota). Each chunk
 is tagged with its course so search can span all classes or filter to one.
@@ -15,6 +15,9 @@ import os
 import re
 import sys
 from pathlib import Path
+
+from . import chdir_root
+from . import ROOT
 
 NOTES_ROOT = Path("notes")
 DB = "chroma_db"
@@ -113,8 +116,8 @@ def route(query):
 
 
 def answer_structured(query):
-    import canvas
-    from canvas import local_tz
+    from . import canvas
+    from .canvas import local_tz
     LOCAL_TZ = local_tz()
     days = 7
     m = re.search(r"(\d+)\s*day", query)
@@ -132,13 +135,13 @@ def answer_structured(query):
 def answer_semantic(query, k=5, course=None):
     from google import genai
     from dotenv import load_dotenv
-    load_dotenv(str(Path(__file__).parent / ".env"))
+    load_dotenv(ROOT / ".env")
     where = {"course": course} if course else None
     res = _collection().query(query_texts=[query], n_results=k, where=where)
     docs, metas = res["documents"][0], res["metadatas"][0]
     if not docs:
         return {"mode": "semantic",
-                "answer": "No indexed material — run `python chat.py index`.", "sources": []}
+                "answer": "No indexed material — run `python -m canvas_vault.chat index`.", "sources": []}
     context = "\n\n".join(f"[{m['course']} · {m['source']} · {m['section']}]\n{d}"
                           for d, m in zip(docs, metas))
     prompt = (
@@ -174,6 +177,7 @@ def cmd_ask(a):
 
 
 def main():
+    chdir_root()      # data paths are relative to the repo root
     p = argparse.ArgumentParser(description="RAG chat across your course materials")
     sub = p.add_subparsers(dest="cmd", required=True)
     pi = sub.add_parser("index", help="sync the vector index with notes/ (incremental)")

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Phase 3: lecture notes -> concept nodes with [[wikilinks]] -> per-course vault.
 
-    python extract.py DS4400      # build vault/DS4400/ from notes/DS4400/
+    python -m canvas_vault.extract DS4400      # build vault/DS4400/ from notes/DS4400/
 
 Two passes: (1) per lecture note, Gemini extracts concepts + intra-note links;
 (2) merge concepts by canonical name ACROSS lectures (creates cross-lecture
@@ -13,6 +13,9 @@ import os
 import re
 import time
 from pathlib import Path
+
+from . import chdir_root
+from . import ROOT
 
 from google import genai
 from google.genai import types
@@ -77,8 +80,8 @@ def safe_filename(name: str) -> str:
 
 
 def _client():
-    load_dotenv(str(Path(__file__).parent / ".env"))
-    from canvas import gemini_key
+    load_dotenv(ROOT / ".env")
+    from .canvas import gemini_key
     return genai.Client(api_key=gemini_key())
 
 
@@ -233,6 +236,7 @@ def build(slug):
 
 
 def main():
+    chdir_root()      # data paths are relative to the repo root
     p = argparse.ArgumentParser(description="Extract concept graph for one course")
     p.add_argument("slug", help="course slug, e.g. DS4400 (matches notes/<slug>/)")
     build(p.parse_args().slug)

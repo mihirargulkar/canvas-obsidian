@@ -3,16 +3,17 @@
   - vault/Dashboard.md          — deadlines across ALL current classes
   - vault/<slug>/Dashboard.md   — one class: its deadlines + recent announcements
 
-    python dashboard.py           # all current classes
-    python dashboard.py 253025    # just that course's per-class dashboard
+    python -m canvas_vault.dashboard           # all current classes
+    python -m canvas_vault.dashboard 253025    # just that course's per-class dashboard
 """
 import argparse
 from datetime import datetime
 from pathlib import Path
 
-import canvas
-import updates
-from canvas import local_tz
+from . import chdir_root
+from . import canvas
+from . import updates
+from .canvas import local_tz
 
 
 def overview(days=14):
@@ -54,11 +55,12 @@ def course_dashboard(course, days=14, data=None):
 
 
 def main():
+    chdir_root()      # data paths are relative to the repo root
     p = argparse.ArgumentParser(description="Generate Obsidian dashboards")
     p.add_argument("course_id", type=int, nargs="?", help="one course; omit for all-class overview")
     p.add_argument("--days", type=int, default=14)
     a = p.parse_args()
-    from course import Course
+    from .course import Course
     if a.course_id:
         course_dashboard(Course.get(a.course_id), a.days)
     else:

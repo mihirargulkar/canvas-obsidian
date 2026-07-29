@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Sync every class you're taking this semester, and report what's new.
 
-    python sync.py                 # all current courses
-    python sync.py --only DS4400   # just one class
-    python sync.py --list          # show detected classes, change nothing
-    python sync.py --quiet         # only print if something changed (for cron/launchd)
+    python -m canvas_vault.sync                 # all current courses
+    python -m canvas_vault.sync --only DS4400   # just one class
+    python -m canvas_vault.sync --list          # show detected classes, change nothing
+    python -m canvas_vault.sync --quiet         # only print if something changed (for cron/launchd)
 
 Re-runnable and cheap: ingestion and extraction are content-hash cached, the
 search index updates incrementally, and unchanged files aren't re-downloaded.
@@ -14,10 +14,11 @@ import argparse
 import sys
 from datetime import datetime
 
-import chat
-import changes
-import dashboard
-from course import Course
+from . import chdir_root
+from . import chat
+from . import changes
+from . import dashboard
+from .course import Course
 
 
 def run_sync(only=None, limit=None, do_index=True, deep=True) -> tuple[list, str]:
@@ -43,6 +44,7 @@ def run_sync(only=None, limit=None, do_index=True, deep=True) -> tuple[list, str
 
 
 def main():
+    chdir_root()      # data paths are relative to the repo root
     p = argparse.ArgumentParser(description="Sync all current Canvas classes")
     p.add_argument("--only", metavar="SLUG", help="sync just this course slug")
     p.add_argument("--list", action="store_true", help="list detected classes and exit")

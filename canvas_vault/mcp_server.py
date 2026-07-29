@@ -2,7 +2,7 @@
 """MCP server exposing your Canvas classes + concept vaults to an LLM client
 (Claude Desktop / Claude Code / Gemini CLI). Runs over stdio.
 
-    python mcp_server.py
+    python -m canvas_vault.mcp_server
 
 Multi-class: every tool takes an optional `course` slug (e.g. "DS4400").
 Omit it to span all your current classes. The Canvas token is read from .env;
@@ -15,7 +15,8 @@ from pathlib import Path
 
 # A client launches us from an arbitrary CWD; anchor to the repo so .env,
 # notes/, vault/, and chroma_db/ (all relative) resolve.
-os.chdir(Path(__file__).resolve().parent)
+from . import chdir_root      # noqa: E402  (must run before relative data paths)
+chdir_root()
 
 # MCP stdio uses stdout for JSON-RPC — force library logging to stderr.
 logging.basicConfig(level=logging.WARNING, stream=sys.stderr)
@@ -23,8 +24,8 @@ logging.getLogger("canvasapi").setLevel(logging.WARNING)
 
 from mcp.server import MCPServer
 
-import canvas
-from course import Course
+from . import canvas
+from .course import Course
 
 MAX_TEXT = 2000        # per-chunk cap: keep tool results well under client size limits
 
@@ -81,7 +82,7 @@ def search_notes(query: str, k: int = 5, course: str | None = None) -> list[dict
     """Semantic search over the student's own course material — lecture slides,
     homework prompts, and code notebooks. Searches ALL classes unless `course` is
     given. Each hit carries its course, source file and section for citation."""
-    import chat
+    from . import chat
     where = {"course": course} if course else None
     res = chat._collection().query(query_texts=[query], n_results=k, where=where)
     docs, metas = res["documents"][0], res["metadatas"][0]
@@ -105,9 +106,13 @@ def refresh(course: str | None = None) -> str:
 
     Does NOT transcribe newly-posted lecture files — that needs a vision model
     and takes minutes, which would exceed this request's timeout. New slides are
-    picked up by the scheduled daily sync (or `python sync.py` in a terminal).
+    picked up by the scheduled daily sync (or `python -m canvas_vault.sync` in a terminal).
     """
-    import io, contextlib, sync, updates as updates_mod
+    import contextlib
+    import io
+
+    from . import sync
+    from . import updates as updates_mod
     buf = io.StringIO()
     with contextlib.redirect_stdout(buf):        # keep sync logs off MCP stdout
         courses, summary = sync.run_sync(only=course, deep=False)

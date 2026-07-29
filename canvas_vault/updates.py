@@ -2,7 +2,7 @@
 """Fetch Canvas announcements + syllabus, strip HTML, and write them into the
 vault (Obsidian-browsable) and the note index (semantic-searchable).
 
-    python updates.py 253025
+    python -m canvas_vault.updates 253025
 
 Announcements are the time-stamped 'key updates' professors post (cancellations,
 exam logistics, study guides). Kept out of the concept graph (they're not
@@ -13,7 +13,8 @@ import html
 import re
 from pathlib import Path
 
-from canvas import ttl_cache
+from . import chdir_root
+from .canvas import ttl_cache
 
 NOTES = Path("notes")
 VAULT = Path("vault")
@@ -39,7 +40,7 @@ def fetch_updates(course_id):
     """Live from Canvas -> {'syllabus': str, 'announcements': [{date,title,body}]}.
     Cached briefly: sync() and the MCP announcements/syllabus tools each ask for
     this within seconds of one another."""
-    from canvas import get_client
+    from .canvas import get_client
     course = get_client().get_course(course_id, include=["syllabus_body"])
     syllabus = strip_html(getattr(course, "syllabus_body", "") or "")
     anns = []
@@ -80,13 +81,14 @@ def write_notes(slug, data):
 
 
 def main():
+    chdir_root()      # data paths are relative to the repo root
     p = argparse.ArgumentParser(description="Fetch Canvas announcements + syllabus")
     p.add_argument("course_id", type=int)
     p.add_argument("--slug", default=None)
     a = p.parse_args()
     slug = a.slug
     if not slug:
-        from canvas import get_client, slug_of
+        from .canvas import get_client, slug_of
         slug = slug_of(get_client().get_course(a.course_id))
     data = fetch_updates(a.course_id)
     write_notes(slug, data)

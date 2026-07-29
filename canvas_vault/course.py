@@ -13,10 +13,11 @@ dashboard) as functions; Course composes them so no caller has to thread a
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
+import re
+from dataclasses import dataclass, replace
 from pathlib import Path
 
-import canvas as canvas_api
+from . import canvas as canvas_api
 
 
 @dataclass(frozen=True)
@@ -25,12 +26,14 @@ class Course:
 
     id: int
     name: str
+    code: str = ""          # Canvas course_code, e.g. "DS4400.50397.202650"
 
     # --- construction -----------------------------------------------------
 
     @classmethod
     def from_canvas(cls, c) -> "Course":
-        return cls(id=c.id, name=canvas_api.course_label(c))
+        return cls(id=c.id, name=canvas_api.course_label(c),
+                   code=getattr(c, "course_code", "") or "")
 
     @classmethod
     @canvas_api.ttl_cache(300)
@@ -38,7 +41,18 @@ class Course:
         """Every course in the most recent term (all your classes this semester).
         Cached briefly — every MCP tool call resolves a slug through this."""
         client = canvas_api.get_client()
-        return [cls.from_canvas(c) for c in canvas_api.current_courses(client)]
+        return cls._disambiguate(
+            [cls.from_canvas(c) for c in canvas_api.current_courses(client)])
+
+    @staticmethod
+    def _disambiguate(courses: list["Course"]) -> list["Course"]:
+        """Ensure slugs are unique. Two courses that key to the same directory
+        would silently merge each other's notes (e.g. two sections of one class,
+        or a lecture/lab pair), so a collision gets the course id appended."""
+        from collections import Counter
+        dupes = {s for s, n in Counter(c.slug for c in courses).items() if n > 1}
+        return [replace(c, code=f"{c.slug}-{c.id}") if c.slug in dupes else c
+                for c in courses]
 
     @classmethod
     def get(cls, course_id: int) -> "Course":
@@ -48,8 +62,27 @@ class Course:
 
     @property
     def slug(self) -> str:
-        """Short key, e.g. 'DS4400' — first token of the course name."""
-        return self.name.split()[0]
+        """Filesystem-safe short key for this course, e.g. 'DS4400'.
+
+        Prefers Canvas's course_code ("DS4400.50397.202650" -> "DS4400"), which is
+        reliable. Falls back to parsing the name, joining a leading letters+digits
+        pair so "DS 4400 Machine Learning" gives "DS4400" rather than "DS" (which
+        would collide with every other DS course the student takes).
+
+        Always sanitised: a name may contain "/" (cross-listed courses like
+        "CS1800/1802") or "..", either of which would escape or nest the data
+        directory when used as a path component.
+        """
+        raw = (self.code or "").split(".")[0].strip()
+        if not raw:
+            tokens = self.name.split()
+            if tokens:
+                # "DS 4400 ..." -> "DS4400"; otherwise just the first token
+                raw = (tokens[0] + tokens[1]
+                       if len(tokens) > 1 and tokens[0].isalpha() and tokens[1][:1].isdigit()
+                       else tokens[0])
+        safe = re.sub(r"[^A-Za-z0-9_-]", "", raw)
+        return safe or f"course-{self.id}"
 
     @property
     def notes_dir(self) -> Path:
@@ -69,24 +102,24 @@ class Course:
 
     def ingest(self, limit=None):
         """Canvas files + homework -> notes/<slug>/*.md (Gemini vision + text)."""
-        import ingest
+        from . import ingest
         return ingest.ingest_course(self.id, limit)
 
     def extract(self):
         """Lecture notes -> concept graph -> vault/<slug>/concepts/."""
-        import extract
+        from . import extract
         return extract.build(self.slug)
 
     def refresh_updates(self):
         """Announcements + syllabus -> notes/<slug>/ and vault/<slug>/updates/."""
-        import updates
+        from . import updates
         data = updates.fetch_updates(self.id)
         updates.write_notes(self.slug, data)
         return data
 
     def dashboard(self, days: int = 14):
         """vault/<slug>/Dashboard.md — this class's deadlines + announcements."""
-        import dashboard
+        from . import dashboard
         return dashboard.course_dashboard(self, days)
 
     # --- reads (used by the MCP tools) -----------------------------------
@@ -101,19 +134,19 @@ class Course:
         return canvas_api.upcoming(days, courses=[self._api])
 
     def announcements(self, limit: int = 10) -> list[dict]:
-        import updates
+        from . import updates
         return updates.fetch_updates(self.id)["announcements"][:limit]
 
     def syllabus(self) -> str:
-        import updates
+        from . import updates
         return updates.fetch_updates(self.id)["syllabus"]
 
     def concept(self, name: str) -> dict | None:
-        import extract
+        from . import extract
         return extract.concept_data(self.slug, name)
 
     def graph(self) -> dict:
-        import extract
+        from . import extract
         return extract.graph_data(self.slug)
 
     # --- orchestration ----------------------------------------------------
@@ -152,8 +185,8 @@ class Course:
         Re-reads announcements/assignments rather than caching them on the
         instance — Course is frozen, and both reads are TTL-cached anyway.
         """
-        import changes
-        import updates as updates_mod
+        from . import changes
+        from . import updates as updates_mod
         try:
             anns = updates_mod.fetch_updates(self.id).get("announcements", [])
         except Exception:

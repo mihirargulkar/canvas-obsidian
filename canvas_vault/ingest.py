@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Phase 2: ingest a course's files + homework into faithful markdown notes.
 
-    python ingest.py 253025            # files (slides, notebooks, docs) + homework
-    python ingest.py 253025 --limit 3  # first 3 files (cheap trial)
+    python -m canvas_vault.ingest 253025            # files (slides, notebooks, docs) + homework
+    python -m canvas_vault.ingest 253025 --limit 3  # first 3 files (cheap trial)
 
 Vision files (pdf/pptx/docx) go through Gemini; text files (ipynb/txt/md) are
 extracted directly (no model call). Homework = assignment descriptions + the
@@ -24,7 +24,9 @@ from pathlib import Path
 from google import genai
 from dotenv import load_dotenv
 
-from canvas import get_client, course_label
+from . import chdir_root
+from . import ROOT
+from .canvas import get_client, course_label
 
 VISION_EXT = {".pdf", ".pptx", ".docx"}          # -> pdf -> Gemini vision
 IMAGE_EXT = {".png", ".jpg", ".jpeg", ".webp"}   # -> straight to Gemini (reads images natively)
@@ -231,9 +233,9 @@ def ingest_assignments(course, slug, client, counts):
 
 
 def ingest_course(course_id: int, limit=None):
-    load_dotenv(str(Path(__file__).parent / ".env"))
+    load_dotenv(ROOT / ".env")
     canvas = get_client()
-    from canvas import gemini_key
+    from .canvas import gemini_key
     client = genai.Client(api_key=gemini_key())
 
     course = canvas.get_course(course_id)
@@ -287,6 +289,7 @@ def ingest_course(course_id: int, limit=None):
 
 
 def main():
+    chdir_root()      # data paths are relative to the repo root
     p = argparse.ArgumentParser(description="Ingest a course's files + homework")
     p.add_argument("course_id", type=int)
     p.add_argument("--limit", type=int, default=None, help="first N files only; skips homework")

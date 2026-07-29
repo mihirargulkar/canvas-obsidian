@@ -1,7 +1,7 @@
 import pytest
 from pathlib import Path
 
-from extract import graph_data, concept_data
+from canvas_vault.extract import graph_data, concept_data
 
 SLUG = "DS4400"
 pytestmark = pytest.mark.skipif(not (Path("vault") / SLUG / "concepts").exists(),

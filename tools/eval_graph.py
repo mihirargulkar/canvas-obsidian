@@ -11,8 +11,11 @@ draw yourself from one of its lectures. This is a tool for iterating on
 extraction quality, not something end users need to run.
 """
 import argparse
+import sys
 import re
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))  # repo root
 
 GOLD_COURSE = "DS4400"     # the course GOOD_PAIRS/BAD_CONCEPTS were written for
 
@@ -90,7 +93,7 @@ def main():
 
     vault = Path("vault") / args.course / "concepts"
     if not vault.exists():
-        print(f"no concept graph at {vault} — run: python extract.py {args.course}")
+        print(f"no concept graph at {vault} — run: python -m canvas_vault.extract {args.course}")
         return
     if args.course != GOLD_COURSE:
         print(f"WARNING: the gold set is hand-written for {GOLD_COURSE}; results for "

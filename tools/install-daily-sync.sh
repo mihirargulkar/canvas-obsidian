@@ -5,7 +5,7 @@
 #   tools/install-daily-sync.sh 18 00      # ...or at 18:00
 #   tools/install-daily-sync.sh --uninstall
 #
-# The job runs `sync.py --quiet`, so it writes to the log only when something
+# The job runs `python -m canvas_vault.sync --quiet`, so it writes to the log only when something
 # actually changed. Logs: cache/sync.log (and cache/sync.err for failures).
 set -euo pipefail
 
@@ -35,7 +35,8 @@ cat > "$PLIST" <<PLIST_EOF
   <key>ProgramArguments</key>
   <array>
     <string>$PY</string>
-    <string>$REPO/sync.py</string>
+    <string>-m</string>
+    <string>canvas_vault.sync</string>
     <string>--quiet</string>
   </array>
   <key>WorkingDirectory</key><string>$REPO</string>

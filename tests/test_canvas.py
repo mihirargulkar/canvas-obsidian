@@ -1,6 +1,6 @@
 """Self-check for canvas.py pure logic. Run: python test_canvas.py  (no network)."""
 from datetime import datetime, timezone
-from canvas import term_code, parse_due, in_window
+from canvas_vault.canvas import term_code, parse_due, in_window
 
 # term code extraction
 assert term_code("202650_2B Summer 2026 Semester Session B") == "202650"
@@ -26,7 +26,7 @@ assert in_window(None, now, 7) is False                       # undated excluded
 print("test_canvas.py: all asserts passed")
 
 # --- test upcoming() helper
-from canvas import upcoming
+from canvas_vault.canvas import upcoming
 from datetime import timedelta
 
 class _FakeA:

@@ -1,0 +1,4 @@
+[tool.pytest.ini_options]
+# tests/ imports the canvas_vault package, so the repo root must be importable
+pythonpath = ["."]
+testpaths = ["tests"]

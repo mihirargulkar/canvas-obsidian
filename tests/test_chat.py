@@ -1,4 +1,4 @@
-from chat import route
+from canvas_vault.chat import route
 
 def test_route_deadline_vs_semantic():
     assert route("what's due this week") == "deadline"

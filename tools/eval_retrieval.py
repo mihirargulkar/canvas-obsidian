@@ -17,6 +17,9 @@ GOLD with questions about your own material to evaluate your own corpus.
 """
 import argparse
 import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))  # repo root
 
 GOLD_COURSE = "DS4400"
 
@@ -36,7 +39,7 @@ GOLD = [
 
 
 def evaluate(course, k):
-    import chat
+    import canvas_vault.chat as chat
     col = chat._collection()
     hits, rr, rows = 0, 0.0, []
     for question, expected in GOLD:
@@ -70,7 +73,7 @@ def main():
         hits, n = evaluate(a.course, a.k)
     except Exception as e:
         sys.exit(f"retrieval eval failed ({type(e).__name__}) — is the index built? "
-                 f"run: python chat.py index")
+                 f"run: python -m canvas_vault.chat index")
     sys.exit(0 if hits == n else 1)     # non-zero so CI/scripts can gate on it
 
 
