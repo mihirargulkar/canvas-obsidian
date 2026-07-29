@@ -1,18 +1,12 @@
 # Contributing
 
-Thanks for taking a look. This is a small, local-first personal tool — contributions
-are welcome, but please read the scope note first so nobody wastes effort.
+Thanks for taking a look. This is a small, local-first tool and contributions are
+welcome.
 
 ## Scope
 
-**In scope:** portability across institutions and platforms, ingestion of more Canvas
-material, concept-extraction quality, MCP tools, bug fixes.
-
-**Out of scope:** hosting it as a multi-user service (Instructure's API terms prohibit
-handling other people's tokens), and re-implementing the broad Canvas API — for that,
-[`vishalsachdev/canvas-mcp`](https://github.com/vishalsachdev/canvas-mcp) already exists
-and is more complete. The deliberate niche here is *the vault*: markdown you own plus a
-cross-lecture concept graph.
+Portability across institutions and platforms, ingestion of more Canvas material,
+concept-extraction quality, MCP tools, and bug fixes are all fair game.
 
 ## Setup
 
