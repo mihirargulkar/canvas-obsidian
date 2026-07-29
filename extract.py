@@ -50,6 +50,12 @@ RELATED-LINK RULES (recall matters — a concept map is edges, not just nodes):
   "Gradient" and "Derivative"; a method builds on its underlying assumption).
 - If a concept is a specific VARIANT of a more general one, link to the general
   concept (illustrative: "L2 Regularization" -> "Regularization").
+- The examples above show the SHAPE of a link, not the subject matter — extract
+  whatever this course is actually about, in its own vocabulary.
+
+  (Tried and reverted: adding psychology/literature examples alongside these to
+  reduce domain bias measurably HURT link recall on the evaluated course,
+  5/6 -> 3/6 on eval_graph.py. Re-test with eval_graph.py before changing.)
 
 NAMING RULES (the SAME idea must get the SAME name across lectures):
 - Use the concept's standard, widely-used name and keep it stable.
@@ -98,17 +104,21 @@ def extract_note(client, text: str) -> list:
 
 
 def pass1(slug):
-    """Extract concepts per lecture note (cached by note hash)."""
+    """Extract concepts per lecture note, cached by (note + prompt + model)."""
     import hashlib
     client = _client()
     XCACHE.mkdir(parents=True, exist_ok=True)
     out = {}
+    # Cache on the prompt and model too, not just the note: otherwise editing the
+    # extraction prompt silently reuses old results and iteration looks like a no-op.
+    recipe = hashlib.sha256((PROMPT + MODEL).encode()).hexdigest()[:12]
     notes = sorted(p for p in notes_dir(slug).glob("*.md") if is_lecture(p))
     print(f"pass 1 [{slug}]: extracting concepts from {len(notes)} lecture note(s)")
+    failed = 0
     for p in notes:
         text = p.read_text()
         h = hashlib.sha256(text.encode()).hexdigest()
-        cache = XCACHE / f"{h}.json"
+        cache = XCACHE / f"{recipe}-{h}.json"
         if cache.exists():
             out[p.stem] = json.loads(cache.read_text())
             continue
@@ -118,12 +128,18 @@ def pass1(slug):
             out[p.stem] = concepts
             print(f"  new  {p.name} ({len(concepts)} concepts)")
         except Exception as e:
+            failed += 1
             print(f"       FAILED {p.name}: {str(e)[:70]} (retry next run)")
-    return out
+    return out, failed
 
 
-def pass2(slug, per_lecture: dict):
-    """Merge concepts across lectures by canonical name, write vault/<slug>/."""
+def pass2(slug, per_lecture: dict, complete: bool = True):
+    """Merge concepts across lectures by canonical name, write vault/<slug>/.
+
+    `complete` says whether every lecture extracted successfully. If any failed
+    (rate limit, bad JSON), this run's concept set is a SUBSET of the real one,
+    so stale-purging would delete good notes — see the guard below.
+    """
     vault = vault_dir(slug)
     nodes = {}
     for stem, concepts in per_lecture.items():
@@ -141,6 +157,21 @@ def pass2(slug, per_lecture: dict):
     for p in notes_dir(slug).glob("*.md"):
         if is_lecture(p):
             (vault / "lectures" / p.name).write_text(p.read_text())
+
+    # Drop concept notes from earlier runs that are no longer extracted; otherwise
+    # they linger forever as orphan nodes and pollute any evaluation.
+    # ONLY when this run covered every lecture: a partial run (e.g. Gemini daily
+    # quota hit halfway) legitimately produces fewer concepts, and purging against
+    # it deletes good notes. Leaving orphans is cosmetic; deleting data is not.
+    written = {safe_filename(n["name"]) for n in nodes.values()}
+    stale = [p for p in (vault / "concepts").glob("*.md") if p.stem not in written]
+    if stale and complete:
+        for p in stale:
+            p.unlink()
+        print(f"           removed {len(stale)} stale concept note(s)")
+    elif stale:
+        print(f"           kept {len(stale)} note(s) from previous runs "
+              f"(extraction incomplete — not purging)")
 
     edges = 0
     for k, n in nodes.items():
@@ -196,9 +227,9 @@ def concept_data(slug, name):
 
 
 def build(slug):
-    per = pass1(slug)
+    per, failed = pass1(slug)
     if per:
-        pass2(slug, per)
+        pass2(slug, per, complete=(failed == 0))
 
 
 def main():

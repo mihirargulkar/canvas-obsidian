@@ -246,9 +246,19 @@ was made — the layout is seeded, so regenerating produces no diff churn):
 .venv/bin/python tools/graph_svg.py DS4400 --size 2000x1100 --label-degree 8 --out docs/ml.svg
 ```
 
-Tests that need a built vault skip automatically. `eval_graph.py` is a **development**
-tool: it scores concept-graph quality against a hand-labelled gold set for one specific
-course, so it is not meaningful for other courses as-is.
+Tests that need a built vault skip automatically.
+
+Two **development** tools evaluate output quality against hand-labelled gold sets.
+Both are written for one specific course — swap in your own cases to use them:
+
+```bash
+.venv/bin/python eval_graph.py       # concept graph: link recall + noise-node exclusion
+.venv/bin/python eval_retrieval.py   # RAG: recall@k and MRR for realistic questions
+```
+
+They exist because "the output looks fine" is not a measurement: a prompt tweak, a
+chunker change, or a different embedding model can quietly degrade quality, and these
+are what catch it.
 
 ## License
 
