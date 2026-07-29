@@ -1,15 +1,20 @@
 #!/usr/bin/env python3
-"""Phase 3 eval gate: score vault/ against a hand-labeled gold set.
+"""DEVELOPMENT TOOL — scores a course's concept graph against a hand-labelled
+gold set, turning "are these links meaningful?" into pass/fail.
 
-Gold set = my reading of DS4400 Lecture 4 (Linear Regression) + one cross-lecture
-pair. Converts "meaningful links" from a vibe into pass/fail.
+    python eval_graph.py [--course SLUG]
 
-    python eval_graph.py
+NOTE: the gold set below is hand-written for ONE specific course (DS4400,
+machine learning). It is not meaningful for any other course as-is — to use
+this on your own class, replace GOOD_PAIRS/BAD_CONCEPTS with pairs you would
+draw yourself from one of its lectures. This is a tool for iterating on
+extraction quality, not something end users need to run.
 """
+import argparse
 import re
 from pathlib import Path
 
-VAULT = Path("vault/concepts")
+GOLD_COURSE = "DS4400"     # the course GOOD_PAIRS/BAD_CONCEPTS were written for
 
 # pairs that SHOULD be directly linked (concept map edges a student would draw)
 GOOD_PAIRS = [
@@ -28,10 +33,10 @@ BAD_CONCEPTS = ["Today's Agenda", "Instructor Background", "Practice Exercises",
 def canon(s): return re.sub(r"\s+", " ", s).strip().casefold()
 
 
-def load_graph():
+def load_graph(vault):
     """Return (node_canon->display, adjacency set of frozenset{a,b})."""
     nodes, adj = {}, set()
-    for f in VAULT.glob("*.md"):
+    for f in vault.glob("*.md"):
         txt = f.read_text()
         name = re.search(r"^#\s+(.+)$", txt, re.M)
         name = name.group(1).strip() if name else f.stem
@@ -77,10 +82,22 @@ def distance(a, b, adj):
 
 
 def main():
-    if not VAULT.exists():
-        print("no vault yet — run extract.py first"); return
-    nodes, adj = load_graph()
-    print(f"vault: {len(nodes)} concept nodes, {len(adj)} unique edges\n")
+    p = argparse.ArgumentParser(description=__doc__.split("\n")[1],
+                                formatter_class=argparse.RawDescriptionHelpFormatter)
+    p.add_argument("--course", default=GOLD_COURSE,
+                   help=f"course slug to score (default {GOLD_COURSE})")
+    args = p.parse_args()
+
+    vault = Path("vault") / args.course / "concepts"
+    if not vault.exists():
+        print(f"no concept graph at {vault} — run: python extract.py {args.course}")
+        return
+    if args.course != GOLD_COURSE:
+        print(f"WARNING: the gold set is hand-written for {GOLD_COURSE}; results for "
+              f"{args.course} are meaningless until you replace GOOD_PAIRS/BAD_CONCEPTS.\n")
+
+    nodes, adj = load_graph(vault)
+    print(f"{args.course}: {len(nodes)} concept nodes, {len(adj)} unique edges\n")
 
     print("GOOD PAIRS (want a meaningful connection, <=2 hops):")
     good_ok = 0

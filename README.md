@@ -95,11 +95,10 @@ Claude Code, Gemini CLI): `list_courses`, `upcoming_assignments`, `announcements
 `syllabus`, `search_notes` (semantic search over your slides, homework and notebooks),
 and `concept`. Every tool takes an optional `course` slug — omit it to span all classes.
 
-**Claude Code** (this repo): `.mcp.json` is already here — it's picked up automatically.
+### Connecting a client
 
-**Claude Desktop:** add to your `claude_desktop_config.json`
-(macOS `~/Library/Application Support/Claude/`, Windows `%APPDATA%\Claude\`), using
-**absolute paths** — Claude Desktop doesn't run in the repo directory:
+Every MCP client takes the **same server definition** — only the file it lives in
+differs. Use **absolute paths**: clients don't run in the repo directory.
 
 ```json
 {
@@ -112,9 +111,28 @@ and `concept`. Every tool takes an optional `course` slug — omit it to span al
 }
 ```
 
-Restart Claude Desktop, then ask *"what's due this week?"*, *"what's on the midterm 2
-study guide?"*, or *"explain gradient descent from my lecture notes"* — it picks the
-right tool and cites your material.
+| Client | Where that block goes |
+|---|---|
+| **Claude Code** | `.mcp.json` — already in this repo, picked up automatically |
+| **Claude Desktop** | macOS `~/Library/Application Support/Claude/claude_desktop_config.json` · Windows `%APPDATA%\Claude\claude_desktop_config.json` · Linux `~/.config/Claude/claude_desktop_config.json` |
+| **Gemini CLI** | `~/.gemini/settings.json` (or `.gemini/settings.json` per project) |
+| **Cursor** | `.cursor/mcp.json` in the project (or `~/.cursor/mcp.json` globally) |
+| **VS Code / Copilot** | `.vscode/mcp.json` — note VS Code nests servers under `"servers"` rather than `"mcpServers"` |
+| **Continue** | `.continue/mcpServers/mcp.json` |
+
+Merge into the existing `mcpServers` object if the file already has one — don't
+overwrite it. Restart the client afterwards; most only read config at launch.
+
+**A note on Groq, OpenAI and other providers:** MCP is a *client* protocol, not a model
+API. Groq, OpenAI and Together are inference providers — they don't connect to MCP
+servers themselves. To use those models with this server, point an MCP-capable client
+that supports custom providers (Continue, Cline, LibreChat, Goose) at them; the server
+definition above is unchanged. The zero-extra-cost paths are Claude (Pro/Max
+subscription) and the Gemini CLI free tier.
+
+Then ask *"what's due this week?"*, *"what's on the midterm 2 study guide?"*, or
+*"explain gradient descent from my lecture notes"* — the client picks the right tool
+and cites your material.
 
 ## Privacy, cost and terms
 

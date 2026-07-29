@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Broad Canvas API access via MCP
+    url: https://github.com/vishalsachdev/canvas-mcp
+    about: If you want many Canvas API tools rather than a concept vault, use that server.

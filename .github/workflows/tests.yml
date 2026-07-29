@@ -1,0 +1,37 @@
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.13"]   # README claims 3.10+; test both bounds
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install test dependencies
+        # Deliberately NOT the full requirements.txt: chromadb and
+        # sentence-transformers pull ~2GB of torch, and nothing the tests
+        # import needs them (chat.py imports chromadb lazily inside functions).
+        # If a module-level import of those ever appears, this job failing is
+        # the signal we want.
+        run: pip install canvasapi python-dotenv google-genai pytest
+
+      - name: Syntax-check every module
+        run: python -m compileall -q .
+
+      - name: Run tests
+        # Tests needing a built vault or live Canvas credentials skip themselves.
+        run: pytest -q
