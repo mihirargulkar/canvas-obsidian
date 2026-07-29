@@ -81,6 +81,32 @@ def recipe() -> str:
     return hashlib.sha256((PROMPT + MODEL).encode()).hexdigest()[:12]
 
 
+def _migrate_legacy_cache() -> int:
+    """Adopt pre-recipe cache entries (`<sha256>.md`) into `<recipe>-<sha256>.md`.
+
+    The transcription cache used to be keyed on file bytes alone. Adding the
+    prompt+model recipe was the right fix, but it stranded every existing entry:
+    without this, upgrading silently re-transcribes the whole corpus through a
+    paid/rate-limited vision model. Entries predating the recipe were produced by
+    the current PROMPT and MODEL, so adopting them is correct.
+
+    Idempotent and cheap (a directory scan); safe to call on every run.
+    """
+    if not MD.exists():
+        return 0
+    r, moved = recipe(), 0
+    for p in MD.glob("*.md"):
+        if not re.fullmatch(r"[0-9a-f]{64}", p.stem):
+            continue                                  # already namespaced
+        target = MD / f"{r}-{p.stem}.md"
+        if target.exists():
+            p.unlink()                                # duplicate; keep the new one
+        else:
+            p.rename(target)
+            moved += 1
+    return moved
+
+
 def _load_manifest() -> dict:
     return json.loads(MANIFEST.read_text()) if MANIFEST.exists() else {}
 
@@ -267,6 +293,9 @@ def ingest_course(course_id: int, limit=None):
     print(f"{slug}: {len(files)} ingestible file(s)")
 
     counts = {"new": 0, "cached": 0, "fail": 0, "new_files": []}
+    adopted = _migrate_legacy_cache()
+    if adopted:
+        print(f"  adopted {adopted} cached transcription(s) from the pre-recipe cache")
     manifest = _load_manifest()
     for f in files:
         ext = Path(f.display_name).suffix.lower()

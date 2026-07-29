@@ -105,3 +105,30 @@ def test_write_failure_does_not_destroy_existing_notes(tmp_path, monkeypatch):
 def test_safe_filename_is_length_capped():
     """An over-long concept name raised ENAMETOOLONG mid-write."""
     assert len(extract.safe_filename("Z" * 400)) <= 120
+
+
+# --- cache migration: a key change must not strand existing work --------------
+
+def test_legacy_transcription_cache_is_adopted(tmp_path, monkeypatch):
+    """Adding prompt+model to the cache key stranded every pre-existing entry,
+    which would silently re-transcribe a whole corpus through a rate-limited
+    vision model on upgrade."""
+    from canvas_vault import ingest
+
+    monkeypatch.chdir(tmp_path)
+    md = tmp_path / "cache" / "md"
+    md.mkdir(parents=True)
+    monkeypatch.setattr(ingest, "MD", md)
+
+    old, dup = "a" * 64, "b" * 64
+    (md / f"{old}.md").write_text("legacy transcription")
+    (md / f"{dup}.md").write_text("stale duplicate")
+    (md / f"{ingest.recipe()}-{dup}.md").write_text("current")
+    (md / "unrelated.md").write_text("not a cache entry")
+
+    assert ingest._migrate_legacy_cache() == 1
+    assert (md / f"{ingest.recipe()}-{old}.md").read_text() == "legacy transcription"
+    assert (md / f"{ingest.recipe()}-{dup}.md").read_text() == "current"
+    assert not [p for p in md.glob("*.md") if len(p.stem) == 64]
+    assert (md / "unrelated.md").exists()
+    assert ingest._migrate_legacy_cache() == 0, "must be idempotent"
