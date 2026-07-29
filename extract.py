@@ -29,7 +29,8 @@ MODEL = os.getenv("EXTRACT_MODEL", "gemini-3.5-flash")
 # lecture decks only — skip polls (quiz noise) and HW solutions (exercises)
 def is_lecture(p: Path) -> bool:
     n = p.name.lower()
-    skip = ("polls", "solution", "announcement", "syllabus")   # not lecture concepts
+    skip = ("polls", "solution", "announcement", "syllabus",    # not lecture concepts
+            "assignment", "hw-", "code-")                       # homework + notebooks
     return p.suffix == ".md" and not any(s in n for s in skip)
 
 PROMPT = """You are building a concept map for a Machine Learning course.
