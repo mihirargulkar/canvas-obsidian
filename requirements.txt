@@ -3,7 +3,5 @@ python-dotenv
 google-genai
 chromadb
 sentence-transformers
-fastapi
-uvicorn
 pytest
 mcp[cli]

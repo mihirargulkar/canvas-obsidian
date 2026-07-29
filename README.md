@@ -63,12 +63,3 @@ midterm 2 study guide?"*, or *"explain gradient descent from my lecture notes"* 
 routes to the right tool and cites your material. The Canvas token stays in `.env`;
 it is never passed through MCP.
 
-## Web app (legacy / optional)
-
-An earlier custom web UI still exists:
-
-```bash
-.venv/bin/python server.py      # http://localhost:8000
-```
-
-Superseded by the Vault + MCP path above, but kept for reference.
