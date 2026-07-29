@@ -73,16 +73,7 @@ class Course:
         "CS1800/1802") or "..", either of which would escape or nest the data
         directory when used as a path component.
         """
-        raw = (self.code or "").split(".")[0].strip()
-        if not raw:
-            tokens = self.name.split()
-            if tokens:
-                # "DS 4400 ..." -> "DS4400"; otherwise just the first token
-                raw = (tokens[0] + tokens[1]
-                       if len(tokens) > 1 and tokens[0].isalpha() and tokens[1][:1].isdigit()
-                       else tokens[0])
-        safe = re.sub(r"[^A-Za-z0-9_-]", "", raw)
-        return safe or f"course-{self.id}"
+        return canvas_api.slug_from(self.code, self.name, self.id)
 
     @property
     def notes_dir(self) -> Path:
@@ -151,15 +142,18 @@ class Course:
 
     # --- orchestration ----------------------------------------------------
 
-    def sync(self, limit=None, deep=True) -> list[str]:
+    def sync(self, limit=None, deep=True) -> dict:
         """Full pipeline for this one class. Safe to re-run (content-hash cached).
 
         Each step is isolated: a course with Files disabled (Canvas 403) or a
         rate-limited step degrades that step only — the rest of this class, and
-        every other class, still sync. Returns the names of failed steps.
+        every other class, still sync.
+
+        Returns {"failed": [step names], "new_files": [filenames]} rather than
+        storing anything on self — Course is frozen, so assignment would raise.
         """
         print(f"\n=== {self.slug} — {self.name} ===")
-        failed = []
+        failed, new_files = [], []
         # deep=False skips the slow model work (file transcription, concept
         # extraction) and only re-reads Canvas metadata. That's what an
         # interactive "anything new?" check needs — a full sync takes minutes and
@@ -170,14 +164,16 @@ class Course:
                      ("extract", self.extract), ("dashboard", self.dashboard))
         for step, fn in steps:
             try:
-                fn()
+                result = fn()
+                if step == "ingest" and isinstance(result, dict):
+                    new_files.extend(result.get("new_files", []))
             except Exception as e:
                 failed.append(step)
                 reason = ("not permitted for this course (instructor restricted it)"
                           if "unauthorized" in str(e).lower() or "Forbidden" in type(e).__name__
                           else f"{type(e).__name__}: {str(e)[:80]}")
                 print(f"  ! {step} skipped — {reason}")
-        return failed
+        return {"failed": failed, "new_files": new_files}
 
     def changes_since_last_sync(self):
         """What appeared on Canvas since the previous sync (see changes.py).
@@ -187,15 +183,17 @@ class Course:
         """
         from . import changes
         from . import updates as updates_mod
+        complete = True
         try:
             anns = updates_mod.fetch_updates(self.id).get("announcements", [])
         except Exception:
-            anns = []
+            anns, complete = [], False
         try:
             names = [a.name for a in self._api.get_assignments()]
         except Exception:
-            names = []
-        return changes.diff_course(self.slug, anns, names)
+            names, complete = [], False
+        # `complete=False` stops a failed read from being written as "seen"
+        return changes.diff_course(self.slug, anns, names, complete=complete)
 
     def __str__(self):
         return f"{self.slug} ({self.id})"

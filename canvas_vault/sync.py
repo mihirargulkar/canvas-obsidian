@@ -35,10 +35,18 @@ def run_sync(only=None, limit=None, do_index=True, deep=True) -> tuple[list, str
     per_course = {}
     for c in courses:
         before = c.changes_since_last_sync()   # diff BEFORE syncing overwrites state
-        c.sync(limit, deep=deep)
+        result = c.sync(limit, deep=deep)
+        # New lecture files are what the pipeline actually spends money on, so
+        # name them; failed steps must surface too, or a nightly run whose quota
+        # is exhausted reports "no changes" forever.
+        before["files"] = result.get("new_files", [])
+        before["failed"] = result.get("failed", [])
         per_course[c.slug] = before
 
-    dashboard.overview()
+    try:
+        dashboard.overview()      # one restricted course must not sink the run
+    except Exception as e:
+        print(f"  ! cross-class dashboard skipped — {type(e).__name__}: {str(e)[:80]}")
     n_changed = chat.index(quiet=True) if do_index else 0
     return courses, changes.summarise(per_course, n_changed)
 

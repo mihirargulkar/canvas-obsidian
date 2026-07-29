@@ -39,16 +39,31 @@ def _collection():
 
 
 def chunks_from_note(text, source, course):
-    """Split a note into (id, text, meta) chunks, one per '## section'."""
+    """Split a note into (id, text, meta) chunks, one per '## section'.
+
+    parts[0] is whatever precedes the first '## ' heading, and it used to be
+    dropped. A note written with only '#' headings then produced ZERO chunks and
+    was invisible to search with no warning — the vision prompt asks for headings
+    "mirroring the slides", so `#`-only transcriptions happen regularly.
+    """
     parts = re.split(r"(?m)^(##\s+.+)$", text)
     out = []
-    for i in range(1, len(parts), 2):
-        section = parts[i].lstrip("# ").strip()
-        body = parts[i + 1].strip()
+
+    def add(section, body, i):
+        body = body.strip()
         if len(body) < 20:
-            continue
+            return
         out.append((f"{course}::{source}::{section[:50]}::{i}", f"{section}\n{body}",
                     {"source": source, "section": section, "course": course}))
+
+    # preamble: strip YAML frontmatter, then index whatever is left
+    pre = parts[0]
+    if pre.startswith("---"):
+        pre = pre.split("---", 2)[-1]
+    add(source, re.sub(r"(?m)^#\s+", "", pre), 0)
+
+    for i in range(1, len(parts), 2):
+        add(parts[i].lstrip("# ").strip(), parts[i + 1], i)
     return out
 
 
@@ -79,7 +94,11 @@ def index(rebuild=False, quiet=False):
 
     ids, docs, metas, courses = _collect_chunks()
     if not ids:
-        sys.exit("no notes to index — run ingest.py first")
+        # Not sys.exit: SystemExit isn't an Exception, so it sails through
+        # course.sync's handler and out of the MCP tool that called us.
+        if not quiet:
+            print("index: nothing to index yet — run the sync first")
+        return 0
 
     existing = col.get(include=["documents"])
     have = dict(zip(existing["ids"], existing["documents"]))
@@ -119,8 +138,23 @@ def answer_structured(query):
     from . import canvas
     from .canvas import local_tz
     LOCAL_TZ = local_tz()
+    # "overdue"/"late"/"missed" ask about the PAST. upcoming() only looks forward,
+    # so these used to be answered "nothing due in the next 7 days" — the opposite
+    # of the truth. Answer them with a negative window instead.
+    if re.search(r"\b(overdue|past due|late|missed)\b", query, re.I):
+        days, back = 0, 14
+        rows = canvas.overdue(back)
+        if not rows:
+            return {"mode": "deadline",
+                    "answer": f"Nothing overdue in the last {back} days.", "sources": []}
+        lines = [f"- **{n}** — was due {d.astimezone(LOCAL_TZ):%a %b %d, %I:%M %p}  ({c})"
+                 for d, c, n, _p in rows]
+        return {"mode": "deadline",
+                "answer": f"Overdue in the last {back} days:\n\n" + "\n".join(lines),
+                "sources": []}
+
     days = 7
-    m = re.search(r"(\d+)\s*day", query)
+    m = re.search(r"(\d+)\s*days?\b", query)
     if m: days = int(m.group(1))
     elif re.search(r"next week|two weeks|2 weeks", query, re.I): days = 14
     rows = canvas.upcoming(days)

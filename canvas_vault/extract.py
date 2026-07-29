@@ -76,7 +76,14 @@ def canon(name: str) -> str:
 
 
 def safe_filename(name: str) -> str:
-    return re.sub(r'[\\/:*?"<>|]', "-", name).strip().strip(".") or "unnamed"
+    """Path-safe stem for a concept note.
+
+    Capped at 120 chars: the model is asked for a short noun phrase but nothing
+    enforces it, and a long one raises ENAMETOOLONG mid-write (most filesystems
+    cap a component at 255 bytes, fewer once non-ASCII is encoded).
+    """
+    cleaned = re.sub(r'[\\/:*?"<>|]', "-", name).strip().strip(".")
+    return cleaned[:120].strip() or "unnamed"
 
 
 def _client():
@@ -161,22 +168,10 @@ def pass2(slug, per_lecture: dict, complete: bool = True):
         if is_lecture(p):
             (vault / "lectures" / p.name).write_text(p.read_text())
 
-    # Drop concept notes from earlier runs that are no longer extracted; otherwise
-    # they linger forever as orphan nodes and pollute any evaluation.
-    # ONLY when this run covered every lecture: a partial run (e.g. Gemini daily
-    # quota hit halfway) legitimately produces fewer concepts, and purging against
-    # it deletes good notes. Leaving orphans is cosmetic; deleting data is not.
-    written = {safe_filename(n["name"]) for n in nodes.values()}
-    stale = [p for p in (vault / "concepts").glob("*.md") if p.stem not in written]
-    if stale and complete:
-        for p in stale:
-            p.unlink()
-        print(f"           removed {len(stale)} stale concept note(s)")
-    elif stale:
-        print(f"           kept {len(stale)} note(s) from previous runs "
-              f"(extraction incomplete — not purging)")
-
-    edges = 0
+    # WRITE FIRST, PURGE AFTER. The purge used to run before these writes, so any
+    # failure in the loop below (a pathological concept name, ENOSPC, permissions)
+    # left the old notes deleted and the new ones unwritten — losing the graph.
+    edges, written = 0, set()
     for k, n in nodes.items():
         links = sorted({nodes[r]["name"] for r in n["related"] if r in nodes and r != k})
         edges += len(links)
@@ -185,7 +180,22 @@ def pass2(slug, per_lecture: dict, complete: bool = True):
         if links:
             body += ["## Related", *[f"- [[{l}]]" for l in links], ""]
         body += ["## Appears in", *[f"- [[{s}]]" for s in sorted(n["lectures"])], ""]
-        (vault / "concepts" / f"{safe_filename(n['name'])}.md").write_text("\n".join(fm + body))
+        stem = safe_filename(n["name"])
+        (vault / "concepts" / f"{stem}.md").write_text("\n".join(fm + body))
+        written.add(stem)
+
+    # Drop notes from earlier runs that are no longer extracted, or they linger as
+    # orphan nodes and pollute evaluation. Only when this run covered every
+    # lecture: a partial run (Gemini daily quota) legitimately yields fewer
+    # concepts, and purging against it deletes good notes.
+    stale = [p for p in (vault / "concepts").glob("*.md") if p.stem not in written]
+    if stale and complete:
+        for p in stale:
+            p.unlink()
+        print(f"           removed {len(stale)} stale concept note(s)")
+    elif stale:
+        print(f"           kept {len(stale)} note(s) from previous runs "
+              f"(extraction incomplete — not purging)")
 
     print(f"pass 2 [{slug}]: {len(nodes)} concept nodes, {edges} links -> {vault}/")
     return nodes

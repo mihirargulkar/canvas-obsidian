@@ -73,6 +73,14 @@ def sha256(b: bytes) -> str:
     return hashlib.sha256(b).hexdigest()
 
 
+def recipe() -> str:
+    """Fingerprint of the transcription inputs other than the file itself.
+
+    Without this, editing PROMPT or switching GEMINI_MODEL silently reuses every
+    old transcription — the same trap extract.pass1 already keys around."""
+    return hashlib.sha256((PROMPT + MODEL).encode()).hexdigest()[:12]
+
+
 def _load_manifest() -> dict:
     return json.loads(MANIFEST.read_text()) if MANIFEST.exists() else {}
 
@@ -169,7 +177,7 @@ def ingest_bytes(name, raw: Path, slug, client, out_name=None) -> tuple[str, str
     Returns (status, content_hash) where status is new|cached|fail."""
     ext = raw.suffix.lower()
     h = sha256(raw.read_bytes())
-    md_cache = MD / f"{h}.md"
+    md_cache = MD / f"{recipe()}-{h}.md"
     out = NOTES / slug / ((out_name or Path(name).stem) + ".md")
     if ext not in TEXT_EXT and md_cache.exists():   # text extraction is free — always re-chunk
         out.write_text(md_cache.read_text())
@@ -185,8 +193,11 @@ def ingest_bytes(name, raw: Path, slug, client, out_name=None) -> tuple[str, str
             if ext != ".pdf":
                 pdf = pdf.rename(PDF / f"{h}.pdf")
             body = gemini_markdown(client, pdf)
-            if body.strip() == "UNREADABLE" or not body.strip():
-                return "fail", h
+        # Applies to every model-transcribed branch, images included. Skipping this
+        # for images cached the failure as a success: the note's body became the
+        # literal string "UNREADABLE" and it was never retried.
+        if ext not in TEXT_EXT and (not body.strip() or body.strip() == "UNREADABLE"):
+            return "fail", h
         md_cache.write_text(header + body)
         out.write_text(header + body)
         return "new", h
@@ -255,7 +266,7 @@ def ingest_course(course_id: int, limit=None):
         files = files[:limit]
     print(f"{slug}: {len(files)} ingestible file(s)")
 
-    counts = {"new": 0, "cached": 0, "fail": 0}
+    counts = {"new": 0, "cached": 0, "fail": 0, "new_files": []}
     manifest = _load_manifest()
     for f in files:
         ext = Path(f.display_name).suffix.lower()
@@ -266,8 +277,8 @@ def ingest_course(course_id: int, limit=None):
         # (Text files still re-download: they're small and re-chunking is free.)
         key = _file_key(f)
         known = manifest.get(key)
-        if ext not in TEXT_EXT and known and (MD / f"{known}.md").exists():
-            out.write_text((MD / f"{known}.md").read_text())
+        if ext not in TEXT_EXT and known and (MD / f"{recipe()}-{known}.md").exists():
+            out.write_text((MD / f"{recipe()}-{known}.md").read_text())
             counts["cached"] += 1
             print(f"  cached {f.display_name} (no download)")
             continue
@@ -277,6 +288,8 @@ def ingest_course(course_id: int, limit=None):
         st, h = ingest_bytes(f.display_name, raw, slug, client, out_name)
         if st != "fail":
             manifest[key] = h
+        if st == "new":
+            counts["new_files"].append(f.display_name)
         counts[st] += 1
         print(f"  {st:6} {f.display_name}")
     _save_manifest(manifest)

@@ -28,7 +28,7 @@ def _save(state: dict):
     STATE.write_text(json.dumps(state, indent=0, sort_keys=True))
 
 
-def diff_course(slug, announcements, assignments, first_run_silent=True):
+def diff_course(slug, announcements, assignments, first_run_silent=True, complete=True):
     """Compare this course against last sync. Returns
     {"announcements": [...], "assignments": [...], "first_run": bool}.
 
@@ -48,8 +48,13 @@ def diff_course(slug, announcements, assignments, first_run_silent=True):
     new_ann = [a for a, k in zip(announcements, ann_keys) if k not in seen_ann]
     new_asg = [a for a, k in zip(assignments, asg_keys) if k not in seen_asg]
 
-    state[slug] = {"announcements": ann_keys, "assignments": asg_keys}
-    _save(state)
+    # Never persist state derived from a read we know failed. A rate-limited or
+    # 403'd fetch yields empty lists; saving those wipes the seen-set, and because
+    # the wiped entry is still truthy the next healthy run looks like a first run
+    # and re-reports the entire term as brand-new.
+    if complete:
+        state[slug] = {"announcements": ann_keys, "assignments": asg_keys}
+        _save(state)
 
     if first_run and first_run_silent:
         return {"announcements": [], "assignments": [], "first_run": True}
@@ -69,12 +74,15 @@ def summarise(per_course: dict, index_changed: int = 0) -> str:
             bits.append(f"new assignment: {name}")
         for f in d.get("files", []):
             bits.append(f"new file: {f}")
+        for step in d.get("failed", []):
+            bits.append(f"FAILED step: {step} (see log; will retry next run)")
         if bits:
             any_news = True
             lines.append(f"  {slug}")
             lines += [f"    - {b}" for b in bits]
 
-    if not any_news and not index_changed:
+    failures = any(d.get("failed") for d in per_course.values())
+    if not any_news and not index_changed and not failures:
         return "No changes since last sync."
     head = "What's new:" if any_news else "No new course content."
     tail = (f"  index: {index_changed} chunk(s) updated" if index_changed else "")

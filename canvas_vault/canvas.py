@@ -15,6 +15,8 @@ from zoneinfo import ZoneInfo
 from canvasapi import Canvas
 from dotenv import load_dotenv
 
+from . import chdir_root
+
 DEFAULT_TZ = "America/New_York"   # only used if Canvas and the OS both stay silent
 
 
@@ -165,15 +167,75 @@ def get_course(course_id):
 
 
 def course_label(c):
-    return getattr(c, "name", f"course {c.id}")
+    # Canvas can send name: null, so `or` rather than a getattr default
+    return getattr(c, "name", None) or f"course {c.id}"
+
+
+def slug_from(code, name, course_id):
+    """Filesystem-safe short course key, e.g. 'DS4400'.
+
+    THE single definition of a slug: Course.slug and slug_of both delegate here.
+    They disagreed once, and the two halves of the codebase then wrote data to
+    vault/DS4400/ while linking to vault/DS/.
+
+    Prefers Canvas's course_code ("DS4400.50397.202650" -> "DS4400"). Falls back
+    to the name, joining a leading letters+digits pair so "DS 4400 Machine
+    Learning" gives "DS4400" and not "DS" (which would collide with every other
+    DS course). Sanitised, because a name may contain "/" (cross-listed courses)
+    or ".." and the result is used as a path component.
+    """
+    raw = ((code or "").split(".")[0]).strip()
+    if not raw:
+        tokens = (name or "").split()
+        if tokens:
+            raw = (tokens[0] + tokens[1]
+                   if len(tokens) > 1 and tokens[0].isalpha() and tokens[1][:1].isdigit()
+                   else tokens[0])
+    return re.sub(r"[^A-Za-z0-9_-]", "", raw) or f"course-{course_id}"
 
 
 def slug_of(c):
-    """Short course key, e.g. 'DS4400' — first token of the course name."""
-    return course_label(c).split()[0]
+    """Short course key for a live canvasapi course object.
+
+    Passes the raw name, not course_label(): the label synthesises "course 5" for
+    a null name, which the parser would turn into "course5" while Course.slug
+    produces "course-5" for the same course.
+    """
+    return slug_from(getattr(c, "course_code", "") or "",
+                     getattr(c, "name", None) or "", c.id)
 
 
 # --- commands ---------------------------------------------------------------
+
+def overdue(days_back=14, courses=None):
+    """Assignments whose due date has passed within the last `days_back` days.
+
+    upcoming() is forward-only, so "what am I overdue on?" needs its mirror."""
+    now = datetime.now(timezone.utc)
+    rows = [r for r in _rows(courses)
+            if r[0] and now - timedelta(days=days_back) <= r[0] < now]
+    rows.sort(key=lambda r: r[0], reverse=True)
+    return rows
+
+
+def _rows(courses=None):
+    """(due_utc, slug, name, points) for every dated assignment, unfiltered."""
+    if courses is None:
+        courses = current_courses(get_client())
+    out = []
+    for c in courses:
+        try:
+            assignments = list(c.get_assignments())
+        except Exception as e:
+            print(f"  ! {slug_of(c)}: assignments unavailable ({type(e).__name__})",
+                  file=sys.stderr)
+            continue
+        for a in assignments:
+            due = parse_due(getattr(a, "due_at", None))
+            if due:
+                out.append((due, slug_of(c), a.name, getattr(a, "points_possible", None)))
+    return out
+
 
 def upcoming(days, courses=None):
     """Sorted (due_utc, course_code, name, points_possible) for assignments due within `days`."""
@@ -182,9 +244,17 @@ def upcoming(days, courses=None):
         courses = current_courses(get_client())
     rows = []
     for c in courses:
-        for a in c.get_assignments():
+        try:
+            assignments = list(c.get_assignments())
+        except Exception as e:
+            # One course with a restricted Assignments tab must not take down
+            # deadlines for every other class.
+            print(f"  ! {slug_of(c)}: assignments unavailable ({type(e).__name__})",
+                  file=sys.stderr)
+            continue
+        for a in assignments:
             if in_window(getattr(a, "due_at", None), now, days):
-                rows.append((parse_due(a.due_at), course_label(c).split()[0],
+                rows.append((parse_due(a.due_at), slug_of(c),
                              a.name, getattr(a, "points_possible", None)))
     rows.sort(key=lambda r: r[0])
     return rows
@@ -196,7 +266,7 @@ def cmd_list(args):
     label = "all active" if args.all else "current-term"
     print(f"{len(courses)} {label} course(s):\n")
     for c in sorted(courses, key=lambda c: course_label(c)):
-        term = getattr(c, "term", {}).get("name", "?")
+        term = (getattr(c, "term", {}) or {}).get("name", "?")
         print(f"  {c.id:>7}  {course_label(c)}   [{term}]")
 
 
