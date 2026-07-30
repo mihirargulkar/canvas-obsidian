@@ -23,11 +23,13 @@ jobs:
 
       - name: Install test dependencies
         # Deliberately NOT the full requirements.txt: chromadb and
-        # sentence-transformers pull ~2GB of torch, and nothing the tests
-        # import needs them (chat.py imports chromadb lazily inside functions).
-        # If a module-level import of those ever appears, this job failing is
-        # the signal we want.
-        run: pip install canvasapi python-dotenv google-genai pytest
+        # sentence-transformers pull ~2GB of torch, and nothing imported at
+        # module scope needs them (chat.py imports chromadb lazily inside
+        # functions). If a module-level import of those ever appears, this job
+        # failing is the signal we want.
+        # mcp IS required: mcp_server imports it at module scope, and
+        # test_imports.py imports every module. It's small, unlike torch.
+        run: pip install canvasapi python-dotenv google-genai "mcp[cli]" pytest
 
       - name: Syntax-check every module
         run: python -m compileall -q .
