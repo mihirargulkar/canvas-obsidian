@@ -99,14 +99,16 @@ def concept(name: str, course: str) -> dict | None:
 
 @server.tool()
 def refresh(course: str | None = None) -> str:
-    """Re-read announcements, assignments and the syllabus from Canvas, then
-    report what's new since the last check. Takes a few seconds. Use it when the
-    student asks whether anything was posted recently, or when an answer might be
-    stale.
+    """Check Canvas for anything new: announcements, assignments, and newly
+    posted files. Takes a few seconds. Use it when the student asks whether
+    anything was posted recently, or when an answer might be stale.
 
-    Does NOT transcribe newly-posted lecture files — that needs a vision model
-    and takes minutes, which would exceed this request's timeout. New slides are
-    picked up by the scheduled daily sync (or `python -m canvas_vault.sync` in a terminal).
+    New lecture FILES are detected and named, but not transcribed — reading a
+    slide deck needs a vision model and takes minutes, which would exceed this
+    request's timeout. So a deck can be reported as posted while its contents
+    are not yet searchable; the scheduled daily sync (or
+    `python -m canvas_vault.sync`) transcribes it. Report a file as posted if it
+    appears here, even though search_notes can't read it yet.
     """
     import contextlib
     import io
@@ -131,8 +133,9 @@ def refresh(course: str | None = None) -> str:
         if anns:
             latest.append(f"{c.slug} — most recent announcements now:")
             latest += [f"  {a['date']}  {a['title']}" for a in anns]
-    return (f"Checked {', '.join(c.slug for c in courses)} "
-            f"(announcements/assignments only).\n{summary}\n\n" + "\n".join(latest))
+    return (f"Checked {', '.join(c.slug for c in courses)} — announcements, "
+            f"assignments and file listings (new files are named but not yet "
+            f"transcribed).\n{summary}\n\n" + "\n".join(latest))
 
 
 if __name__ == "__main__":

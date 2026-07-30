@@ -41,6 +41,9 @@ def run_sync(only=None, limit=None, do_index=True, deep=True) -> tuple[list, str
         # is exhausted reports "no changes" forever.
         before["files"] = result.get("new_files", [])
         before["failed"] = result.get("failed", [])
+        # A shallow run doesn't transcribe, but it should still notice a deck
+        # that has appeared on Canvas rather than implying nothing was posted.
+        before["pending"] = [] if deep else c.pending_files()
         per_course[c.slug] = before
 
     try:

@@ -74,6 +74,8 @@ def summarise(per_course: dict, index_changed: int = 0) -> str:
             bits.append(f"new assignment: {name}")
         for f in d.get("files", []):
             bits.append(f"new file: {f}")
+        for f in d.get("pending", []):
+            bits.append(f"NEW FILE on Canvas, not transcribed yet: {f}")
         for step in d.get("failed", []):
             bits.append(f"FAILED step: {step} (see log; will retry next run)")
         if bits:
@@ -83,7 +85,9 @@ def summarise(per_course: dict, index_changed: int = 0) -> str:
 
     failures = any(d.get("failed") for d in per_course.values())
     if not any_news and not index_changed and not failures:
-        return "No changes since last sync."
+        # Say what was actually checked. "No changes" alone let a caller conclude
+        # nothing had been posted when files simply hadn't been examined.
+        return "No new announcements, assignments or files since the last check."
     head = "What's new:" if any_news else "No new course content."
     tail = (f"  index: {index_changed} chunk(s) updated" if index_changed else "")
     return "\n".join([head, *lines, tail]).rstrip()

@@ -175,6 +175,32 @@ class Course:
                 print(f"  ! {step} skipped — {reason}")
         return {"failed": failed, "new_files": new_files}
 
+    def pending_files(self) -> list[str]:
+        """Ingestible Canvas files that have no note yet.
+
+        Listing files is one cheap API call; transcribing them is the expensive
+        part. A fast refresh can therefore still *detect* a newly posted lecture
+        deck and say so, instead of reporting "no changes" because it never
+        looked — which is what made a freshness check claim a deck that existed
+        on Canvas "hasn't been posted".
+        """
+        from .ingest import INGEST_EXT, TEXT_EXT
+        try:
+            files = list(self._api.get_files())
+        except Exception:
+            return []                      # Files tab restricted; nothing to say
+        have = {p.stem for p in self.notes_dir.glob("*.md")}
+        pending = []
+        for f in files:
+            name = f.display_name
+            stem = Path(name).stem
+            if Path(name).suffix.lower() not in INGEST_EXT:
+                continue                   # e.g. .csv — never transcribed, not "missing"
+            prefixed = f"code-{stem}" if Path(name).suffix.lower() in TEXT_EXT else stem
+            if prefixed not in have and stem not in have:
+                pending.append(name)
+        return pending
+
     def changes_since_last_sync(self):
         """What appeared on Canvas since the previous sync (see changes.py).
 

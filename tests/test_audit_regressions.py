@@ -132,3 +132,25 @@ def test_legacy_transcription_cache_is_adopted(tmp_path, monkeypatch):
     assert not [p for p in md.glob("*.md") if len(p.stem) == 64]
     assert (md / "unrelated.md").exists()
     assert ingest._migrate_legacy_cache() == 0, "must be idempotent"
+
+
+# --- freshness: never imply "nothing posted" when files weren't examined ------
+
+def test_shallow_refresh_still_reports_new_files():
+    """refresh runs deep=False (no transcription) so it never ran ingest, the
+    only step that looks at Canvas Files. It then said "No changes since last
+    sync", and a client concluded a lecture deck that WAS on Canvas "hasn't been
+    posted". A cheap file listing must still be surfaced."""
+    summary = changes.summarise(
+        {"DS4400": {"announcements": [], "assignments": [],
+                    "pending": ["Lecture17-DS4400.pptx"]}}, 0)
+    assert "Lecture17-DS4400.pptx" in summary
+    assert "not transcribed yet" in summary
+
+
+def test_quiet_summary_names_what_was_checked():
+    """'No changes' alone is ambiguous between 'checked, found nothing' and
+    'never looked'."""
+    summary = changes.summarise({"DS4400": {"announcements": [], "assignments": []}}, 0)
+    for word in ("announcements", "assignments", "files"):
+        assert word in summary
