@@ -54,10 +54,24 @@ as files you keep, this.
 ## Setup
 
 ```bash
+git clone https://github.com/mihirargulkar/canvas-obsidian && cd canvas-obsidian
+./setup.sh
+```
+
+That creates the virtualenv, installs dependencies, checks for LibreOffice, prompts
+for your two credentials, verifies the Canvas token actually works, and offers to run
+the first sync. It's safe to re-run — anything already in place is left alone, and
+`--no-sync` sets up without syncing.
+
+<details>
+<summary>Manual setup</summary>
+
+```bash
 python3 -m venv .venv
 .venv/bin/pip install -r requirements.txt
 cp .env.example .env      # then fill it in
 ```
+</details>
 
 `.env` (gitignored — never commit it):
 
@@ -122,10 +136,27 @@ for anything new."*
 
 ### Layout
 
+Data it produces (all gitignored — it's yours, not the repo's):
+
 ```
 notes/<SLUG>/          transcribed markdown (lectures, hw-*, code-*, announcements)
 vault/Dashboard.md     deadlines across ALL classes
 vault/<SLUG>/          concepts/ lectures/ updates/ Dashboard.md   <- open in Obsidian
+cache/                 downloads, transcriptions, sync state (safe to delete)
+```
+
+The code:
+
+```
+canvas_vault/          canvas   Canvas API, term detection, deadlines
+                       course   Course: identity, paths, pipeline orchestration
+                       ingest   files + homework -> markdown (vision model)
+                       extract  lecture notes -> concept graph
+                       updates  announcements + syllabus
+                       dashboard, chat (RAG index + router), changes, sync
+                       mcp_server   the MCP tools
+tools/                 eval_graph, eval_retrieval, graph_svg, install-daily-sync
+tests/
 ```
 
 Open the `vault/` folder as an Obsidian vault for the graph, backlinks and dashboards.
@@ -135,7 +166,8 @@ Open the `vault/` folder as an Obsidian vault for the graph, backlinks and dashb
 `canvas_vault/mcp_server.py` exposes your classes + live Canvas to any MCP client (Claude Desktop,
 Claude Code, Gemini CLI): `list_courses`, `upcoming_assignments`, `announcements`,
 `syllabus`, `search_notes` (semantic search over your slides, homework and notebooks),
-`concept`, and `refresh` (pull anything new from Canvas on demand). Every tool takes
+`concept`, and `refresh` (check Canvas for new announcements, assignments and files
+on demand — new files are named immediately, then transcribed by the next full sync). Every tool takes
 an optional `course` slug — omit it to span all classes.
 
 ### Connecting a client
@@ -186,6 +218,7 @@ came from, so you can go read the source.
 **Staying on top of the term**
 
 - "What's due this week across all my classes?"
+- "Am I overdue on anything?"
 - "Did I miss any announcements? Anything change about the exam?"
 - "What's the late policy in my ML class?" *(reads the syllabus)*
 
