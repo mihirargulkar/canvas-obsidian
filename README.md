@@ -141,7 +141,9 @@ an optional `course` slug — omit it to span all classes.
 ### Connecting a client
 
 Every MCP client takes the **same server definition** — only the file it lives in
-differs. Use **absolute paths**: clients don't run in the repo directory.
+differs. Use **absolute paths**: clients don't run in the repo directory. `-m` needs the
+repo root importable, so set both `cwd` and `PYTHONPATH` — not every client
+honours `cwd`.
 
 ```json
 {
@@ -149,7 +151,8 @@ differs. Use **absolute paths**: clients don't run in the repo directory.
     "canvas": {
       "command": "/absolute/path/to/canvas-obsidian/.venv/bin/python",
       "args": ["-m", "canvas_vault.mcp_server"],
-      "cwd": "/absolute/path/to/canvas-obsidian"
+      "cwd": "/absolute/path/to/canvas-obsidian",
+      "env": { "PYTHONPATH": "/absolute/path/to/canvas-obsidian" }
     }
   }
 }
