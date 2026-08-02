@@ -22,6 +22,10 @@ git clone https://github.com/mihirargulkar/canvas-obsidian && cd canvas-obsidian
 The script sets up a virtualenv, installs everything, asks for your Canvas token and a
 Gemini API key, then offers to run the first sync. Safe to re-run.
 
+Install is about 170MB. Search runs on static embeddings plus BM25, no PyTorch. If
+you want slightly better ranking you can `pip install sentence-transformers` and it
+gets picked up automatically, at the cost of ~800MB.
+
 You'll need Python 3.10+, a [Canvas token](https://community.canvaslms.com/t5/Student-Guide/How-do-I-manage-API-access-tokens-as-a-student/ta-p/273)
 (Account > Settings > New Access Token), a free [Gemini key](https://aistudio.google.com/app/apikey),
 and LibreOffice if you want `.pptx` slides read (`brew install --cask libreoffice`).

@@ -21,7 +21,8 @@ from . import ROOT
 
 NOTES_ROOT = Path("notes")
 DB = "index/vectors.db"
-EMBED_MODEL = "all-MiniLM-L6-v2"
+EMBED_MODEL = "all-MiniLM-L6-v2"          # used only if sentence-transformers is installed
+STATIC_MODEL = "minishlab/potion-base-8M"  # numpy-only default
 ANSWER_MODEL = os.getenv("ANSWER_MODEL", "gemini-3.5-flash")
 
 DATE_INTENT = re.compile(
@@ -33,10 +34,28 @@ _STORE = None
 
 
 def _embedder():
-    """Load the sentence-transformer once per process (it's slow to construct)."""
-    from sentence_transformers import SentenceTransformer
-    model = SentenceTransformer(EMBED_MODEL)
-    return lambda texts: model.encode(texts, show_progress_bar=False)
+    """Pick an embedding model, preferring quality when it's available.
+
+    sentence-transformers ranks better but drags in ~800MB of PyTorch, which is
+    hard to justify for a tool that searches a couple of MB of notes. So the
+    default install ships static embeddings (numpy-only, ~30MB); if someone has
+    sentence-transformers installed, we use it automatically.
+
+    Measured on the gold set: static + BM25 gives recall@5 10/10, MRR 0.85;
+    sentence-transformers + BM25 gives 10/10 and 0.95.
+
+    Returns (encode_fn, id). The id goes in the store so switching models
+    rebuilds the index instead of mixing incompatible vectors.
+    """
+    try:
+        from sentence_transformers import SentenceTransformer
+        model = SentenceTransformer(EMBED_MODEL)
+        return (lambda texts: model.encode(texts, show_progress_bar=False),
+                f"sentence-transformers:{EMBED_MODEL}")
+    except ImportError:
+        from model2vec import StaticModel
+        model = StaticModel.from_pretrained(STATIC_MODEL)
+        return lambda texts: model.encode(texts), f"model2vec:{STATIC_MODEL}"
 
 
 def _collection():
@@ -45,7 +64,8 @@ def _collection():
     global _STORE
     if _STORE is None:
         from .store import VectorStore
-        _STORE = VectorStore(DB, _embedder())
+        encode, ident = _embedder()
+        _STORE = VectorStore(DB, encode, embedder_id=ident)
     return _STORE
 
 

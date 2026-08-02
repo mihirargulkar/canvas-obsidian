@@ -5,6 +5,10 @@ canvasapi>=3.2,<4
 python-dotenv>=1.0
 google-genai>=1.0,<3
 numpy>=1.24
-sentence-transformers>=3.0,<6
+model2vec>=0.3
 mcp[cli]>=2.0,<3
 pytest>=8.0
+
+# Optional: better search ranking (MRR 0.95 vs 0.85 on the gold set), at the
+# cost of ~800MB of PyTorch. Installed or not, it's picked up automatically.
+#   pip install 'sentence-transformers>=3.0,<6'
