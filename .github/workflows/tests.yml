@@ -21,15 +21,13 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: pip
 
-      - name: Install test dependencies
-        # Deliberately NOT the full requirements.txt: chromadb and
-        # sentence-transformers pull ~2GB of torch, and nothing imported at
-        # module scope needs them (chat.py imports chromadb lazily inside
-        # functions). If a module-level import of those ever appears, this job
-        # failing is the signal we want.
-        # mcp IS required: mcp_server imports it at module scope, and
-        # test_imports.py imports every module. It's small, unlike torch.
-        run: pip install canvasapi python-dotenv google-genai "mcp[cli]" pytest
+      - name: Install dependencies
+        # Install exactly what users install. This used to be a hand-picked
+        # subset, to avoid pulling ~2GB of torch into CI, and it broke twice
+        # because the list drifted whenever a dependency changed (first mcp,
+        # then numpy). Dropping torch got the full install down to ~170MB, so
+        # the subset has no reason to exist and neither does the drift.
+        run: pip install -r requirements.txt
 
       - name: Syntax-check every module
         run: python -m compileall -q .
