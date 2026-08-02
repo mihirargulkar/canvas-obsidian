@@ -4,6 +4,7 @@ vault/
 cache/
 notes/
 chroma_db/
+index/
 __pycache__/
 *.db
 *.pyc

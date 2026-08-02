@@ -20,8 +20,7 @@ from . import chdir_root
 from . import ROOT
 
 NOTES_ROOT = Path("notes")
-DB = "chroma_db"
-COLLECTION = "notes"
+DB = "index/vectors.db"
 EMBED_MODEL = "all-MiniLM-L6-v2"
 ANSWER_MODEL = os.getenv("ANSWER_MODEL", "gemini-3.5-flash")
 
@@ -30,12 +29,24 @@ DATE_INTENT = re.compile(
     r"when.*(due|submit)|what.*due|homework.*due|assignments?\s+due)\b", re.I)
 
 
+_STORE = None
+
+
+def _embedder():
+    """Load the sentence-transformer once per process (it's slow to construct)."""
+    from sentence_transformers import SentenceTransformer
+    model = SentenceTransformer(EMBED_MODEL)
+    return lambda texts: model.encode(texts, show_progress_bar=False)
+
+
 def _collection():
-    import chromadb
-    from chromadb.utils import embedding_functions
-    ef = embedding_functions.SentenceTransformerEmbeddingFunction(model_name=EMBED_MODEL)
-    client = chromadb.PersistentClient(path=DB)
-    return client.get_or_create_collection(COLLECTION, embedding_function=ef)
+    """The vector store. Named for the Chroma call it replaced, so the handful
+    of external callers didn't have to change."""
+    global _STORE
+    if _STORE is None:
+        from .store import VectorStore
+        _STORE = VectorStore(DB, _embedder())
+    return _STORE
 
 
 def chunks_from_note(text, source, course):
@@ -86,10 +97,10 @@ def index(rebuild=False, quiet=False):
     chunks are touched. `rebuild=True` forces a full re-embed (escape hatch if the
     chunker or embedding model changes).
     """
-    import chromadb
-    client = chromadb.PersistentClient(path=DB)
-    if rebuild and COLLECTION in [c.name for c in client.list_collections()]:
-        client.delete_collection(COLLECTION)
+    if rebuild:
+        Path(DB).unlink(missing_ok=True)
+        global _STORE
+        _STORE = None
     col = _collection()
 
     ids, docs, metas, courses = _collect_chunks()
@@ -100,7 +111,7 @@ def index(rebuild=False, quiet=False):
             print("index: nothing to index yet — run the sync first")
         return 0
 
-    existing = col.get(include=["documents"])
+    existing = col.get()
     have = dict(zip(existing["ids"], existing["documents"]))
     want = dict(zip(ids, docs))
 

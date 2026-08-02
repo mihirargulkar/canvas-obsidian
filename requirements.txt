@@ -1,11 +1,10 @@
 # Major versions are capped because these libraries have shipped breaking API
-# changes: mcp renamed FastMCP -> MCPServer in 2.0, and chromadb's collection
-# API changed in 1.0. Unpinned, a future major release silently breaks a fresh
-# install. Bump a cap deliberately, after testing.
+# changes: mcp renamed FastMCP -> MCPServer in 2.0. Unpinned, a future major
+# release silently breaks a fresh install. Bump a cap deliberately, after testing.
 canvasapi>=3.2,<4
 python-dotenv>=1.0
 google-genai>=1.0,<3
-chromadb>=1.0,<2
+numpy>=1.24
 sentence-transformers>=3.0,<6
 mcp[cli]>=2.0,<3
 pytest>=8.0
