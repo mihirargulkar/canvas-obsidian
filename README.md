@@ -125,4 +125,8 @@ your own cases if you want them to mean anything for your classes.
 
 Code lives in `canvas_vault/`, tests in `tests/`, dev scripts in `tools/`.
 
+The product thinking behind it, including which quality claims are actually
+measured and which aren't, is in [docs/PRD.pdf](docs/PRD.pdf). The markdown
+[source](docs/PRD.md) is what you edit; `tools/build-prd.sh` regenerates the PDF.
+
 MIT licensed. See [LICENSE](LICENSE).
