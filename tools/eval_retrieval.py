@@ -16,6 +16,8 @@ NOTE: like eval_graph.py, the gold set below is written for ONE course. Replace
 GOLD with questions about your own material to evaluate your own corpus.
 """
 import argparse
+import json
+import math
 import sys
 from pathlib import Path
 
@@ -38,7 +40,105 @@ GOLD = [
 ]
 
 
-def evaluate(course, k):
+def load_gold(course, path):
+    """Hand written pairs by default; the larger synthetic set if it exists.
+
+    The hand written 10 are a smoke test — at that size a one rank shift moves
+    MRR by 0.10, which is why no fusion weights were ever tuned against it.
+    tools/make_eval_set.py generates a bigger set for actually comparing
+    configurations.
+    """
+    if path and Path(path).exists():
+        rows = json.loads(Path(path).read_text())
+        return [(r["query"], r["source"]) for r in rows], f"{path} (synthetic)"
+    return GOLD, "built-in (hand written)"
+
+
+def judge(pairs):
+    """Ask a model whether each retrieved passage answers the query.
+
+    Exact-source matching is wrong for this corpus. A topic shows up in the
+    lecture slides, the polls for that lecture, and a notebook, so retrieving
+    "the Monte Carlo lecture" for a Monte Carlo question gets scored as a miss
+    only because the query happened to be generated from the notebook. Judging
+    relevance directly measures what we actually care about.
+    """
+    from google import genai
+    from canvas_vault.canvas import gemini_key
+    client = genai.Client(api_key=gemini_key())
+    prompt = ("For each numbered pair, does the PASSAGE help answer the QUESTION "
+              "for a student studying this course? Be strict about topical "
+              "relevance but do not require it to be the single best passage.\n"
+              'Return ONLY a JSON array: [{"n": <number>, "relevant": true|false}]\n\n')
+    body = "\n\n".join(
+        f"[{i}] QUESTION: {q}\nPASSAGE: {d[:700]}" for i, (q, d) in enumerate(pairs))
+    r = client.models.generate_content(
+        model="gemini-3.5-flash", contents=[prompt, body],
+        config={"response_mime_type": "application/json"})
+    out = {}
+    for item in json.loads(r.text):
+        if isinstance(item.get("n"), int):
+            out[item["n"]] = bool(item.get("relevant"))
+    return out
+
+
+def evaluate_judged(course, k, gold):
+    """recall@k and MRR using judged relevance instead of exact source match."""
+    import canvas_vault.chat as chat
+    col = chat._collection()
+    hits = rr = 0
+    batch, meta = [], []
+    for question, _ in gold:
+        res = col.query(query_texts=[question], n_results=k, where={"course": course})
+        docs = res["documents"][0]
+        for rank, d in enumerate(docs):
+            batch.append((question, d)); meta.append((question, rank))
+    verdicts, unjudged = {}, set()
+    for start in range(0, len(batch), 25):
+        try:
+            got = judge(batch[start:start + 25])
+        except Exception as e:
+            # A failed judge call is missing data, not evidence of a miss. Counting
+            # it as a miss makes a rate limit look like broken retrieval — which is
+            # exactly the confusion this eval exists to prevent.
+            print(f"  judge batch {start}: {type(e).__name__} {str(e)[:50]} (excluded)")
+            unjudged.update(range(start, min(start + 25, len(batch))))
+            got = {}
+        for i, v in got.items():
+            verdicts[start + i] = v
+    per_query, incomplete = {}, set()
+    for idx, (question, rank) in enumerate(meta):
+        if idx in unjudged:
+            incomplete.add(question)
+        elif verdicts.get(idx):
+            per_query.setdefault(question, rank + 1)
+    scored = [q for q, _ in gold if q not in incomplete or q in per_query]
+    for question in scored:
+        if question in per_query:
+            hits += 1; rr += 1 / per_query[question]
+    if incomplete - set(per_query):
+        print(f"  {len(incomplete - set(per_query))} quer(ies) excluded: judge "
+              f"unavailable for their passages")
+    n = len(scored)
+    lo, hi = wilson(hits, n)
+    print(f"{course}: JUDGED recall@{k} = {hits}/{n} ({hits/n:.0%}, 95% CI {lo:.0%}-{hi:.0%})"
+          f"   MRR = {rr/n:.2f}")
+    return hits, n
+
+
+def wilson(hits, n, z=1.96):
+    """95% interval for a proportion. Small samples deserve error bars: 10/10 on
+    ten queries and 100/100 on a hundred are not the same claim."""
+    if not n:
+        return 0.0, 0.0
+    p = hits / n
+    d = 1 + z * z / n
+    centre = (p + z * z / (2 * n)) / d
+    half = z * math.sqrt(p * (1 - p) / n + z * z / (4 * n * n)) / d
+    return max(0.0, centre - half), min(1.0, centre + half)
+
+
+def evaluate(course, k, gold=None, label="built-in"):
     import canvas_vault.chat as chat
     col = chat._collection()
     hits, rr, rows = 0, 0.0, []
@@ -53,9 +153,11 @@ def evaluate(course, k):
             rr += 1 / rank
         rows.append((question, expected, rank, sources[0] if sources else "—"))
 
-    n = len(GOLD)
-    print(f"{course}: recall@{k} = {hits}/{n} ({hits / n:.0%})   MRR = {rr / n:.2f}\n")
-    for q, exp, rank, top in rows:
+    n = len(gold)
+    lo, hi = wilson(hits, n)
+    print(f"{course}: recall@{k} = {hits}/{n} ({hits / n:.0%}, 95% CI {lo:.0%}-{hi:.0%})"
+          f"   MRR = {rr / n:.2f}   [{label}]\n")
+    for q, exp, rank, top in (rows if n <= 15 else []):
         mark = f"PASS rank {rank}" if rank == 1 else (f"ok   rank {rank}" if rank else "MISS      ")
         print(f"  {mark}  {q[:44]:44} want~{exp[:22]:22} got:{top[:28]}")
     return hits, n
@@ -65,12 +167,20 @@ def main():
     p = argparse.ArgumentParser(description=__doc__.split("\n")[1])
     p.add_argument("--course", default=GOLD_COURSE)
     p.add_argument("-k", type=int, default=5, help="top-k retrieved (default 5)")
+    p.add_argument("--judged", action="store_true",
+                   help="score with an LLM relevance judge instead of exact source match")
+    p.add_argument("--gold", default="tools/eval_queries.json",
+                   help="synthetic gold set to use if present")
     a = p.parse_args()
     if a.course != GOLD_COURSE:
         print(f"WARNING: gold set is written for {GOLD_COURSE}; results for "
               f"{a.course} are meaningless until you replace GOLD.\n")
     try:
-        hits, n = evaluate(a.course, a.k)
+        gold, label = load_gold(a.course, a.gold)
+        if a.judged:
+            hits, n = evaluate_judged(a.course, a.k, gold)
+        else:
+            hits, n = evaluate(a.course, a.k, gold, label)
     except Exception as e:
         sys.exit(f"retrieval eval failed ({type(e).__name__}) — is the index built? "
                  f"run: python -m canvas_vault.chat index")

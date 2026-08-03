@@ -1,0 +1,422 @@
+[
+ {
+  "query": "how to draw random samples from a weird probability distribution",
+  "source": "code-sampling_examples",
+  "section": "sampling_examples \u2014 part 77",
+  "leakage": 0.0
+ },
+ {
+  "query": "monte carlo approximation intuition",
+  "source": "code-sampling_examples",
+  "section": "sampling_examples \u2014 part 419",
+  "leakage": 0.0
+ },
+ {
+  "query": "what does computer sampling actually do",
+  "source": "code-sampling_examples",
+  "section": "sampling_examples \u2014 part 295",
+  "leakage": 0.33
+ },
+ {
+  "query": "sampling from posterior distribution without integration",
+  "source": "code-sampling_examples",
+  "section": "sampling_examples \u2014 part 309",
+  "leakage": 0.17
+ },
+ {
+  "query": "how to stop lasso from randomly picking one of two highly correlated features",
+  "source": "Lectura6-DS4400",
+  "section": "Elastic Net Penalty (Combines Both Lasso and Ridge)",
+  "leakage": 0.4
+ },
+ {
+  "query": "is there an easier way to sample than metropolis hastings",
+  "source": "code-sampling_examples",
+  "section": "sampling_examples \u2014 part 301",
+  "leakage": 0.0
+ },
+ {
+  "query": "mean value of discrete distribution with different probabilities",
+  "source": "Lecture9-DS4400",
+  "section": "Categorical (In Theory)",
+  "leakage": 0.33
+ },
+ {
+  "query": "formula to squish real numbers between 0 and 1 for binary classification",
+  "source": "Lecture15-DS4400",
+  "section": "Logistic Function",
+  "leakage": 0.44
+ },
+ {
+  "query": "curse of dimensionality in sampling",
+  "source": "code-sampling_examples",
+  "section": "sampling_examples \u2014 part 608",
+  "leakage": 0.33
+ },
+ {
+  "query": "why do we normalize probability distributions before sampling",
+  "source": "code-sampling_examples",
+  "section": "sampling_examples \u2014 part 496",
+  "leakage": 0.2
+ },
+ {
+  "query": "how to do random sampling with replacement in python",
+  "source": "code-sampling_examples",
+  "section": "sampling_examples \u2014 part 619",
+  "leakage": 0.25
+ },
+ {
+  "query": "rejection sampling proposal function helper",
+  "source": "code-sampling_examples",
+  "section": "sampling_examples \u2014 part 371",
+  "leakage": 0.2
+ },
+ {
+  "query": "what does it mean when different inputs give the exact same prediction",
+  "source": "DS4400_HW1_solutions",
+  "section": "Part 2 \u2014 Conceptual Understanding",
+  "leakage": 0.57
+ },
+ {
+  "query": "vector norm that just counts how many elements aren't zero",
+  "source": "Lecture3-polls",
+  "section": "1. The $L_0$ norm of $x = [3, 0, -1, 0, 2]$ counts what?",
+  "leakage": 0.33
+ },
+ {
+  "query": "how to mathematically write a vertical slice of a table of data",
+  "source": "Lecture2-DS4400-new",
+  "section": "Referencing Matrix Elements",
+  "leakage": 0.17
+ },
+ {
+  "query": "gibbs sampling algorithm steps",
+  "source": "code-sampling_examples",
+  "section": "sampling_examples \u2014 part 267",
+  "leakage": 0.25
+ },
+ {
+  "query": "how does the smoothing parameter change the shape of a density plot",
+  "source": "code-no_input_file_mle_kde_m",
+  "section": "no_input_file_mle_kde_m \u2014 part 5",
+  "leakage": 0.33
+ },
+ {
+  "query": "why does the average of many trials get closer to the theoretical average",
+  "source": "Lecture12-DS4400",
+  "section": "The Law of Large Numbers (LLN)",
+  "leakage": 0.0
+ },
+ {
+  "query": "estimating expectation when we can't sample directly from target",
+  "source": "code-sampling_examples",
+  "section": "sampling_examples \u2014 part 347",
+  "leakage": 0.0
+ },
+ {
+  "query": "how does monte carlo integration work",
+  "source": "code-sampling_examples",
+  "section": "sampling_examples \u2014 part 83",
+  "leakage": 0.0
+ },
+ {
+  "query": "probability model where every decimal number in a range has the same chance",
+  "source": "Lecture9-DS4400",
+  "section": "Continuous Uniform Distribution",
+  "leakage": 0.3
+ },
+ {
+  "query": "how to update probability of a hypothesis when we get new evidence",
+  "source": "code-probability",
+  "section": "probability \u2014 part 5",
+  "leakage": 0.17
+ },
+ {
+  "query": "rejection sampling python",
+  "source": "code-sampling_examples",
+  "section": "sampling_examples \u2014 part 613",
+  "leakage": 0.33
+ },
+ {
+  "query": "the sampling method with proposal distribution",
+  "source": "code-sampling_examples",
+  "section": "sampling_examples \u2014 part 491",
+  "leakage": 0.25
+ },
+ {
+  "query": "When is MCMC better than simple Monte Carlo?",
+  "source": "code-sampling_examples",
+  "section": "sampling_examples \u2014 part 17",
+  "leakage": 0.0
+ },
+ {
+  "query": "why does transposing a flat numpy array not do anything",
+  "source": "code-numpy_examples",
+  "section": "numpy_examples \u2014 part 3",
+  "leakage": 0.5
+ },
+ {
+  "query": "metropolis hastings acceptance ratio formula",
+  "source": "code-sampling_examples",
+  "section": "sampling_examples \u2014 part 269",
+  "leakage": 0.0
+ },
+ {
+  "query": "the graphs showing model being too complex or too simple",
+  "source": "Lecture8-DS4400",
+  "section": "Overfitting, Underfitting, and Model Selection",
+  "leakage": 0.25
+ },
+ {
+  "query": "Do I have to buy any books for this class?",
+  "source": "syllabus",
+  "section": "Syllabus (part 2)",
+  "leakage": 0.0
+ },
+ {
+  "query": "monte carlo approximation expectation",
+  "source": "code-sampling_examples",
+  "section": "sampling_examples \u2014 part 88",
+  "leakage": 0.0
+ },
+ {
+  "query": "how do we get the actual prediction at the bottom of the tree",
+  "source": "Lecture17-DS4400",
+  "section": "Decision Trees: Training vs. Inference",
+  "leakage": 0.5
+ },
+ {
+  "query": "How does the random walk metropolis algorithm work?",
+  "source": "code-sampling_examples",
+  "section": "sampling_examples \u2014 part 285",
+  "leakage": 0.0
+ },
+ {
+  "query": "np random choice without replacement",
+  "source": "code-sampling_examples",
+  "section": "sampling_examples \u2014 part 546",
+  "leakage": 0.0
+ },
+ {
+  "query": "How do you find the probability of both events happening if they depend on each other?",
+  "source": "code-probability",
+  "section": "probability \u2014 part 14",
+  "leakage": 0.11
+ },
+ {
+  "query": "throwing away points under a curve to get samples",
+  "source": "code-sampling_examples",
+  "section": "sampling_examples \u2014 part 367",
+  "leakage": 0.0
+ },
+ {
+  "query": "using inverse cdf to get random variables",
+  "source": "code-sampling_examples",
+  "section": "sampling_examples \u2014 part 557",
+  "leakage": 0.0
+ },
+ {
+  "query": "is there a dot product for 2d grids",
+  "source": "Lecture2-DS4400-new",
+  "section": "Matrix Inner Product",
+  "leakage": 0.2
+ },
+ {
+  "query": "importance sampling weights calculation",
+  "source": "code-sampling_examples",
+  "section": "sampling_examples \u2014 part 70",
+  "leakage": 0.25
+ },
+ {
+  "query": "the sampling thing where you change one variable at a time",
+  "source": "code-sampling_examples",
+  "section": "sampling_examples \u2014 part 63",
+  "leakage": 0.12
+ },
+ {
+  "query": "metropolis hastings acceptance ratio formula",
+  "source": "code-sampling_examples",
+  "section": "sampling_examples \u2014 part 57",
+  "leakage": 0.0
+ },
+ {
+  "query": "why do we need a proposal distribution",
+  "source": "code-sampling_examples",
+  "section": "sampling_examples \u2014 part 606",
+  "leakage": 0.0
+ },
+ {
+  "query": "high dimensional integration using monte carlo",
+  "source": "code-sampling_examples",
+  "section": "sampling_examples \u2014 part 50",
+  "leakage": 0.0
+ },
+ {
+  "query": "difference between l1 l2 and infinity metrics",
+  "source": "DS4400_HW1_solutions",
+  "section": "Part 1 \u2014 Linear Algebra",
+  "leakage": 0.0
+ },
+ {
+  "query": "how to generate random numbers from a custom pdf",
+  "source": "code-sampling_examples",
+  "section": "sampling_examples \u2014 part 193",
+  "leakage": 0.0
+ },
+ {
+  "query": "can you solve an integral by averaging random evaluations",
+  "source": "Lecture12-DS4400",
+  "section": "Using Averages for Integrals (Requires Samples)",
+  "leakage": 0.17
+ },
+ {
+  "query": "generating new data from kernel density",
+  "source": "code-sampling_examples",
+  "section": "sampling_examples \u2014 part 423",
+  "leakage": 0.0
+ },
+ {
+  "query": "how to clean up data before training so the computer can find patterns",
+  "source": "Lecture9-DS4400",
+  "section": "What is Feature Engineering?",
+  "leakage": 0.22
+ },
+ {
+  "query": "how to code random sampling in python",
+  "source": "code-sampling_examples",
+  "section": "sampling_examples \u2014 part 635",
+  "leakage": 0.25
+ },
+ {
+  "query": "generating points from a custom distribution",
+  "source": "code-sampling_examples",
+  "section": "sampling_examples \u2014 part 359",
+  "leakage": 0.0
+ },
+ {
+  "query": "plotting simulation results in python",
+  "source": "code-sampling_examples",
+  "section": "sampling_examples \u2014 part 213",
+  "leakage": 0.0
+ },
+ {
+  "query": "how to run a monte carlo simulation",
+  "source": "code-sampling_examples",
+  "section": "sampling_examples \u2014 part 398",
+  "leakage": 0.0
+ },
+ {
+  "query": "python library for drawing random samples",
+  "source": "code-sampling_examples",
+  "section": "sampling_examples \u2014 part 222",
+  "leakage": 0.0
+ },
+ {
+  "query": "why does a wider gap between classes help on new data",
+  "source": "Lecture16-DS4400 copy",
+  "section": "About the Margin",
+  "leakage": 0.14
+ },
+ {
+  "query": "rejection sampling python",
+  "source": "code-sampling_examples",
+  "section": "sampling_examples \u2014 part 482",
+  "leakage": 0.33
+ },
+ {
+  "query": "draw samples with weights python",
+  "source": "code-sampling_examples",
+  "section": "sampling_examples \u2014 part 123",
+  "leakage": 0.0
+ },
+ {
+  "query": "numpy random choice no replacement",
+  "source": "code-sampling_examples",
+  "section": "sampling_examples \u2014 part 533",
+  "leakage": 0.0
+ },
+ {
+  "query": "gibbs sampler example code",
+  "source": "code-sampling_examples",
+  "section": "sampling_examples \u2014 part 663",
+  "leakage": 0.0
+ },
+ {
+  "query": "how to generate random data points from a custom probability distribution",
+  "source": "code-sampling_examples",
+  "section": "sampling_examples \u2014 part 344",
+  "leakage": 0.0
+ },
+ {
+  "query": "method to get samples when you can't integrate the distribution directly",
+  "source": "code-sampling_examples",
+  "section": "sampling_examples \u2014 part 8",
+  "leakage": 0.0
+ },
+ {
+  "query": "how does the math connect cross entropy to the classification loss function",
+  "source": "announcements",
+  "section": "2026-07-23 \u2014 Class canceled today due to family medical emergency",
+  "leakage": 0.57
+ },
+ {
+  "query": "what is the purpose of setting drop first to true in dummy variables",
+  "source": "code-data_preprocess",
+  "section": "data_preprocess \u2014 part 1",
+  "leakage": 0.43
+ },
+ {
+  "query": "averaging small bell curves over data points to get a smooth shape",
+  "source": "code-mle_kde_m",
+  "section": "mle_kde_m \u2014 part 4",
+  "leakage": 0.4
+ },
+ {
+  "query": "mcmc sampling algorithms explained simply",
+  "source": "code-sampling_examples",
+  "section": "sampling_examples \u2014 part 598",
+  "leakage": 0.2
+ },
+ {
+  "query": "how to normalize features to have zero mean and unit variance in sklearn",
+  "source": "code-data_preprocess",
+  "section": "data_preprocess \u2014 part 2",
+  "leakage": 0.38
+ },
+ {
+  "query": "importance sampling ratio formula",
+  "source": "code-sampling_examples",
+  "section": "sampling_examples \u2014 part 501",
+  "leakage": 0.25
+ },
+ {
+  "query": "how to do metropolis hastings step by step",
+  "source": "code-sampling_examples",
+  "section": "sampling_examples \u2014 part 430",
+  "leakage": 0.0
+ },
+ {
+  "query": "how do you find the combined result of two arrows visually using that box method",
+  "source": "Lecture2-DS4400-new",
+  "section": "Addition and Subtraction of Vectors",
+  "leakage": 0.22
+ },
+ {
+  "query": "filtering random numbers to match a probability curve",
+  "source": "code-sampling_examples",
+  "section": "sampling_examples \u2014 part 42",
+  "leakage": 0.0
+ },
+ {
+  "query": "how to calculate average when we sample from a different proposal distribution",
+  "source": "code-sampling_examples",
+  "section": "sampling_examples \u2014 part 115",
+  "leakage": 0.0
+ },
+ {
+  "query": "that algorithm where you change one coordinate at a time to get random samples",
+  "source": "code-sampling_examples",
+  "section": "sampling_examples \u2014 part 497",
+  "leakage": 0.0
+ }
+]
