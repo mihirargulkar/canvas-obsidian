@@ -154,3 +154,16 @@ def test_quiet_summary_names_what_was_checked():
     summary = changes.summarise({"DS4400": {"announcements": [], "assignments": []}}, 0)
     for word in ("announcements", "assignments", "files"):
         assert word in summary
+
+
+def test_local_tz_falls_back_without_credentials(monkeypatch):
+    """local_tz caught Exception, but get_client raises SystemExit, which isn't
+    one. Formatting any date on a machine with no .env killed the process
+    instead of falling back to the OS timezone."""
+    monkeypatch.delenv("CANVAS_TZ", raising=False)
+    monkeypatch.delenv("CANVAS_URL", raising=False)
+    monkeypatch.delenv("CANVAS_TOKEN", raising=False)
+    monkeypatch.setattr(canvas, "load_dotenv", lambda *a, **k: None)  # ignore a real .env
+    canvas.local_tz.cache_clear()
+    assert canvas.local_tz() is not None
+    canvas.local_tz.cache_clear()

@@ -150,12 +150,18 @@ def local_tz():
     name = os.getenv("CANVAS_TZ")
     if name:
         return ZoneInfo(name)
-    try:
-        tz = get_client().get_current_user().get_profile().get("time_zone")
-        if tz:
-            return ZoneInfo(tz)
-    except Exception:
-        pass
+    # Only ask Canvas if we could actually authenticate. get_client() calls
+    # sys.exit when credentials are missing, and SystemExit is not an Exception,
+    # so it used to sail straight through the handler below and kill the process:
+    # formatting a date without a .env took down the whole run.
+    load_dotenv()
+    if os.getenv("CANVAS_URL") and os.getenv("CANVAS_TOKEN"):
+        try:
+            tz = get_client().get_current_user().get_profile().get("time_zone")
+            if tz:
+                return ZoneInfo(tz)
+        except Exception:
+            pass
     return datetime.now().astimezone().tzinfo or ZoneInfo(DEFAULT_TZ)
 
 
