@@ -389,7 +389,7 @@ re-reported the entire term as new.
 divided by 70 synthetic ones. A perfect run printed "10/70, recall 14%." That
 number got investigated as a retrieval problem, concluded the metric was invalid,
 and motivated an LLM judge that then burned three runs against a daily quota.
-Corrected, it reads 0.60 and agrees with the judge. **A plausible story explained
+Corrected, it read 0.60 and agreed with the judge. **A plausible story explained
 a wrong number, and the story was believed for two days.**
 
 **Slug split-brain.** Two functions derived a course's short name differently, so

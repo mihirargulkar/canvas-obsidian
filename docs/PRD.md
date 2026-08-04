@@ -26,7 +26,7 @@ Everything stays on the student's machine as plain markdown. No hosting, no
 second subscription, no vendor holding the notes.
 
 **Current state:** v0.2 is running daily against two live courses. 2,077 lines
-of Python, 45 tests, seven MCP tools, and a working end to end pipeline. Section
+of Python, 54 tests, seven MCP tools, and a working end to end pipeline. Section
 5 states exactly which quality claims are measured and which are not.
 
 ## 2. Problem
@@ -97,7 +97,7 @@ background sync should pick up new material and say what changed.
 |---|---|
 | Custom web UI | Obsidian already renders wikilinks, backlinks and a graph view. Building that was Phase 5 of the original plan and was cut. |
 | Multi-user or hosted SaaS | Blocked by Instructure's terms. See section 3. |
-| Model fine tuning | Retrieval over 1,385 chunks does not need it. Evaluated and rejected. |
+| Model fine tuning | Retrieval over ~650 chunks per course does not need it. Evaluated and rejected. |
 | Doing the homework | The tool explains material. What a student does with that is between them and their integrity policy. |
 | Broad Canvas API coverage | Grades, quizzes, submissions. Other MCP servers do this well. Content understanding is the differentiator. |
 | Windows and Linux as first class | Code is cross platform; only macOS is tested and only macOS has the scheduled sync installer. |
@@ -120,33 +120,32 @@ asserted but not yet instrumented.
 | Generic concepts excluded from graph | 6/6 | **6/6** | `tools/eval_graph.py` |
 | Meaningful concept links | 6/6 | **4/6** | Same. Was 2/6; see note below. |
 | Fresh install footprint | < 250 MB | **~170 MB**, 74 packages | Down from 1.3 GB / 122 packages |
-| Test suite | Green in CI | **45 passing** | GitHub Actions on every push |
+| Test suite | Green in CI | **54 passing** | GitHub Actions on every push |
 | Re-sync cost when nothing changed | Zero model calls | **Zero** | Content hash cache, verified by run summary |
 
 **The hand set is a smoke test, not an instrument.** Ten queries carries a 95%
 interval of 72 to 100%, and one query moving one rank shifts MRR by 0.10. No
 fusion weights were ever tuned against it, deliberately.
 
-**Realistic queries score far lower, and that gap is the finding.** 1.00 on the
-hand set against 0.65 on the synthetic set is not a contradiction: the hand set
-was written by someone who knew what was in the corpus, so its queries share
-vocabulary with the notes. The synthetic queries were filtered to a mean
-vocabulary overlap of 0.15, which is closer to what a confused student types.
-**Treat 0.65 recall and 0.49 MRR as the honest headline number.** A student
-gets a useful passage in the top 5 about two times in three, and the right one
-first roughly half the time.
+**Realistic queries score lower than the hand set, and that gap is the point.**
+1.00 on the hand set against 0.90 on the synthetic one is not a contradiction:
+the hand set was written by someone who knew what was in the corpus, so its
+queries share vocabulary with the notes. Split by vocabulary overlap, the
+hardest third of the synthetic set still scores 0.88, so there is no cliff.
+**Treat 0.90 recall and 0.69 MRR as the headline.**
 
-**Exact source matching was written off too early, and that cost real time.** It
-was reported at 14%, investigated as a flaw in the metric, and replaced with an
-LLM judge that then spent three runs fighting a daily quota. The 14% was
-arithmetic: the scorer looped over the 10 hand written pairs and divided by the
-70 synthetic ones. Corrected, it reads 0.60 against the judge's 0.65, an
-agreement close enough that **the free, offline, deterministic metric is the one
-to use day to day.** The judge is now a cross check, not the instrument.
+**Two numbers on the way here were wrong, in different ways.** The first, 14%,
+was arithmetic: the scorer looped over the 10 hand written pairs and divided by
+the 70 synthetic ones. It was investigated as a retrieval failure and written up
+as a flaw in exact-source matching, which motivated an LLM judge that then spent
+three runs fighting a per-day quota. The second, a mean vocabulary overlap of
+0.15 cited as evidence the queries were hard, was measured against a corpus half
+composed of base64 image data; a question invented from gibberish shares no
+vocabulary with it. On real content it is 0.36.
 
-19 of 70 queries in the judged run are unscored because judge calls failed. Those
-failures are API errors, independent of whether retrieval succeeded, so the
-estimate over the remaining 51 is not biased by them. It is still a partial run.
+Both survived because each came with a plausible story. The eval now caches
+pooled relevance labels in the gold file, so scoring is free, deterministic and
+needs no judge at measurement time.
 
 **Concept links: 2/6 to 4/6, and the instrument is the limiting factor.**
 Bisecting the regression showed extraction was never at fault: "Learning Rate"
@@ -306,8 +305,8 @@ by reciprocal rank fusion. Deadline questions bypass all of it and hit the live
 API, because a stale index answering "when is the midterm" is the one failure
 mode with real consequences.
 
-**Live corpus (author's machine, 2026-08-03):** 2 courses, 74 notes, 1,385
-indexed chunks, 155 concept nodes, 219 edges.
+**Live corpus (author's machine, 2026-08-04):** 2 courses, 74 notes, 673
+indexed chunks, 178 concept nodes, 294 edges.
 
 ### MCP surface
 
@@ -376,12 +375,14 @@ correctly invalidates.
 
 ## 10. Open questions
 
-1. **Is the graph link regression a prompt problem or a scale problem?** 5/6 to
-   2/6 happened as the corpus grew from 135 to 155 concepts. Needs a bisect
-   before the prompt is touched.
-2. **What is real retrieval quality?** The 70 query synthetic set has never been
-   scored. Expectation: below the hand set, because the synthetic queries are
-   harder.
+1. **Can a 6 pair test tell improvement from noise?** No. Extraction is
+   nondeterministic: re-running the same prompt moved one gold pair from a direct
+   link to 3 hops with no code change. Every graph conclusion is currently drawn
+   from six pairs, which is the weakest instrument in the project.
+2. **How much of the retrieval score is the synthetic generator's bias?** The
+   queries come from the same model family that answers them, and the difficulty
+   filter is a vocabulary-overlap heuristic. Real student query logs would settle
+   it; there aren't any yet.
 3. **Does anyone finish setup?** Two API keys, a terminal, a client config, and
    optionally LibreOffice. Unknown drop off.
 4. **Is one shared vault right for a whole degree?** Currently scoped to the
