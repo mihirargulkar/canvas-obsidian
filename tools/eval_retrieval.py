@@ -18,12 +18,23 @@ GOLD with questions about your own material to evaluate your own corpus.
 import argparse
 import json
 import math
+import os
 import sys
+import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))  # repo root
 
 GOLD_COURSE = "DS4400"
+
+# NOT gemini-3.5-flash. That model's free tier is 20 requests PER DAY
+# (quotaId GenerateRequestsPerDayPerProjectPerModel-FreeTier), and extract.py
+# spends from the same budget on every sync, so a 14-request judging run could
+# never finish. Three separate attempts died this way and the failure reads as
+# a rate limit, not as "this eval cannot run on this model".
+JUDGE_MODEL = os.getenv("JUDGE_MODEL", "gemini-flash-latest")
+JUDGE_BATCH = 50            # pairs per request; 350 pairs -> 7 calls
+PASSAGE_CHARS = 400         # enough to judge topical relevance, keeps the call small
 
 # (question a student would actually ask, substring of the source that answers it)
 GOLD = [
@@ -66,20 +77,47 @@ def judge(pairs):
     from google import genai
     from canvas_vault.canvas import gemini_key
     client = genai.Client(api_key=gemini_key())
-    prompt = ("For each numbered pair, does the PASSAGE help answer the QUESTION "
-              "for a student studying this course? Be strict about topical "
-              "relevance but do not require it to be the single best passage.\n"
-              'Return ONLY a JSON array: [{"n": <number>, "relevant": true|false}]\n\n')
-    body = "\n\n".join(
-        f"[{i}] QUESTION: {q}\nPASSAGE: {d[:700]}" for i, (q, d) in enumerate(pairs))
-    r = client.models.generate_content(
-        model="gemini-3.5-flash", contents=[prompt, body],
-        config={"response_mime_type": "application/json"})
-    out = {}
-    for item in json.loads(r.text):
-        if isinstance(item.get("n"), int):
-            out[item["n"]] = bool(item.get("relevant"))
-    return out
+    # A bare boolean array, not [{"n":..,"relevant":..}]: the object form spends
+    # ~6x the output tokens and got truncated mid-array at 25 pairs, which
+    # surfaced as a JSONDecodeError and cost the whole batch.
+    prompt = (f"For each of the {len(pairs)} numbered pairs below, does the PASSAGE "
+              "help answer the QUESTION for a student studying this course? Be "
+              "strict about topical relevance but do not require it to be the "
+              "single best passage.\n"
+              f"Return ONLY a JSON array of exactly {len(pairs)} booleans, in order, "
+              "one per pair. No other text.\n\n")
+    body = "\n\n".join(f"[{i}] QUESTION: {q}\nPASSAGE: {d[:PASSAGE_CHARS]}"
+                       for i, (q, d) in enumerate(pairs))
+    for attempt in range(5):
+        try:
+            r = client.models.generate_content(
+                model=JUDGE_MODEL, contents=[prompt, body],
+                config={"response_mime_type": "application/json",
+                        "max_output_tokens": 8192,
+                        # This is a thinking model and it spent 800+ thought
+                        # tokens on a 14-token prompt. On a 50-pair batch the
+                        # thoughts consumed the whole output budget and the
+                        # response came back with text=None. A binary relevance
+                        # call does not need deliberation. (0 is rejected by the
+                        # API for this model; 128 is the smallest that works.)
+                        "thinking_config": {"thinking_budget": 128}})
+            if r.text is None:
+                raise ValueError(f"empty response ({r.candidates[0].finish_reason})")
+            got = json.loads(r.text)
+            # Positional answers mean a dropped item silently shifts every verdict
+            # after it. Refuse the batch instead of scoring a misaligned one.
+            if not isinstance(got, list) or len(got) != len(pairs):
+                raise ValueError(f"judge returned {len(got)} verdicts for {len(pairs)} pairs")
+            return {i: bool(v) for i, v in enumerate(got)}
+        except Exception as e:
+            msg = str(e)
+            transient = isinstance(e, (json.JSONDecodeError, ValueError)) or any(
+                c in msg for c in ("503", "429", "500", "UNAVAILABLE", "RESOURCE_EXHAUSTED"))
+            if not transient or attempt == 4:
+                raise
+            wait = min(60, 4 * 2 ** attempt)
+            print(f"    transient ({type(e).__name__}) retry in {wait}s")
+            time.sleep(wait)
 
 
 def evaluate_judged(course, k, gold):
@@ -94,15 +132,17 @@ def evaluate_judged(course, k, gold):
         for rank, d in enumerate(docs):
             batch.append((question, d)); meta.append((question, rank))
     verdicts, unjudged = {}, set()
-    for start in range(0, len(batch), 25):
+    print(f"  judging {len(batch)} pairs in {math.ceil(len(batch)/JUDGE_BATCH)} "
+          f"call(s) to {JUDGE_MODEL}")
+    for start in range(0, len(batch), JUDGE_BATCH):
         try:
-            got = judge(batch[start:start + 25])
+            got = judge(batch[start:start + JUDGE_BATCH])
         except Exception as e:
             # A failed judge call is missing data, not evidence of a miss. Counting
             # it as a miss makes a rate limit look like broken retrieval — which is
             # exactly the confusion this eval exists to prevent.
             print(f"  judge batch {start}: {type(e).__name__} {str(e)[:50]} (excluded)")
-            unjudged.update(range(start, min(start + 25, len(batch))))
+            unjudged.update(range(start, min(start + JUDGE_BATCH, len(batch))))
             got = {}
         for i, v in got.items():
             verdicts[start + i] = v

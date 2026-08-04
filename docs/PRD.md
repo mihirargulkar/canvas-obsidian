@@ -111,17 +111,32 @@ asserted but not yet instrumented.
 
 | Metric | Target | Current | Method |
 |---|---|---|---|
-| Retrieval recall@5 | ≥ 0.90 | **1.00** (10/10) | Hand labelled gold set, `tools/eval_retrieval.py` |
-| Retrieval MRR | ≥ 0.85 | **0.90** sentence-transformers / **0.85** static + BM25 | Same |
+| Retrieval recall@5, hand set | ≥ 0.90 | **1.00** (10/10) | Hand labelled gold set, `tools/eval_retrieval.py` |
+| Retrieval MRR, hand set | ≥ 0.85 | **0.90** sentence-transformers / **0.85** static + BM25 | Same |
+| Retrieval recall@5, realistic queries | ≥ 0.75 | **0.65** (33/51, CI 51-76%) | 70 query synthetic set, LLM judge, `--judged` |
+| Retrieval MRR, realistic queries | ≥ 0.60 | **0.49** | Same |
 | Generic concepts excluded from graph | 6/6 | **6/6** | `tools/eval_graph.py` |
 | Meaningful concept links | 6/6 | **2/6** | Same. See regression note below. |
 | Fresh install footprint | < 250 MB | **~170 MB**, 74 packages | Down from 1.3 GB / 122 packages |
 | Test suite | Green in CI | **45 passing** | GitHub Actions on every push |
 | Re-sync cost when nothing changed | Zero model calls | **Zero** | Content hash cache, verified by run summary |
 
-**The recall and MRR numbers carry a 95% confidence interval of 72 to 100%.**
-Ten queries is a smoke test, not an instrument: one query moving one rank shifts
-MRR by 0.10. No fusion weights were ever tuned against it, deliberately.
+**The hand set is a smoke test, not an instrument.** Ten queries carries a 95%
+interval of 72 to 100%, and one query moving one rank shifts MRR by 0.10. No
+fusion weights were ever tuned against it, deliberately.
+
+**Realistic queries score far lower, and that gap is the finding.** 1.00 on the
+hand set against 0.65 on the synthetic set is not a contradiction: the hand set
+was written by someone who knew what was in the corpus, so its queries share
+vocabulary with the notes. The synthetic queries were filtered to a mean
+vocabulary overlap of 0.15, which is closer to what a confused student types.
+**Treat 0.65 recall and 0.49 MRR as the honest headline number.** A student
+gets a useful passage in the top 5 about two times in three, and the right one
+first roughly half the time.
+
+19 of 70 queries are unscored because judge calls failed. Those failures are API
+errors, independent of whether retrieval succeeded, so the estimate over the
+remaining 51 is not biased by them. It is still a partial run.
 
 **Concept link quality has regressed and is the top known gap.** When the
 extraction prompt was tuned, the gold set scored 5/6. On the current 155 concept
@@ -134,8 +149,8 @@ corpus grew. Owner: section 12, R1.
 
 | Claim | Why it is not measured | Plan |
 |---|---|---|
-| Answer quality (not just retrieval) | No judged eval completed. An LLM-as-judge run exhausted Gemini's daily quota with 63 of 70 queries unscored. | Re-run `eval_retrieval.py --judged` on a reset quota |
-| Retrieval on realistic queries | The 70 query synthetic set exists (mean vocabulary overlap 0.15, so the queries do not parrot the source) but has never been scored end to end | Same run |
+| Answer quality (not just retrieval) | The judge scores whether a retrieved passage is relevant, not whether the assistant's final answer is correct | Sample answers, score for grounding and citation accuracy |
+| A complete judged run | Both free tier models are capped per day (20/day for `gemini-3.5-flash`), and the judge competes with transcription for that budget | Run the 7 judge calls on a day with no sync, or move the judge to a paid key |
 | Transcription fidelity | Spot checked by hand across three decks, never scored | Sample 20 slides, score against source |
 | Time saved per student | One user, no baseline | Deferred until there are users to ask |
 
@@ -376,9 +391,12 @@ installer is launchd only.
 **R1. Fix concept link recall (next).** Bisect the 5/6 to 2/6 regression. Exit
 criterion: back to 5/6 with generic exclusion still 6/6.
 
-**R2. Get a trustworthy retrieval number.** Run the judged eval over all 70
-synthetic queries on a fresh quota. Report with a confidence interval. Exit
-criterion: a number that survives the "did it actually run" check.
+**R2. Raise realistic-query recall from 0.65.** The measurement now exists, so
+this is an improvement task rather than an instrumentation one. Candidates in
+order of laziness: tune the RRF fusion weights (never tuned, because the hand
+set was too small to tune against and now there is a set big enough), revisit
+chunk boundaries, then consider a reranker. Exit criterion: recall@5 ≥ 0.75 with
+the confidence interval clear of the current one.
 
 **R3. Close the concurrency gap.** A lockfile between the scheduled job and MCP
 `refresh`, and atomic cache writes.
