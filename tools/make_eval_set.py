@@ -25,6 +25,7 @@ import argparse
 import json
 import random
 import re
+from collections import Counter
 import sys
 from pathlib import Path
 
@@ -53,6 +54,35 @@ Critical rules:
 
 Return ONLY a JSON array of objects: [{"n": <excerpt number>, "query": "..."}]
 """
+
+
+def kind(source):
+    """Coarse material type, used to keep the sample balanced."""
+    s = source.lower()
+    for prefix, name in (("code-", "notebook"), ("hw-", "homework")):
+        if s.startswith(prefix):
+            return name
+    for needle, name in (("announce", "admin"), ("syllab", "admin"),
+                         ("poll", "poll"), ("solution", "solution")):
+        if needle in s:
+            return name
+    return "lecture"
+
+
+def stratify(pool):
+    """Round-robin across material types instead of sampling the corpus flat.
+
+    A flat sample looked fine and wasn't: notebooks produce long chunks, the
+    generator only considers chunks over 400 chars, and 52 of the first 70
+    queries came out of notebooks — most from a single sampling notebook. The
+    set was measuring one file. Round-robin gives every type a turn, so a type
+    with few long chunks still gets represented.
+    """
+    from itertools import zip_longest
+    buckets = {}
+    for item in pool:
+        buckets.setdefault(kind(item[1]["source"]), []).append(item)
+    return [x for row in zip_longest(*buckets.values()) for x in row if x]
 
 
 def leakage(query, chunk):
@@ -88,8 +118,9 @@ def main():
         sys.exit(f"no chunks for {a.course} — build the index first")
     random.seed(a.seed)
     random.shuffle(pool)
-    pool = pool[:int(a.n * 1.6)]        # over-sample; filtering will drop some
-    print(f"{len(pool)} candidate chunks from {a.course}")
+    pool = stratify(pool)[:int(a.n * 1.6)]   # over-sample; filtering will drop some
+    print(f"{len(pool)} candidate chunks from {a.course}: "
+          f"{dict(Counter(kind(m['source']) for _, m in pool))}")
 
     from google import genai
     client = genai.Client(api_key=gemini_key())

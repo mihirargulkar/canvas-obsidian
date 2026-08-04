@@ -51,6 +51,28 @@ GOLD = [
 ]
 
 
+def accepted(entry):
+    """Source substrings that count as a correct hit for this query.
+
+    Single-source ground truth is wrong for this corpus. Every topic appears in
+    the lecture, that lecture's polls, and usually a notebook, so a query
+    generated from the notebook scored zero when retrieval returned the lecture
+    on the same topic. 23 of 28 apparent misses were exactly that.
+
+    `relevant` is a pooled judgement set, filled in by --relabel and cached in
+    the gold file so scoring stays free. The generating source is relevant by
+    construction, so it seeds the pool at no cost.
+    """
+    return list(dict.fromkeys([entry["source"]] + entry.get("relevant", [])))
+
+
+def unlabelled(entry, sources):
+    """Retrieved sources this query has no verdict for either way."""
+    known = {s.lower() for s in accepted(entry)} | {
+        s.lower() for s in entry.get("irrelevant", [])}
+    return [s for s in sources if s.lower() not in known]
+
+
 def load_gold(course, path):
     """Hand written pairs by default; the larger synthetic set if it exists.
 
@@ -61,8 +83,8 @@ def load_gold(course, path):
     """
     if path and Path(path).exists():
         rows = json.loads(Path(path).read_text())
-        return [(r["query"], r["source"]) for r in rows], f"{path} (synthetic)"
-    return GOLD, "built-in (hand written)"
+        return rows, f"{path} (synthetic)"
+    return [{"query": q, "source": s} for q, s in GOLD], "built-in (hand written)"
 
 
 def judge(pairs):
@@ -126,7 +148,8 @@ def evaluate_judged(course, k, gold):
     col = chat._collection()
     hits = rr = 0
     batch, meta = [], []
-    for question, _ in gold:
+    for entry in gold:
+        question = entry["query"]
         res = col.query(query_texts=[question], n_results=k, where={"course": course})
         docs = res["documents"][0]
         for rank, d in enumerate(docs):
@@ -152,7 +175,8 @@ def evaluate_judged(course, k, gold):
             incomplete.add(question)
         elif verdicts.get(idx):
             per_query.setdefault(question, rank + 1)
-    scored = [q for q, _ in gold if q not in incomplete or q in per_query]
+    scored = [e["query"] for e in gold
+              if e["query"] not in incomplete or e["query"] in per_query]
     for question in scored:
         if question in per_query:
             hits += 1; rr += 1 / per_query[question]
@@ -181,31 +205,86 @@ def wilson(hits, n, z=1.96):
 def evaluate(course, k, gold=None, label="built-in"):
     import canvas_vault.chat as chat
     col = chat._collection()
-    gold = gold or GOLD
-    hits, rr, rows = 0, 0.0, []
+    gold = gold or [{"query": q, "source": s} for q, s in GOLD]
+    hits, rr, rows, gaps = 0, 0.0, [], 0
     # Iterate `gold`, NOT the module-level GOLD. This scored the 10 hand written
     # pairs and then divided by len(gold)=70, so a perfect run printed "10/70,
     # recall 14%". That number got investigated as a retrieval failure and
     # written up as a flaw in exact-source matching. It was arithmetic.
-    for question, expected in gold:
+    for entry in gold:
+        question = entry["query"]
+        ok = accepted(entry)
         res = col.query(query_texts=[question], n_results=k,
                         where={"course": course})
         sources = [m["source"] for m in res["metadatas"][0]]
         rank = next((i + 1 for i, s in enumerate(sources)
-                     if expected.lower() in s.lower()), None)
+                     if any(e.lower() in s.lower() for e in ok)), None)
         if rank:
             hits += 1
             rr += 1 / rank
-        rows.append((question, expected, rank, sources[0] if sources else "—"))
+        else:
+            gaps += bool(unlabelled(entry, sources))
+        rows.append((question, ok[0], rank, sources[0] if sources else "—"))
 
     n = len(gold)
     lo, hi = wilson(hits, n)
     print(f"{course}: recall@{k} = {hits}/{n} ({hits / n:.0%}, 95% CI {lo:.0%}-{hi:.0%})"
-          f"   MRR = {rr / n:.2f}   [{label}]\n")
+          f"   MRR = {rr / n:.2f}   [{label}]")
+    if gaps:
+        # An unlabelled retrieved source is not evidence of a miss. Say so rather
+        # than letting a thin judgement pool read as poor retrieval.
+        print(f"  note: {gaps} miss(es) returned sources with no relevance verdict. "
+              f"This is a LOWER BOUND. Run --relabel to judge them once.")
+    print()
     for q, exp, rank, top in (rows if n <= 15 else []):
         mark = f"PASS rank {rank}" if rank == 1 else (f"ok   rank {rank}" if rank else "MISS      ")
         print(f"  {mark}  {q[:44]:44} want~{exp[:22]:22} got:{top[:28]}")
     return hits, n
+
+
+def relabel(course, k, gold, path):
+    """Judge every retrieved source with no verdict yet and cache the result.
+
+    Pooled relevance judgements, the way IR test collections are actually built:
+    label a (query, source) pair once, reuse it forever. Scoring then costs
+    nothing, and the pool deepens as new configurations surface new documents
+    rather than being fixed to whatever the first configuration happened to find.
+    """
+    import canvas_vault.chat as chat
+    col = chat._collection()
+    todo = []
+    for entry in gold:
+        res = col.query(query_texts=[entry["query"]], n_results=k,
+                        where={"course": course})
+        seen = set()
+        for src, doc in zip((m["source"] for m in res["metadatas"][0]),
+                            res["documents"][0]):
+            if src in seen:
+                continue
+            seen.add(src)
+            if unlabelled(entry, [src]):
+                todo.append((entry, src, doc))
+    if not todo:
+        print("nothing to label; the pool already covers every retrieved source")
+        return 0, 0
+    print(f"labelling {len(todo)} new (query, source) pair(s) in "
+          f"{math.ceil(len(todo)/JUDGE_BATCH)} call(s) to {JUDGE_MODEL}")
+    done = 0
+    for start in range(0, len(todo), JUDGE_BATCH):
+        group = todo[start:start + JUDGE_BATCH]
+        try:
+            got = judge([(e["query"], d) for e, _, d in group])
+        except Exception as e:
+            print(f"  batch {start}: {type(e).__name__} {str(e)[:50]} (left unlabelled)")
+            continue
+        for i, (entry, src, _) in enumerate(group):
+            if i not in got:
+                continue
+            entry.setdefault("relevant" if got[i] else "irrelevant", []).append(src)
+            done += 1
+        Path(path).write_text(json.dumps(gold, indent=1))   # checkpoint each batch
+    print(f"labelled {done}/{len(todo)}; written to {path}")
+    return done, len(todo)
 
 
 def main():
@@ -216,12 +295,20 @@ def main():
                    help="score with an LLM relevance judge instead of exact source match")
     p.add_argument("--gold", default="tools/eval_queries.json",
                    help="synthetic gold set to use if present")
+    p.add_argument("--relabel", action="store_true",
+                   help="judge retrieved sources with no verdict yet and cache them "
+                        "in the gold file, so later runs score for free")
     a = p.parse_args()
     if a.course != GOLD_COURSE:
         print(f"WARNING: gold set is written for {GOLD_COURSE}; results for "
               f"{a.course} are meaningless until you replace GOLD.\n")
     try:
         gold, label = load_gold(a.course, a.gold)
+        if a.relabel:
+            if not Path(a.gold).exists():
+                sys.exit(f"--relabel needs a gold file to write to; {a.gold} not found")
+            relabel(a.course, a.k, gold, a.gold)
+            print()
         if a.judged:
             hits, n = evaluate_judged(a.course, a.k, gold)
         else:

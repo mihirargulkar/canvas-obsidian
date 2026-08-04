@@ -3,6 +3,7 @@
 Each of these shipped once. They're grouped here so the failure modes stay
 described in one place rather than scattered across the suite.
 """
+import json
 import pathlib
 
 from canvas_vault import canvas, changes, chat, extract
@@ -191,9 +192,88 @@ def test_eval_scorer_uses_the_gold_set_it_was_given():
     import canvas_vault.chat as chat
     real, chat._collection = chat._collection, lambda: FakeCol()
     try:
-        gold = [(f"q{i}", "Lecture1") for i in range(4)]
+        gold = [{"query": f"q{i}", "source": "Lecture1"} for i in range(4)]
         hits, n = mod.evaluate("DS4400", 5, gold=gold, label="test")
     finally:
         chat._collection = real
     assert seen == ["q0", "q1", "q2", "q3"], "must score the gold set it was passed"
     assert (hits, n) == (4, 4), "numerator and denominator must come from one set"
+
+
+def _eval_tool():
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(
+        "eval_retrieval", pathlib.Path(__file__).parent.parent / "tools" / "eval_retrieval.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def test_a_different_source_on_the_same_topic_counts_as_a_hit():
+    """Single-source ground truth marked correct answers wrong. Every topic lives
+    in the lecture, its polls and a notebook, so a query generated from the
+    notebook scored zero when retrieval returned the lecture. 23 of 28 apparent
+    misses were that, which is most of the gap between the exact-source score and
+    the judge's."""
+    er = _eval_tool()
+    entry = {"query": "monte carlo intuition", "source": "code-sampling_examples",
+             "relevant": ["Lecture12-DS4400"]}
+    assert er.accepted(entry) == ["code-sampling_examples", "Lecture12-DS4400"]
+
+    class FakeCol:
+        def query(self, query_texts, n_results, where):
+            return {"metadatas": [[{"source": "Lecture12-DS4400"}]], "documents": [[""]]}
+
+    import canvas_vault.chat as chat
+    real, chat._collection = chat._collection, lambda: FakeCol()
+    try:
+        hits, n = er.evaluate("DS4400", 5, gold=[entry], label="t")
+    finally:
+        chat._collection = real
+    assert (hits, n) == (1, 1), "an accepted alternate source must score as a hit"
+
+
+def test_unlabelled_sources_are_reported_not_scored_as_misses(capsys):
+    """A retrieved source with no verdict either way is missing data. Reporting
+    the number as final would repeat the mistake that produced a believed 37%."""
+    er = _eval_tool()
+
+    class FakeCol:
+        def query(self, query_texts, n_results, where):
+            return {"metadatas": [[{"source": "Lecture99"}]], "documents": [[""]]}
+
+    import canvas_vault.chat as chat
+    real, chat._collection = chat._collection, lambda: FakeCol()
+    try:
+        er.evaluate("DS4400", 5, gold=[{"query": "q", "source": "Lecture1"}], label="t")
+    finally:
+        chat._collection = real
+    assert "LOWER BOUND" in capsys.readouterr().out
+
+
+def test_relabel_caches_verdicts_and_is_idempotent(tmp_path):
+    """Pooled judgements: label a (query, source) pair once, reuse forever. A
+    second pass must find nothing to do, or every run re-spends the quota this
+    exists to avoid."""
+    er = _eval_tool()
+    gold_file = tmp_path / "gold.json"
+    gold = [{"query": "monte carlo", "source": "code-sampling"}]
+    gold_file.write_text(json.dumps(gold))
+
+    class FakeCol:
+        def query(self, query_texts, n_results, where):
+            return {"metadatas": [[{"source": "Lecture12"}, {"source": "Lecture3"}]],
+                    "documents": [["monte carlo content", "unrelated"]]}
+
+    er.judge = lambda pairs: {i: i == 0 for i in range(len(pairs))}
+    import canvas_vault.chat as chat
+    real, chat._collection = chat._collection, lambda: FakeCol()
+    try:
+        done, total = er.relabel("DS4400", 5, gold, str(gold_file))
+        assert (done, total) == (2, 2)
+        assert gold[0]["relevant"] == ["Lecture12"]
+        assert gold[0]["irrelevant"] == ["Lecture3"]
+        again, _ = er.relabel("DS4400", 5, json.loads(gold_file.read_text()), str(gold_file))
+        assert again == 0, "already-labelled pairs must not be re-judged"
+    finally:
+        chat._collection = real

@@ -128,9 +128,12 @@ this repo's own corpus are recall@5 of 0.60 and MRR 0.38, and the hand written s
 10/10 because those questions were written by someone who already knew what was in the
 notes. That gap is the honest one.
 
-There's also `--judged`, which asks a model whether each result is actually relevant
-instead of matching filenames. It agrees with the free version within about 5 points, so
-it isn't worth the API quota unless you're chasing something specific.
+That 0.60 is a lower bound, and the script says so when it can't tell. Each question is
+tagged with the one chunk it came from, but the same topic usually appears in the
+lecture, its polls and a notebook, so retrieval often returns a perfectly good answer
+from a different file and gets marked wrong. Run `--relabel` once and a model decides
+which other sources are acceptable, then caches the answer in the gold file so every run
+after that is free.
 
 Both gold sets are written for one course. Swap in your own if you want them to mean
 anything for your classes.

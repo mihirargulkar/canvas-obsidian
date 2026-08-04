@@ -400,12 +400,25 @@ installer is launchd only.
 **R1. Fix concept link recall (next).** Bisect the 5/6 to 2/6 regression. Exit
 criterion: back to 5/6 with generic exclusion still 6/6.
 
-**R2. Raise realistic-query recall from 0.65.** The measurement now exists, so
-this is an improvement task rather than an instrumentation one. Candidates in
-order of laziness: tune the RRF fusion weights (never tuned, because the hand
-set was too small to tune against and now there is a set big enough), revisit
-chunk boundaries, then consider a reranker. Exit criterion: recall@5 ≥ 0.75 with
-the confidence interval clear of the current one.
+**R2. Finish labelling, then raise recall.** Two steps, in order.
+
+*First, fix the instrument.* Error analysis on the 28 misses found 23 of them
+are the same artefact: the query was generated from a notebook, retrieval
+returned the lecture covering that exact topic, and single-source ground truth
+called it wrong. `--relabel` now judges retrieved sources once and caches the
+verdicts in the gold file, so scoring stays free afterwards. 195 pairs, 4 calls.
+The gold set was also 52/70 notebook-derived because notebooks produce long
+chunks and the generator filters on length; sampling is now stratified by
+material type. Regenerate after relabelling.
+
+*Then improve retrieval*, in order of laziness: tune the RRF fusion weights
+(never tuned, because no gold set was big enough to tune against without
+overfitting), prepend the lecture and section title to chunk text before
+embedding, revisit chunk boundaries, then consider a reranker. Exit criterion:
+recall@5 ≥ 0.75 on the relabelled set with the interval clear of the baseline.
+
+Do not tune against the current 0.60. Optimising toward it means teaching the
+ranker to prefer notebooks over lectures on the same topic, which is not a goal.
 
 **R3. Close the concurrency gap.** A lockfile between the scheduled job and MCP
 `refresh`, and atomic cache writes.
