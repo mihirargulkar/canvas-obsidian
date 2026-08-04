@@ -77,8 +77,29 @@ def recipe() -> str:
     """Fingerprint of the transcription inputs other than the file itself.
 
     Without this, editing PROMPT or switching GEMINI_MODEL silently reuses every
-    old transcription — the same trap extract.pass1 already keys around."""
+    old transcription — the same trap extract.pass1 already keys around.
+
+    Deliberately does NOT cover extract_text(): text files are re-extracted on
+    every run (see ingest_bytes), so changing that function needs no cache bust,
+    and folding it in here would invalidate every paid vision transcription."""
     return hashlib.sha256((PROMPT + MODEL).encode()).hexdigest()[:12]
+
+
+# Students paste screenshots into notebook markdown cells, which embeds the whole
+# PNG as a base64 data URI. One notebook came to 847 KB and produced 687 chunks,
+# 51% of the entire course index, of image bytes sliced at arbitrary offsets.
+# Bounded by the closing paren / a non-base64 character, so this can't run on
+# into real prose the way a greedy payload match would.
+_DATA_URI_IMG = re.compile(r"!\[[^\]]*\]\(\s*data:[^)]*\)")
+_DATA_URI_RAW = re.compile(r"data:[\w.+-]+/[\w.+-]+;base64,[A-Za-z0-9+/=]{100,}")
+
+
+def strip_data_uris(text: str) -> str:
+    """Replace embedded base64 payloads with a short placeholder.
+
+    The alt text and surrounding prose are the searchable part of an image; the
+    bytes are noise that crowds out real content and costs embedding time."""
+    return _DATA_URI_RAW.sub("(embedded image)", _DATA_URI_IMG.sub("(embedded image)", text))
 
 
 def _migrate_legacy_cache() -> int:
@@ -170,8 +191,8 @@ def extract_text(path: Path) -> str:
             if not src:
                 continue
             parts.append(f"```python\n{src}\n```" if cell.get("cell_type") == "code" else src)
-        return "\n\n".join(parts)
-    return path.read_text(errors="ignore")
+        return strip_data_uris("\n\n".join(parts))
+    return strip_data_uris(path.read_text(errors="ignore"))
 
 
 def _sectioned(title: str, text: str, max_chars: int = 1200) -> str:

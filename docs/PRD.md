@@ -113,9 +113,10 @@ asserted but not yet instrumented.
 |---|---|---|---|
 | Retrieval recall@5, hand set | ≥ 0.90 | **1.00** (10/10) | Hand labelled gold set, `tools/eval_retrieval.py` |
 | Retrieval MRR, hand set | ≥ 0.85 | **0.90** sentence-transformers / **0.85** static + BM25 | Same |
-| Retrieval recall@5, realistic queries | ≥ 0.75 | **0.60** (42/70, CI 48-71%) | 70 query synthetic set, exact source match |
-| Retrieval MRR, realistic queries | ≥ 0.60 | **0.38** | Same |
-| Same, cross checked with an LLM judge | agreement within 10 pts | **0.65** (33/51), MRR 0.49 | `--judged` |
+| Retrieval recall@5, realistic queries | ≥ 0.75 | **0.90** (90/100, CI 83-94%) | 100 query synthetic set, pooled relevance labels |
+| Retrieval MRR, realistic queries | ≥ 0.60 | **0.69** | Same |
+| Recall@5 on the hardest third | no cliff | **0.88** (n=16, low-leakage queries) | Same, split by vocabulary overlap |
+| Index size per course | no bloat | **642 chunks** (was 1,339) | 51% was base64 image data |
 | Generic concepts excluded from graph | 6/6 | **6/6** | `tools/eval_graph.py` |
 | Meaningful concept links | 6/6 | **2/6** | Same. See regression note below. |
 | Fresh install footprint | < 250 MB | **~170 MB**, 74 packages | Down from 1.3 GB / 122 packages |

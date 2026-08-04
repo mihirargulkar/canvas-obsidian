@@ -318,8 +318,15 @@ BM25) look far better than it is. Every candidate is scored on how much of its
 vocabulary already appears in the target chunk, and anything above 0.6 is
 discarded. Mean overlap ended up at 0.15.
 
-That gap is real and measured: **1.00 recall on the hand set, 0.60 on the
-synthetic one.** The hand set was written by someone who already knew the corpus.
+That gap is real and measured: **1.00 recall on the hand set, 0.90 on the
+synthetic one, and 0.88 on its hardest third.** The hand set was written by
+someone who already knew the corpus.
+
+One trap inside the trap: the first synthetic set reported a mean overlap of
+0.15, which looked excellent. It was flattered by junk. Half that corpus was
+base64 image data, and a question invented from gibberish shares no vocabulary
+with it. Cleaning the corpus moved overlap to a more honest 0.36. **A metric can
+look good because the data is broken.**
 
 ### LLM-as-judge
 
@@ -403,9 +410,10 @@ lookup and removes most of the dependency tree.
 **Why not fine-tune?** This is a search problem. A fine-tuned model would
 memorise one student's corpus, need retraining weekly, and lose citations.
 
-**How do you know it works?** recall@5 of 0.60 and MRR 0.38 on 70 synthetic
-queries, cross-checked against an LLM judge at 0.65. The concept graph is scored
-separately and currently fails 4 of 6 link tests, which is the top open bug.
+**How do you know it works?** recall@5 of 0.90 and MRR 0.69 on 100 synthetic
+queries with pooled relevance labels, holding at 0.88 on the hardest third. The
+concept graph is scored separately and currently fails 4 of 6 link tests, which
+is the top open bug.
 
 **What would you do next?** Fix the concept-link regression, then tune the RRF
 fusion weights, which were never tuned because until now no gold set was big

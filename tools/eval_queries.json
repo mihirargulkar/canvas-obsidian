@@ -1,422 +1,1122 @@
 [
  {
-  "query": "how to draw random samples from a weird probability distribution",
-  "source": "code-sampling_examples",
-  "section": "sampling_examples \u2014 part 77",
-  "leakage": 0.0
+  "query": "where is the math linking binary classification loss to informational entropy",
+  "source": "announcements",
+  "section": "2026-07-23 \u2014 Class canceled today due to family medical emergency",
+  "leakage": 0.25,
+  "irrelevant": [
+   "Lecture15-DS4400",
+   "Lecture13-DS4400-class-new",
+   "Lecture13-polls",
+   "Lecture17-DS4400"
+  ]
  },
  {
-  "query": "monte carlo approximation intuition",
-  "source": "code-sampling_examples",
-  "section": "sampling_examples \u2014 part 419",
-  "leakage": 0.0
- },
- {
-  "query": "what does computer sampling actually do",
-  "source": "code-sampling_examples",
-  "section": "sampling_examples \u2014 part 295",
-  "leakage": 0.33
- },
- {
-  "query": "sampling from posterior distribution without integration",
-  "source": "code-sampling_examples",
-  "section": "sampling_examples \u2014 part 309",
-  "leakage": 0.17
- },
- {
-  "query": "how to stop lasso from randomly picking one of two highly correlated features",
-  "source": "Lectura6-DS4400",
-  "section": "Elastic Net Penalty (Combines Both Lasso and Ridge)",
-  "leakage": 0.4
- },
- {
-  "query": "is there an easier way to sample than metropolis hastings",
-  "source": "code-sampling_examples",
-  "section": "sampling_examples \u2014 part 301",
-  "leakage": 0.0
- },
- {
-  "query": "mean value of discrete distribution with different probabilities",
+  "query": "how to calculate the mean and spread of a binary event like coin tossing",
   "source": "Lecture9-DS4400",
-  "section": "Categorical (In Theory)",
-  "leakage": 0.33
+  "section": "Bernoulli (In Theory)",
+  "leakage": 0.25,
+  "irrelevant": [
+   "Lecture13-DS4400-class-new",
+   "hw-Homework#3"
+  ],
+  "relevant": [
+   "Lecture10-11-DS4400"
+  ]
  },
  {
-  "query": "formula to squish real numbers between 0 and 1 for binary classification",
-  "source": "Lecture15-DS4400",
-  "section": "Logistic Function",
-  "leakage": 0.44
+  "query": "hyperparameter for regulating margin errors in maximum margin classifiers",
+  "source": "code-SVM_Walkthrough",
+  "section": "SVM_Walkthrough \u2014 part 1",
+  "leakage": 0.29,
+  "irrelevant": [
+   "Lecture16-DS4400 copy"
+  ]
  },
  {
-  "query": "curse of dimensionality in sampling",
-  "source": "code-sampling_examples",
-  "section": "sampling_examples \u2014 part 608",
-  "leakage": 0.33
+  "query": "why does the chain rule matter for gradient descent optimization",
+  "source": "Lecture1-polls",
+  "section": "Activity Results",
+  "leakage": 0.33,
+  "irrelevant": [
+   "hw-DS4400_HW2",
+   "Lecture4-DS4400-new",
+   "Lecture4-polls"
+  ],
+  "relevant": [
+   "Lecture1-DS4400"
+  ]
  },
  {
-  "query": "why do we normalize probability distributions before sampling",
-  "source": "code-sampling_examples",
-  "section": "sampling_examples \u2014 part 496",
-  "leakage": 0.2
+  "query": "what is the policy for using chatgpt on the programming exam",
+  "source": "hw-Midterm2-coding",
+  "section": "Take Home Coding Exam 2: From Residuals to Classification",
+  "leakage": 0.4,
+  "irrelevant": [
+   "syllabus",
+   "announcements",
+   "hw-Midterm1-coding"
+  ]
  },
  {
-  "query": "how to do random sampling with replacement in python",
-  "source": "code-sampling_examples",
-  "section": "sampling_examples \u2014 part 619",
-  "leakage": 0.25
+  "query": "how to differentiate a logarithm that is not base e",
+  "source": "DS4400_HW0_solutions",
+  "section": "Part 1 \u2014 Derivatives (60 points)",
+  "leakage": 0.4,
+  "irrelevant": [
+   "Lecture13-DS4400-class-new",
+   "Lecture1-DS4400",
+   "Lecture13-polls",
+   "Lecture1-polls"
+  ],
+  "relevant": [
+   "Lecture15-DS4400"
+  ]
  },
  {
-  "query": "rejection sampling proposal function helper",
-  "source": "code-sampling_examples",
-  "section": "sampling_examples \u2014 part 371",
-  "leakage": 0.2
+  "query": "how do I join the live online lecture sessions",
+  "source": "announcements",
+  "section": "2026-06-28 \u2014 Welcome to DS 4400: Machine Learning and Data Mining (Summer B)",
+  "leakage": 0.6,
+  "relevant": [
+   "syllabus"
+  ]
  },
  {
-  "query": "what does it mean when different inputs give the exact same prediction",
-  "source": "DS4400_HW1_solutions",
-  "section": "Part 2 \u2014 Conceptual Understanding",
-  "leakage": 0.57
+  "query": "mathematical measure of unexpectedness",
+  "source": "Lecture13-DS4400-class-new",
+  "section": "1. Self-Information (Surprisal)",
+  "leakage": 0.0,
+  "irrelevant": [
+   "Lecture13-polls",
+   "Lecture4-DS4400-new",
+   "Lecture17-DS4400"
+  ],
+  "relevant": [
+   "Lecture5-DS4400"
+  ]
  },
  {
-  "query": "vector norm that just counts how many elements aren't zero",
+  "query": "how to calculate different types of vector magnitudes in python",
+  "source": "code-norms",
+  "section": "norms \u2014 part 1",
+  "leakage": 0.5,
+  "irrelevant": [
+   "code-norms_matcalc",
+   "Lecture2-DS4400-new"
+  ],
+  "relevant": [
+   "code-numpy_examples"
+  ]
+ },
+ {
+  "query": "how to get the individual probability of one variable when you have their shared distribution",
+  "source": "Lecture6-polls",
+  "section": "Poll Questions",
+  "leakage": 0.22,
+  "irrelevant": [
+   "Lecture7-DS4400",
+   "Lecture9-DS4400",
+   "Lecture10-11-DS4400"
+  ]
+ },
+ {
+  "query": "where is the fix for the knn neighbor weights",
+  "source": "announcements",
+  "section": "2026-07-23 \u2014 Lecture15, now in CANVAS",
+  "leakage": 0.2,
+  "relevant": [
+   "code-m_knn"
+  ],
+  "irrelevant": [
+   "Lecture15-DS4400"
+  ]
+ },
+ {
+  "query": "how was a generative model used to predict material scattering profiles",
+  "source": "Lecture13-DS4400-class-new",
+  "section": "VAE Real-World Application Example",
+  "leakage": 0.43,
+  "irrelevant": [
+   "Lecture7-DS4400",
+   "Lectura6-DS4400",
+   "Lecture10-11-polls"
+  ]
+ },
+ {
+  "query": "python code to fit a parabola with least squares",
+  "source": "code-data_preprocess_close_form",
+  "section": "data_preprocess_close_form \u2014 part 4",
+  "leakage": 0.33,
+  "irrelevant": [
+   "Lecture4-DS4400-new",
+   "Lecture3-polls",
+   "code-gradient_descent_epochs_sklearn",
+   "Lecture5-polls"
+  ]
+ },
+ {
+  "query": "what are the size requirements to multiply two matrices",
+  "source": "Lecture2-polls",
+  "section": "Activity 2: For matrix multiplication XY to be valid, what must be true?",
+  "leakage": 0.2,
+  "irrelevant": [
+   "Lecture2-DS4400-new",
+   "Lecture3-DS4400-new"
+  ]
+ },
+ {
+  "query": "how to do a manual gradient step with vector weights",
+  "source": "hw-DS4400_HW2",
+  "section": "Part 1 \u2014 Regression and Probability",
+  "leakage": 0.6,
+  "irrelevant": [
+   "Lecture3-polls",
+   "Lecture5-polls",
+   "code-no_input_file_mle_kde_m",
+   "Lecture3-DS4400-new"
+  ]
+ },
+ {
+  "query": "dan sheehan zoom link for help",
+  "source": "announcements",
+  "section": "2026-07-28 \u2014 Dan Office Hours 7/28",
+  "leakage": 0.6
+ },
+ {
+  "query": "how to project one vector onto another formula with example",
+  "source": "Lecture16-DS4400 copy",
+  "section": "Projection Calculation Example",
+  "leakage": 0.29,
+  "irrelevant": [
+   "Lecture2-DS4400-new",
+   "Lecture15-DS4400"
+  ]
+ },
+ {
+  "query": "silvermans rule equation for kernel width",
+  "source": "code-mle_kde_m",
+  "section": "mle_kde_m \u2014 part 6",
+  "leakage": 0.4,
+  "irrelevant": [
+   "code-SVM_Walkthrough",
+   "Lecture10-11-DS4400",
+   "Lecture12-DS4400"
+  ]
+ },
+ {
+  "query": "why can a probability density function go above one but a mass function can't",
+  "source": "Lecture7-polls",
+  "section": "Poll Questions",
+  "leakage": 0.4,
+  "irrelevant": [
+   "Lecture7-DS4400",
+   "Lecture9-DS4400",
+   "Lecture8-DS4400"
+  ]
+ },
+ {
+  "query": "rubric for the ml limitation essay",
+  "source": "hw-Essay_Project_Rubric",
+  "section": "Grading Criteria",
+  "leakage": 0.5,
+  "relevant": [
+   "assignments",
+   "syllabus"
+  ]
+ },
+ {
+  "query": "is predicting house prices classification or regression?",
+  "source": "Lecture14-DS4400",
+  "section": "Supervised Learning",
+  "leakage": 0.6,
+  "relevant": [
+   "Lecture7-DS4400",
+   "Lecture3-DS4400-new"
+  ],
+  "irrelevant": [
+   "Lecture8-DS4400",
+   "Lecture10-11-DS4400"
+  ]
+ },
+ {
+  "query": "does l0 norm mean the number of elements",
   "source": "Lecture3-polls",
   "section": "1. The $L_0$ norm of $x = [3, 0, -1, 0, 2]$ counts what?",
-  "leakage": 0.33
+  "leakage": 0.4,
+  "relevant": [
+   "Lecture3-DS4400-new"
+  ],
+  "irrelevant": [
+   "code-norms_matcalc",
+   "code-norms",
+   "Lecture2-polls"
+  ]
  },
  {
-  "query": "how to mathematically write a vertical slice of a table of data",
-  "source": "Lecture2-DS4400-new",
-  "section": "Referencing Matrix Elements",
-  "leakage": 0.17
+  "query": "can you add a transposed vector to a regular vector",
+  "source": "hw-DS4400_HW1_updated",
+  "section": "Part 1 \u2014 Linear Algebra",
+  "leakage": 0.4,
+  "irrelevant": [
+   "Lecture2-DS4400-new",
+   "code-numpy_examples",
+   "Lecture16-DS4400 copy",
+   "Lecture2-polls"
+  ]
  },
  {
-  "query": "gibbs sampling algorithm steps",
-  "source": "code-sampling_examples",
-  "section": "sampling_examples \u2014 part 267",
-  "leakage": 0.25
+  "query": "why is adjusting parameters manually a bad idea in machine learning",
+  "source": "DS4400_HW0_solutions",
+  "section": "Part 2 \u2014 Conceptual Understanding (40 points)",
+  "leakage": 0.43,
+  "irrelevant": [
+   "Lecture10-11-DS4400",
+   "Lecture1-DS4400",
+   "Lecture5-DS4400",
+   "Lecture10-11-polls"
+  ]
  },
  {
-  "query": "how does the smoothing parameter change the shape of a density plot",
-  "source": "code-no_input_file_mle_kde_m",
-  "section": "no_input_file_mle_kde_m \u2014 part 5",
-  "leakage": 0.33
+  "query": "how does the machine calculate movie ratings using theta and x",
+  "source": "Lecture2-polls",
+  "section": "Activity 1: How does the machine compute predicted scores y for one movie?",
+  "leakage": 0.57,
+  "relevant": [
+   "Lecture2-DS4400-new"
+  ]
  },
  {
-  "query": "why does the average of many trials get closer to the theoretical average",
-  "source": "Lecture12-DS4400",
-  "section": "The Law of Large Numbers (LLN)",
-  "leakage": 0.0
+  "query": "who is the TA with office hours on wednesdays",
+  "source": "syllabus",
+  "section": "Syllabus (part 1)",
+  "leakage": 0.4,
+  "irrelevant": [
+   "announcements"
+  ]
  },
  {
-  "query": "estimating expectation when we can't sample directly from target",
-  "source": "code-sampling_examples",
-  "section": "sampling_examples \u2014 part 347",
-  "leakage": 0.0
+  "query": "the thing where lasso makes some weights zero but ridge doesn't",
+  "source": "Lecture4-polls",
+  "section": "Question 1: What is the key difference between Lasso and Ridge?",
+  "leakage": 0.36,
+  "relevant": [
+   "Lectura6-DS4400",
+   "Lecture4-DS4400-new"
+  ]
  },
  {
-  "query": "how does monte carlo integration work",
-  "source": "code-sampling_examples",
-  "section": "sampling_examples \u2014 part 83",
-  "leakage": 0.0
+  "query": "what formats do we need to submit for our assignments",
+  "source": "hw-DS4400_HW1_updated",
+  "section": "Homework Assignment #1",
+  "leakage": 0.4,
+  "relevant": [
+   "hw-DS4400_HW2"
+  ],
+  "irrelevant": [
+   "Lecture1-DS4400",
+   "syllabus",
+   "Lecture5-DS4400"
+  ]
  },
  {
-  "query": "probability model where every decimal number in a range has the same chance",
-  "source": "Lecture9-DS4400",
-  "section": "Continuous Uniform Distribution",
-  "leakage": 0.3
+  "query": "is there a term for running multiple models at the same time vs one after another to get better results",
+  "source": "Lecture17-DS4400",
+  "section": "Ensemble Methods and Bagging",
+  "leakage": 0.47,
+  "irrelevant": [
+   "Lecture5-polls",
+   "Lecture8-DS4400",
+   "code-gradient_descent_epochs_sklearn"
+  ]
  },
  {
-  "query": "how to update probability of a hypothesis when we get new evidence",
-  "source": "code-probability",
-  "section": "probability \u2014 part 5",
-  "leakage": 0.17
+  "query": "python logistic regression default solver",
+  "source": "code-logistic_regression_demo",
+  "section": "3. Version 2: scikit-learn",
+  "leakage": 0.6,
+  "irrelevant": [
+   "Lecture15-DS4400"
+  ]
  },
  {
-  "query": "rejection sampling python",
-  "source": "code-sampling_examples",
-  "section": "sampling_examples \u2014 part 613",
-  "leakage": 0.33
+  "query": "do we have to calculate calculus slopes by hand for the first assignment",
+  "source": "hw-DS4400_HW0_final",
+  "section": "Homework Assignment #0",
+  "leakage": 0.5,
+  "irrelevant": [
+   "Lecture1-DS4400",
+   "Lecture4-DS4400-new"
+  ],
+  "relevant": [
+   "hw-DS4400_HW2",
+   "hw-DS4400_HW1_updated"
+  ]
  },
  {
-  "query": "the sampling method with proposal distribution",
-  "source": "code-sampling_examples",
-  "section": "sampling_examples \u2014 part 491",
-  "leakage": 0.25
+  "query": "what happens if I use LLMs to write my code or answers",
+  "source": "syllabus",
+  "section": "Syllabus (part 6)",
+  "leakage": 0.0,
+  "irrelevant": [
+   "hw-Midterm1-coding",
+   "hw-DS4400_HW1_updated",
+   "hw-SummerB-2026-DS4400-midterm1-1",
+   "hw-Homework#3"
+  ],
+  "relevant": [
+   "hw-Midterm2-coding"
+  ]
  },
  {
-  "query": "When is MCMC better than simple Monte Carlo?",
-  "source": "code-sampling_examples",
-  "section": "sampling_examples \u2014 part 17",
-  "leakage": 0.0
+  "query": "which regularization handles redundant predictor variables by splitting the influence between them",
+  "source": "Lectura6-DS4400",
+  "section": "What Kind of Features Does Ridge Regularization Favor?",
+  "leakage": 0.27,
+  "irrelevant": [
+   "Lecture4-DS4400-new",
+   "Lecture4-polls"
+  ]
  },
  {
-  "query": "why does transposing a flat numpy array not do anything",
-  "source": "code-numpy_examples",
-  "section": "numpy_examples \u2014 part 3",
-  "leakage": 0.5
+  "query": "why do the submission times on the portal look different than the syllabus deadlines",
+  "source": "announcements",
+  "section": "2026-07-03 \u2014 Homeworks #0 and #1 have been released",
+  "leakage": 0.12,
+  "irrelevant": [
+   "syllabus",
+   "Lecture5-polls",
+   "Lecture13-polls"
+  ]
  },
  {
-  "query": "metropolis hastings acceptance ratio formula",
-  "source": "code-sampling_examples",
-  "section": "sampling_examples \u2014 part 269",
-  "leakage": 0.0
- },
- {
-  "query": "the graphs showing model being too complex or too simple",
+  "query": "why do we use greek letters sometimes and normal letters other times for averages",
   "source": "Lecture8-DS4400",
-  "section": "Overfitting, Underfitting, and Model Selection",
-  "leakage": 0.25
+  "section": "Various Forms of Expectation",
+  "leakage": 0.44,
+  "irrelevant": [
+   "Lecture2-DS4400-new",
+   "Lecture7-polls",
+   "Lecture9-DS4400"
+  ]
  },
  {
-  "query": "Do I have to buy any books for this class?",
+  "query": "python code for finding rate parameter of exponential distribution using optimization",
+  "source": "code-no_input_file_mle_kde_m",
+  "section": "no_input_file_mle_kde_m \u2014 part 7",
+  "leakage": 0.44,
+  "irrelevant": [
+   "code-sampling_examples",
+   "code-autograd_example"
+  ]
+ },
+ {
+  "query": "why do we subtract the step size times derivative in machine learning",
+  "source": "hw-DS4400_HW2",
+  "section": "Part 2 \u2014 Conceptual Understanding (16 points)",
+  "leakage": 0.57,
+  "irrelevant": [
+   "Lecture4-DS4400-new",
+   "Lecture1-DS4400"
+  ]
+ },
+ {
+  "query": "what is the name of the probability distribution for multiple options like rolling a die",
+  "source": "Lecture9-DS4400",
+  "section": "Categorical Distribution",
+  "leakage": 0.5,
+  "irrelevant": [
+   "Lecture7-polls",
+   "Lecture10-11-DS4400",
+   "Lecture7-DS4400"
+  ]
+ },
+ {
+  "query": "how does the algorithm figure out the best fitting average for a bell curve",
+  "source": "code-mle_kde_m",
+  "section": "mle_kde_m \u2014 part 1",
+  "leakage": 0.38,
+  "irrelevant": [
+   "Lecture8-DS4400",
+   "Lecture9-DS4400",
+   "Lecture2-polls"
+  ],
+  "relevant": [
+   "code-no_input_file_mle_kde_m"
+  ]
+ },
+ {
+  "query": "how to measure the amount of surprise in an event with probability",
+  "source": "hw-Homework#3",
+  "section": "Part 2 \u2014 Information Theory (30 points)",
+  "leakage": 0.4,
+  "relevant": [
+   "Lecture13-polls",
+   "Lecture13-DS4400-class-new"
+  ]
+ },
+ {
+  "query": "what list of topics are covered on the second test",
+  "source": "announcements",
+  "section": "2026-07-25 \u2014 Study Guide (topics) DS4400 midterm 2",
+  "leakage": 0.4,
+  "relevant": [
+   "Lecture14-DS4400"
+  ],
+  "irrelevant": [
+   "Lectura6-DS4400"
+  ]
+ },
+ {
+  "query": "why does a continuous variable have zero probability at a single exact number",
+  "source": "Lecture7-DS4400",
+  "section": "7. Basic Rules of Probability Functions",
+  "leakage": 0.22,
+  "irrelevant": [
+   "Lecture9-DS4400",
+   "Lecture7-polls",
+   "Lecture10-11-DS4400"
+  ]
+ },
+ {
+  "query": "transforming uniform random numbers into an exponential curve",
+  "source": "code-sampling_examples",
+  "section": "sampling_examples \u2014 part 2",
+  "leakage": 0.43,
+  "relevant": [
+   "code-autograd_example"
+  ],
+  "irrelevant": [
+   "Lecture12-DS4400",
+   "Lecture10-11-DS4400"
+  ]
+ },
+ {
+  "query": "can we bring a cheat sheet to the first test",
+  "source": "hw-SummerB-2026-DS4400-midterm1-1",
+  "section": "Midterm Exam 1 (In-Class Math)",
+  "leakage": 0.6,
+  "irrelevant": [
+   "Lecture1-DS4400",
+   "Lecture14-DS4400",
+   "hw-Midterm2-coding",
+   "Lectura6-DS4400"
+  ]
+ },
+ {
+  "query": "where can I find the free books suggested for the course",
   "source": "syllabus",
   "section": "Syllabus (part 2)",
-  "leakage": 0.0
+  "leakage": 0.33,
+  "irrelevant": [
+   "Lecture1-DS4400",
+   "announcements"
+  ]
  },
  {
-  "query": "monte carlo approximation expectation",
-  "source": "code-sampling_examples",
-  "section": "sampling_examples \u2014 part 88",
-  "leakage": 0.0
+  "query": "how to prepare raw messy datasets before training a machine learning model",
+  "source": "Lecture5-DS4400",
+  "section": "Data Preprocessing",
+  "leakage": 0.22,
+  "irrelevant": [
+   "Lectura6-DS4400",
+   "Lecture4-DS4400-new",
+   "Lecture14-DS4400"
+  ]
  },
  {
-  "query": "how do we get the actual prediction at the bottom of the tree",
-  "source": "Lecture17-DS4400",
-  "section": "Decision Trees: Training vs. Inference",
-  "leakage": 0.5
+  "query": "how to get the diagonal elements of a rectangular matrix in numpy",
+  "source": "code-numpy_examples",
+  "section": "numpy_examples \u2014 part 5",
+  "leakage": 0.5,
+  "irrelevant": [
+   "Lecture2-DS4400-new",
+   "code-norms_matcalc"
+  ]
  },
  {
-  "query": "How does the random walk metropolis algorithm work?",
-  "source": "code-sampling_examples",
-  "section": "sampling_examples \u2014 part 285",
-  "leakage": 0.0
+  "query": "what is the policy if I submit an assignment late because of an emergency",
+  "source": "syllabus",
+  "section": "Syllabus (part 5)",
+  "leakage": 0.5,
+  "irrelevant": [
+   "hw-Homework#3",
+   "announcements",
+   "hw-DS4400_HW1_updated"
+  ]
  },
  {
-  "query": "np random choice without replacement",
-  "source": "code-sampling_examples",
-  "section": "sampling_examples \u2014 part 546",
-  "leakage": 0.0
+  "query": "how much of my dataset should go to training vs testing if i have a small dataset",
+  "source": "Lecture8-DS4400",
+  "section": "Cross Validation",
+  "leakage": 0.3,
+  "irrelevant": [
+   "Lectura6-DS4400",
+   "Lecture4-DS4400-new",
+   "Lecture16-DS4400 copy"
+  ]
  },
  {
-  "query": "How do you find the probability of both events happening if they depend on each other?",
-  "source": "code-probability",
-  "section": "probability \u2014 part 14",
-  "leakage": 0.11
+  "query": "how to add a column of ones to a matrix for linear regression in python",
+  "source": "code-data_preprocess",
+  "section": "data_preprocess \u2014 part 5",
+  "leakage": 0.43,
+  "irrelevant": [
+   "code-numpy_examples"
+  ]
  },
  {
-  "query": "throwing away points under a curve to get samples",
-  "source": "code-sampling_examples",
-  "section": "sampling_examples \u2014 part 367",
-  "leakage": 0.0
+  "query": "where do we go to fill out the course evaluations at the end of the term",
+  "source": "syllabus",
+  "section": "Syllabus (part 8)",
+  "leakage": 0.11,
+  "irrelevant": [
+   "announcements",
+   "Lecture17-DS4400"
+  ]
  },
  {
-  "query": "using inverse cdf to get random variables",
-  "source": "code-sampling_examples",
-  "section": "sampling_examples \u2014 part 557",
-  "leakage": 0.0
+  "query": "why do we need calculus to update model parameters instead of just guessing",
+  "source": "Lecture1-DS4400",
+  "section": "Why Derivatives are Important for Machine Learning",
+  "leakage": 0.0,
+  "irrelevant": [
+   "Lecture15-DS4400",
+   "Lecture12-polls",
+   "Lecture3-DS4400-new",
+   "Lecture5-DS4400",
+   "Lectura6-DS4400"
+  ]
  },
  {
-  "query": "is there a dot product for 2d grids",
-  "source": "Lecture2-DS4400-new",
-  "section": "Matrix Inner Product",
-  "leakage": 0.2
+  "query": "how to measure the uncertainty before and after splitting a node in a classification tree",
+  "source": "code-trees",
+  "section": "trees \u2014 part 2",
+  "leakage": 0.12,
+  "irrelevant": [
+   "Lecture17-DS4400"
+  ]
  },
  {
-  "query": "importance sampling weights calculation",
-  "source": "code-sampling_examples",
-  "section": "sampling_examples \u2014 part 70",
-  "leakage": 0.25
+  "query": "where to find the dataset for the first coding test",
+  "source": "announcements",
+  "section": "2026-07-20 \u2014 Midterm 1 coding exam: available today and due July 27",
+  "leakage": 0.17,
+  "irrelevant": [
+   "hw-Midterm1-coding",
+   "Lecture4-DS4400-new",
+   "Lectura6-DS4400",
+   "code-data_preprocess"
+  ]
  },
  {
-  "query": "the sampling thing where you change one variable at a time",
-  "source": "code-sampling_examples",
-  "section": "sampling_examples \u2014 part 63",
-  "leakage": 0.12
+  "query": "why does adding absolute value penalty make weights zero",
+  "source": "Lecture4-DS4400-new",
+  "section": "L1 Regularization (Lasso)",
+  "leakage": 0.43,
+  "irrelevant": [
+   "Lecture4-polls",
+   "Lecture16-DS4400 copy"
+  ],
+  "relevant": [
+   "Lectura6-DS4400"
+  ]
  },
  {
-  "query": "metropolis hastings acceptance ratio formula",
-  "source": "code-sampling_examples",
-  "section": "sampling_examples \u2014 part 57",
-  "leakage": 0.0
+  "query": "how to convert model probability outputs into binary class predictions",
+  "source": "code-logistic_regression_demo",
+  "section": "logistic_regression_demo \u2014 part 3",
+  "leakage": 0.0,
+  "relevant": [
+   "Lecture15-DS4400"
+  ],
+  "irrelevant": [
+   "Lecture14-DS4400",
+   "Lecture3-DS4400-new",
+   "Lecture5-DS4400"
+  ]
  },
  {
-  "query": "why do we need a proposal distribution",
-  "source": "code-sampling_examples",
-  "section": "sampling_examples \u2014 part 606",
-  "leakage": 0.0
- },
- {
-  "query": "high dimensional integration using monte carlo",
-  "source": "code-sampling_examples",
-  "section": "sampling_examples \u2014 part 50",
-  "leakage": 0.0
- },
- {
-  "query": "difference between l1 l2 and infinity metrics",
-  "source": "DS4400_HW1_solutions",
-  "section": "Part 1 \u2014 Linear Algebra",
-  "leakage": 0.0
- },
- {
-  "query": "how to generate random numbers from a custom pdf",
-  "source": "code-sampling_examples",
-  "section": "sampling_examples \u2014 part 193",
-  "leakage": 0.0
- },
- {
-  "query": "can you solve an integral by averaging random evaluations",
-  "source": "Lecture12-DS4400",
-  "section": "Using Averages for Integrals (Requires Samples)",
-  "leakage": 0.17
- },
- {
-  "query": "generating new data from kernel density",
-  "source": "code-sampling_examples",
-  "section": "sampling_examples \u2014 part 423",
-  "leakage": 0.0
- },
- {
-  "query": "how to clean up data before training so the computer can find patterns",
+  "query": "formula for probability of an event happening x times when we know the average rate",
   "source": "Lecture9-DS4400",
-  "section": "What is Feature Engineering?",
-  "leakage": 0.22
+  "section": "Poisson (In Theory)",
+  "leakage": 0.33,
+  "irrelevant": [
+   "Lecture8-DS4400",
+   "Lecture7-polls"
+  ]
  },
  {
-  "query": "how to code random sampling in python",
-  "source": "code-sampling_examples",
-  "section": "sampling_examples \u2014 part 635",
-  "leakage": 0.25
+  "query": "what is the default column ordering when generating quadratic features in sklearn",
+  "source": "code-data_preprocess",
+  "section": "data_preprocess \u2014 part 6",
+  "leakage": 0.14,
+  "irrelevant": [
+   "code-logistic_regression_demo",
+   "code-m_knn",
+   "Lecture5-DS4400"
+  ],
+  "relevant": [
+   "code-data_preprocess_close_form"
+  ]
  },
  {
-  "query": "generating points from a custom distribution",
-  "source": "code-sampling_examples",
-  "section": "sampling_examples \u2014 part 359",
-  "leakage": 0.0
+  "query": "how to write unit tests to check analytical gradient against autograd in python",
+  "source": "code-norms_matcalc",
+  "section": "norms_matcalc \u2014 part 3",
+  "leakage": 0.56,
+  "irrelevant": [
+   "Lecture1-DS4400",
+   "code-autograd_example",
+   "code-no_input_file_mle_kde_m",
+   "code-mle_kde_m"
+  ]
  },
  {
-  "query": "plotting simulation results in python",
-  "source": "code-sampling_examples",
-  "section": "sampling_examples \u2014 part 213",
-  "leakage": 0.0
+  "query": "why do we minimize negative log likelihood instead of maximizing likelihood in binary classification",
+  "source": "Lecture15-DS4400",
+  "section": "Connection to Cross-Entropy $H(p, q)$",
+  "leakage": 0.56,
+  "relevant": [
+   "code-mle_kde_m",
+   "code-no_input_file_mle_kde_m"
+  ]
  },
  {
-  "query": "how to run a monte carlo simulation",
-  "source": "code-sampling_examples",
-  "section": "sampling_examples \u2014 part 398",
-  "leakage": 0.0
+  "query": "the formula that breaks down total model error into three parts",
+  "source": "Lecture8-DS4400",
+  "section": "The Tradeoff",
+  "leakage": 0.33,
+  "irrelevant": [
+   "Lecture4-DS4400-new",
+   "Lecture4-polls"
+  ]
  },
  {
-  "query": "python library for drawing random samples",
-  "source": "code-sampling_examples",
-  "section": "sampling_examples \u2014 part 222",
-  "leakage": 0.0
+  "query": "can you use gradient descent to find the mean and standard deviation of a normal distribution",
+  "source": "code-no_input_file_mle_kde_m",
+  "section": "no_input_file_mle_kde_m \u2014 part 3",
+  "leakage": 0.44,
+  "irrelevant": [
+   "Lecture5-polls",
+   "Lecture5-DS4400",
+   "Lecture15-DS4400"
+  ],
+  "relevant": [
+   "code-mle_kde_m"
+  ]
  },
  {
-  "query": "why does a wider gap between classes help on new data",
-  "source": "Lecture16-DS4400 copy",
-  "section": "About the Margin",
+  "query": "why is my gradient descent bouncing back and forth and not reaching the minimum",
+  "source": "Lecture4-DS4400-new",
+  "section": "Gradient Descent Algorithm (1D)",
+  "leakage": 0.5,
+  "irrelevant": [
+   "hw-DS4400_HW2"
+  ]
+ },
+ {
+  "query": "what do the dashed lines on an svm plot represent",
+  "source": "code-SVM_Walkthrough",
+  "section": "4. Visualize the decision boundary",
+  "leakage": 0.6,
+  "irrelevant": [
+   "Lecture16-DS4400 copy"
+  ]
+ },
+ {
+  "query": "What does the colon subscript mean when writing a matrix column in math",
+  "source": "Lecture2-DS4400-new",
+  "section": "Referencing Matrix Elements",
+  "leakage": 0.29,
+  "irrelevant": [
+   "Lecture2-polls"
+  ]
+ },
+ {
+  "query": "how to make the smooth line on a histogram less bumpy",
+  "source": "code-mle_kde_m",
+  "section": "mle_kde_m \u2014 part 5",
+  "leakage": 0.33,
+  "irrelevant": [
+   "code-probability",
+   "Lecture12-DS4400"
+  ],
+  "relevant": [
+   "code-no_input_file_mle_kde_m"
+  ]
+ },
+ {
+  "query": "different vector norms calculation examples",
+  "source": "Lecture3-DS4400-new",
+  "section": "6. Practice Exercises",
+  "leakage": 0.2,
+  "relevant": [
+   "code-norms",
+   "code-norms_matcalc",
+   "Lectura6-DS4400"
+  ]
+ },
+ {
+  "query": "How does changing the penalty parameter affect the boundary width in support vector machines",
+  "source": "code-SVM_Walkthrough",
+  "section": "3. Train a soft-margin SVM",
+  "leakage": 0.11,
+  "irrelevant": [
+   "Lecture16-DS4400 copy"
+  ]
+ },
+ {
+  "query": "graph where the line goes up and down to touch every point",
+  "source": "Lectura6-DS4400",
+  "section": "Housing Price Prediction",
+  "leakage": 0.22,
+  "irrelevant": [
+   "Lecture1-DS4400",
+   "Lecture4-DS4400-new",
+   "Lecture3-polls",
+   "code-SVM_Walkthrough"
+  ]
+ },
+ {
+  "query": "why do we minimize the negative log instead of maximizing probability in code",
+  "source": "code-mle_kde_m",
+  "section": "mle_kde_m \u2014 part 2",
+  "leakage": 0.29,
+  "relevant": [
+   "Lecture15-DS4400"
+  ],
+  "irrelevant": [
+   "Lecture13-DS4400-class-new"
+  ]
+ },
+ {
+  "query": "basic algorithm to classify text just by counting positive and negative words",
+  "source": "Lecture15-DS4400",
+  "section": "Attempt 1: Simple Threshold Classifier",
+  "leakage": 0.6,
+  "irrelevant": [
+   "Lecture14-DS4400"
+  ]
+ },
+ {
+  "query": "silverman rule of thumb for smoothing parameter",
+  "source": "code-no_input_file_mle_kde_m",
+  "section": "no_input_file_mle_kde_m \u2014 part 6",
+  "leakage": 0.4,
+  "irrelevant": [
+   "code-mle_kde_m",
+   "Lecture10-11-DS4400",
+   "Lecture12-DS4400"
+  ]
+ },
+ {
+  "query": "how to measure how much better a branch split is in decision trees",
+  "source": "Lecture17-DS4400",
+  "section": "Reading the Tree: The Entropy Calculation",
   "leakage": 0.14
  },
  {
-  "query": "rejection sampling python",
-  "source": "code-sampling_examples",
-  "section": "sampling_examples \u2014 part 482",
-  "leakage": 0.33
+  "query": "why is my kernel density plot looking super bumpy and jagged",
+  "source": "code-no_input_file_mle_kde_m",
+  "section": "no_input_file_mle_kde_m \u2014 part 5",
+  "leakage": 0.43,
+  "irrelevant": [
+   "Lecture10-11-DS4400",
+   "Lecture12-DS4400"
+  ],
+  "relevant": [
+   "code-mle_kde_m"
+  ]
  },
  {
-  "query": "draw samples with weights python",
-  "source": "code-sampling_examples",
-  "section": "sampling_examples \u2014 part 123",
-  "leakage": 0.0
+  "query": "what is the term for the extra penalty when our predicted distribution doesn't match the true one",
+  "source": "Lecture13-DS4400-class-new",
+  "section": "Difference Between Entropy and Cross Entropy",
+  "leakage": 0.09,
+  "irrelevant": [
+   "Lecture4-polls",
+   "Lecture16-DS4400 copy",
+   "Lecture13-polls",
+   "Lecture4-DS4400-new"
+  ]
  },
  {
-  "query": "numpy random choice no replacement",
-  "source": "code-sampling_examples",
-  "section": "sampling_examples \u2014 part 533",
-  "leakage": 0.0
+  "query": "how to update weights manually in binary classification without libraries",
+  "source": "code-logistic_regression_demo",
+  "section": "2. Version 1: From scratch, with the explicit gradient descent update rule",
+  "leakage": 0.14,
+  "irrelevant": [
+   "Lecture5-polls",
+   "Lecture17-DS4400",
+   "Lecture3-DS4400-new"
+  ],
+  "relevant": [
+   "Lecture4-DS4400-new"
+  ]
  },
  {
-  "query": "gibbs sampler example code",
-  "source": "code-sampling_examples",
-  "section": "sampling_examples \u2014 part 663",
-  "leakage": 0.0
+  "query": "formula for average squared distance of predictions to targets",
+  "source": "Lecture4-DS4400-new",
+  "section": "Minimizing ($\\min$) the MSE",
+  "leakage": 0.33,
+  "irrelevant": [
+   "Lecture3-DS4400-new",
+   "Lecture5-polls"
+  ],
+  "relevant": [
+   "Lecture2-polls"
+  ]
  },
  {
-  "query": "how to generate random data points from a custom probability distribution",
-  "source": "code-sampling_examples",
-  "section": "sampling_examples \u2014 part 344",
-  "leakage": 0.0
- },
- {
-  "query": "method to get samples when you can't integrate the distribution directly",
-  "source": "code-sampling_examples",
-  "section": "sampling_examples \u2014 part 8",
-  "leakage": 0.0
- },
- {
-  "query": "how does the math connect cross entropy to the classification loss function",
-  "source": "announcements",
-  "section": "2026-07-23 \u2014 Class canceled today due to family medical emergency",
-  "leakage": 0.57
- },
- {
-  "query": "what is the purpose of setting drop first to true in dummy variables",
-  "source": "code-data_preprocess",
-  "section": "data_preprocess \u2014 part 1",
-  "leakage": 0.43
- },
- {
-  "query": "averaging small bell curves over data points to get a smooth shape",
+  "query": "using automatic differentiation to find optimal mean and variance",
   "source": "code-mle_kde_m",
-  "section": "mle_kde_m \u2014 part 4",
-  "leakage": 0.4
+  "section": "mle_kde_m \u2014 part 3",
+  "leakage": 0.0,
+  "irrelevant": [
+   "Lecture5-DS4400",
+   "Lecture8-DS4400",
+   "Lecture19-DS4400"
+  ],
+  "relevant": [
+   "code-autograd_example"
+  ]
  },
  {
-  "query": "mcmc sampling algorithms explained simply",
-  "source": "code-sampling_examples",
-  "section": "sampling_examples \u2014 part 598",
-  "leakage": 0.2
+  "query": "why do some random things use uppercase and lowercase letters",
+  "source": "Lecture7-DS4400",
+  "section": "4. Random Variables",
+  "leakage": 0.57,
+  "irrelevant": [
+   "Lecture13-polls",
+   "Lecture2-DS4400-new"
+  ],
+  "relevant": [
+   "Lecture8-DS4400"
+  ]
  },
  {
-  "query": "how to normalize features to have zero mean and unit variance in sklearn",
-  "source": "code-data_preprocess",
-  "section": "data_preprocess \u2014 part 2",
-  "leakage": 0.38
+  "query": "svm parameter for letting points cross the boundary",
+  "source": "code-SVM_Walkthrough",
+  "section": "5. Effect of `C`",
+  "leakage": 0.33,
+  "irrelevant": [
+   "Lecture16-DS4400 copy"
+  ]
  },
  {
-  "query": "importance sampling ratio formula",
-  "source": "code-sampling_examples",
-  "section": "sampling_examples \u2014 part 501",
-  "leakage": 0.25
- },
- {
-  "query": "how to do metropolis hastings step by step",
-  "source": "code-sampling_examples",
-  "section": "sampling_examples \u2014 part 430",
-  "leakage": 0.0
- },
- {
-  "query": "how do you find the combined result of two arrows visually using that box method",
+  "query": "the loop where you nudge parameters to make predictions better",
   "source": "Lecture2-DS4400-new",
-  "section": "Addition and Subtraction of Vectors",
-  "leakage": 0.22
+  "section": "What Does the Machine Actually Learn?",
+  "leakage": 0.43,
+  "irrelevant": [
+   "Lectura6-DS4400",
+   "Lecture1-DS4400",
+   "Lecture15-DS4400",
+   "Lecture3-DS4400-new"
+  ]
  },
  {
-  "query": "filtering random numbers to match a probability curve",
-  "source": "code-sampling_examples",
-  "section": "sampling_examples \u2014 part 42",
-  "leakage": 0.0
+  "query": "checking if predictions match actual values with a diagonal line",
+  "source": "code-data_preprocess",
+  "section": "data_preprocess \u2014 part 11",
+  "leakage": 0.29,
+  "irrelevant": [
+   "Lecture3-DS4400-new"
+  ]
  },
  {
-  "query": "how to calculate average when we sample from a different proposal distribution",
-  "source": "code-sampling_examples",
-  "section": "sampling_examples \u2014 part 115",
-  "leakage": 0.0
+  "query": "which side of a decision tree split is yes",
+  "source": "Lecture17-DS4400",
+  "section": "Reading the Tree",
+  "leakage": 0.5
  },
  {
-  "query": "that algorithm where you change one coordinate at a time to get random samples",
-  "source": "code-sampling_examples",
-  "section": "sampling_examples \u2014 part 497",
-  "leakage": 0.0
+  "query": "how to code nearest neighbors distance calculation in numpy",
+  "source": "code-m_knn",
+  "section": "m_knn \u2014 part 2",
+  "leakage": 0.5,
+  "irrelevant": [
+   "Lecture14-DS4400",
+   "Lecture15-DS4400"
+  ]
+ },
+ {
+  "query": "formula for line that separates two classes",
+  "source": "Lecture16-DS4400 copy",
+  "section": "The Simplest Support Vector Machine",
+  "leakage": 0.4,
+  "irrelevant": [
+   "code-SVM_Walkthrough",
+   "Lecture17-DS4400"
+  ]
+ },
+ {
+  "query": "using gradient descent to find distribution parameter like lambda",
+  "source": "code-no_input_file_mle_kde_m",
+  "section": "no_input_file_mle_kde_m \u2014 part 8",
+  "leakage": 0.12,
+  "relevant": [
+   "code-mle_kde_m",
+   "hw-DS4400_HW2",
+   "Lecture10-11-DS4400"
+  ],
+  "irrelevant": [
+   "Lecture5-polls"
+  ]
+ },
+ {
+  "query": "direct matrix formula for regression weights instead of gradient descent",
+  "source": "code-data_preprocess",
+  "section": "data_preprocess \u2014 part 8",
+  "leakage": 0.0,
+  "irrelevant": [
+   "Lecture4-DS4400-new",
+   "Lecture3-DS4400-new",
+   "code-gradient_descent_epochs_matrix"
+  ],
+  "relevant": [
+   "Lecture5-DS4400"
+  ]
+ },
+ {
+  "query": "what happens if you don't set max depth in scikit learn decision tree",
+  "source": "Lecture17-DS4400",
+  "section": "Fitting a Full Tree",
+  "leakage": 0.6,
+  "irrelevant": [
+   "code-trees"
+  ]
+ },
+ {
+  "query": "joint probability of multiple normal distribution samples formula",
+  "source": "Lecture10-11-DS4400",
+  "section": "Independent Variables and Joint Distribution",
+  "leakage": 0.57,
+  "irrelevant": [
+   "code-sampling_examples",
+   "code-probability",
+   "Lecture7-DS4400"
+  ]
+ },
+ {
+  "query": "the thing with the probability table to find uncertainty of y given x",
+  "source": "code-trees",
+  "section": "trees \u2014 part 1",
+  "leakage": 0.25,
+  "relevant": [
+   "Lecture7-DS4400",
+   "Lecture17-DS4400",
+   "Lecture13-DS4400-class-new"
+  ]
+ },
+ {
+  "query": "how do probability models, loss functions, and optimization fit together in machine learning",
+  "source": "Lecture15-DS4400",
+  "section": "Synthesis: Why Learn Logistic Regression in Detail?",
+  "leakage": 0.44,
+  "irrelevant": [
+   "Lecture9-DS4400",
+   "Lecture10-11-DS4400"
+  ]
+ },
+ {
+  "query": "scoring different parameters to see which one fits the data best",
+  "source": "code-no_input_file_mle_kde_m",
+  "section": "no_input_file_mle_kde_m \u2014 part 1",
+  "leakage": 0.56,
+  "relevant": [
+   "Lectura6-DS4400",
+   "code-mle_kde_m",
+   "Lecture8-DS4400"
+  ],
+  "irrelevant": [
+   "Lecture15-DS4400"
+  ]
+ },
+ {
+  "query": "subtracting the average from every data point",
+  "source": "Lecture5-DS4400",
+  "section": "Data Centering and Scaling: Standardization",
+  "leakage": 0.33,
+  "irrelevant": [
+   "Lecture8-DS4400",
+   "Lecture12-DS4400",
+   "Lecture4-DS4400-new"
+  ]
+ },
+ {
+  "query": "how does svm find the line with the biggest gap",
+  "source": "Lecture16-DS4400 copy",
+  "section": "How SVM Works",
+  "leakage": 0.4,
+  "irrelevant": [
+   "code-SVM_Walkthrough"
+  ]
+ },
+ {
+  "query": "what does a 2D loss function look like",
+  "source": "Lecture3-DS4400-new",
+  "section": "11. Lecture Summary",
+  "leakage": 0.4,
+  "irrelevant": [
+   "Lecture4-polls",
+   "Lecture2-polls",
+   "Lecture15-DS4400",
+   "Lecture2-DS4400-new"
+  ]
+ },
+ {
+  "query": "how to calculate metrics for binary classifiers",
+  "source": "Lecture14-DS4400",
+  "section": "Evaluation Metrics for Classification",
+  "leakage": 0.25,
+  "irrelevant": [
+   "code-SVM_Walkthrough",
+   "Lecture13-polls",
+   "Lecture17-DS4400"
+  ]
+ },
+ {
+  "query": "how to get class labels from logistic probability output",
+  "source": "Lecture15-DS4400",
+  "section": "Logistic Function",
+  "leakage": 0.57,
+  "irrelevant": [
+   "announcements",
+   "code-logistic_regression_demo"
+  ]
+ },
+ {
+  "query": "how to find value at a specific percentile in normal distribution python",
+  "source": "code-probability",
+  "section": "probability \u2014 part 4",
+  "leakage": 0.5,
+  "irrelevant": [
+   "code-probability (1)",
+   "code-sampling_examples"
+  ]
+ },
+ {
+  "query": "why do we normalize data before training ml models",
+  "source": "Lecture5-DS4400",
+  "section": "Data Centering and Scaling",
+  "leakage": 0.33,
+  "irrelevant": [
+   "Lecture5-polls",
+   "Lecture3-DS4400-new",
+   "Lecture2-DS4400-new",
+   "Lecture10-11-DS4400"
+  ]
+ },
+ {
+  "query": "distribution where every outcome in a range has the same probability",
+  "source": "Lecture9-DS4400",
+  "section": "Continuous Uniform Distribution",
+  "leakage": 0.5,
+  "irrelevant": [
+   "code-probability",
+   "Lecture10-11-DS4400"
+  ]
  }
 ]

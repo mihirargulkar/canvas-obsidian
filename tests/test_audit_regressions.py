@@ -277,3 +277,30 @@ def test_relabel_caches_verdicts_and_is_idempotent(tmp_path):
         assert again == 0, "already-labelled pairs must not be re-judged"
     finally:
         chat._collection = real
+
+
+def test_base64_payloads_are_stripped_from_notebooks():
+    """Students paste screenshots into notebook markdown cells, embedding whole
+    PNGs as data URIs. One notebook was 847KB and produced 687 chunks, 51% of the
+    course index, of image bytes sliced at arbitrary offsets and then embedded."""
+    from canvas_vault import ingest
+
+    md = "before ![shot.png](data:image/png;base64,iVBORw0KGgo=) after"
+    assert ingest.strip_data_uris(md) == "before (embedded image) after"
+
+    raw = '<img src="data:image/png;base64,' + "A" * 400 + '"> prose survives'
+    assert "prose survives" in ingest.strip_data_uris(raw)
+    assert "AAAA" not in ingest.strip_data_uris(raw)
+
+    # must not run on past the payload into real text, which a greedy match would
+    keep = "see data:text/plain;base64,QUJD and then a whole paragraph of notes"
+    assert keep == ingest.strip_data_uris(keep), "short payloads are not image dumps"
+
+
+def test_recipe_does_not_cover_text_extraction():
+    """TEXT extraction is redone every run, so folding its version into recipe()
+    would invalidate every paid vision transcription for nothing."""
+    from canvas_vault import ingest
+    import hashlib
+    assert ingest.recipe() == hashlib.sha256(
+        (ingest.PROMPT + ingest.MODEL).encode()).hexdigest()[:12]
