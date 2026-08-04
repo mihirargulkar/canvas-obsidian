@@ -167,3 +167,33 @@ def test_local_tz_falls_back_without_credentials(monkeypatch):
     canvas.local_tz.cache_clear()
     assert canvas.local_tz() is not None
     canvas.local_tz.cache_clear()
+
+
+def test_eval_scorer_uses_the_gold_set_it_was_given():
+    """evaluate() looped over the module-level GOLD (10 hand written pairs) but
+    divided by len(gold) (70 synthetic), so a perfect run printed "10/70, 14%".
+    That number was investigated as a retrieval failure and written up as a flaw
+    in exact-source matching. It was a numerator from one set over a denominator
+    from another."""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(
+        "eval_retrieval", pathlib.Path(__file__).parent.parent / "tools" / "eval_retrieval.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+
+    seen = []
+
+    class FakeCol:
+        def query(self, query_texts, n_results, where):
+            seen.append(query_texts[0])
+            return {"metadatas": [[{"source": "Lecture1"}]], "documents": [[""]]}
+
+    import canvas_vault.chat as chat
+    real, chat._collection = chat._collection, lambda: FakeCol()
+    try:
+        gold = [(f"q{i}", "Lecture1") for i in range(4)]
+        hits, n = mod.evaluate("DS4400", 5, gold=gold, label="test")
+    finally:
+        chat._collection = real
+    assert seen == ["q0", "q1", "q2", "q3"], "must score the gold set it was passed"
+    assert (hits, n) == (4, 4), "numerator and denominator must come from one set"

@@ -113,8 +113,9 @@ asserted but not yet instrumented.
 |---|---|---|---|
 | Retrieval recall@5, hand set | ≥ 0.90 | **1.00** (10/10) | Hand labelled gold set, `tools/eval_retrieval.py` |
 | Retrieval MRR, hand set | ≥ 0.85 | **0.90** sentence-transformers / **0.85** static + BM25 | Same |
-| Retrieval recall@5, realistic queries | ≥ 0.75 | **0.65** (33/51, CI 51-76%) | 70 query synthetic set, LLM judge, `--judged` |
-| Retrieval MRR, realistic queries | ≥ 0.60 | **0.49** | Same |
+| Retrieval recall@5, realistic queries | ≥ 0.75 | **0.60** (42/70, CI 48-71%) | 70 query synthetic set, exact source match |
+| Retrieval MRR, realistic queries | ≥ 0.60 | **0.38** | Same |
+| Same, cross checked with an LLM judge | agreement within 10 pts | **0.65** (33/51), MRR 0.49 | `--judged` |
 | Generic concepts excluded from graph | 6/6 | **6/6** | `tools/eval_graph.py` |
 | Meaningful concept links | 6/6 | **2/6** | Same. See regression note below. |
 | Fresh install footprint | < 250 MB | **~170 MB**, 74 packages | Down from 1.3 GB / 122 packages |
@@ -134,9 +135,17 @@ vocabulary overlap of 0.15, which is closer to what a confused student types.
 gets a useful passage in the top 5 about two times in three, and the right one
 first roughly half the time.
 
-19 of 70 queries are unscored because judge calls failed. Those failures are API
-errors, independent of whether retrieval succeeded, so the estimate over the
-remaining 51 is not biased by them. It is still a partial run.
+**Exact source matching was written off too early, and that cost real time.** It
+was reported at 14%, investigated as a flaw in the metric, and replaced with an
+LLM judge that then spent three runs fighting a daily quota. The 14% was
+arithmetic: the scorer looped over the 10 hand written pairs and divided by the
+70 synthetic ones. Corrected, it reads 0.60 against the judge's 0.65, an
+agreement close enough that **the free, offline, deterministic metric is the one
+to use day to day.** The judge is now a cross check, not the instrument.
+
+19 of 70 queries in the judged run are unscored because judge calls failed. Those
+failures are API errors, independent of whether retrieval succeeded, so the
+estimate over the remaining 51 is not biased by them. It is still a partial run.
 
 **Concept link quality has regressed and is the top known gap.** When the
 extraction prompt was tuned, the gold set scored 5/6. On the current 155 concept

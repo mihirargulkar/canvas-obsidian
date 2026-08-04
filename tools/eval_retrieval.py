@@ -181,8 +181,13 @@ def wilson(hits, n, z=1.96):
 def evaluate(course, k, gold=None, label="built-in"):
     import canvas_vault.chat as chat
     col = chat._collection()
+    gold = gold or GOLD
     hits, rr, rows = 0, 0.0, []
-    for question, expected in GOLD:
+    # Iterate `gold`, NOT the module-level GOLD. This scored the 10 hand written
+    # pairs and then divided by len(gold)=70, so a perfect run printed "10/70,
+    # recall 14%". That number got investigated as a retrieval failure and
+    # written up as a flaw in exact-source matching. It was arithmetic.
+    for question, expected in gold:
         res = col.query(query_texts=[question], n_results=k,
                         where={"course": course})
         sources = [m["source"] for m in res["metadatas"][0]]
