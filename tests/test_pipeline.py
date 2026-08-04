@@ -203,3 +203,49 @@ def test_pending_files_empty_when_files_restricted(tmp_path, monkeypatch, phys_c
     c = Course.from_canvas(phys_course)
     monkeypatch.setattr(type(c), "_api", property(lambda self: phys_course))
     assert c.pending_files() == []
+
+
+# --- cross-lecture linking ----------------------------------------------------
+
+def test_subsumption_links_specific_concepts_to_general_ones():
+    """Pass 1 sees one lecture at a time, so "Gradient Descent" -> "Gradient" only
+    got made when both happened to appear in the same deck. Cross-lecture edges
+    are the point of the graph, so a link the names already state should not
+    depend on the model guessing another lecture's wording."""
+    nodes = {n: {"related": set(), "lectures": {"L1"}} for n in
+             ["gradient descent", "gradient", "l2 regularization", "regularization",
+              "partial derivative", "derivative", "iterate", "rate"]}
+    extract.add_subsumption_links(nodes)
+    assert "gradient" in nodes["gradient descent"]["related"]
+    assert "regularization" in nodes["l2 regularization"]["related"]
+    assert "derivative" in nodes["partial derivative"]["related"]
+    assert "rate" not in nodes["iterate"]["related"], "must match tokens, not substrings"
+    assert not nodes["gradient"]["related"], "the general concept must not link back"
+
+
+def test_aliases_merge_into_the_better_attested_name():
+    """One deck used "basis function" and "feature map" for the same idea, so the
+    concept split into two nodes each holding half its lectures and half its
+    edges. The survivor is the name covering more lectures."""
+    nodes = {
+        "feature map": {"related": {"linear regression"}, "lectures": {"L1", "L2", "L4"},
+                        "aka": {"basis function"}},
+        "basis function": {"related": {"polynomial"}, "lectures": {"L1"}, "aka": set()},
+        "linear regression": {"related": {"basis function"}, "lectures": {"L1"}, "aka": set()},
+    }
+    assert extract.merge_aliases(nodes) == 1
+    assert "basis function" not in nodes, "the alias node must be folded away"
+    assert nodes["feature map"]["lectures"] == {"L1", "L2", "L4"}
+    assert "polynomial" in nodes["feature map"]["related"], "its edges must survive"
+    assert nodes["linear regression"]["related"] == {"feature map"}, "edges repoint"
+
+
+def test_alias_merge_keeps_the_name_with_more_lectures():
+    """Otherwise the surviving name depends on dict ordering rather than on which
+    term the course actually leans on."""
+    nodes = {
+        "feature map": {"related": set(), "lectures": {"L1"}, "aka": {"basis function"}},
+        "basis function": {"related": set(), "lectures": {"L1", "L2", "L3"}, "aka": set()},
+    }
+    extract.merge_aliases(nodes)
+    assert "basis function" in nodes, "the better-attested name must win"

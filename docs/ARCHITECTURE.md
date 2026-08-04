@@ -121,8 +121,11 @@ lectures rather than three separate nodes.
 
 That merge step is **entity resolution**: deciding when two mentions refer to the
 same real thing. It's a classic hard problem (think deduplicating customer
-records) and here it's done with a simple canonical-name match. That's also why
-link quality drops as the corpus grows, which is the current top bug.
+records). Here it's canonical-name matching, plus two repairs: synonym nodes are
+folded together through an `aka` field the extractor fills in, and specific
+concepts are linked to the general ones their names contain ("L2 Regularization"
+to "Regularization"), because pass 1 sees one lecture at a time and cannot
+reliably guess what another lecture called something.
 
 **Out loud:** "The cross-lecture linking is the interesting part. Anyone can
 summarize one lecture. Recognizing that the thing in week 7 is the same thing
@@ -412,8 +415,9 @@ memorise one student's corpus, need retraining weekly, and lose citations.
 
 **How do you know it works?** recall@5 of 0.90 and MRR 0.69 on 100 synthetic
 queries with pooled relevance labels, holding at 0.88 on the hardest third. The
-concept graph is scored separately and currently fails 4 of 6 link tests, which
-is the top open bug.
+concept graph scores 4 of 6 link tests, up from 2, with generic concepts still
+6/6 excluded. That test is only 6 pairs and extraction is nondeterministic, so
+treat it as a smoke test.
 
 **What would you do next?** Fix the concept-link regression, then tune the RRF
 fusion weights, which were never tuned because until now no gold set was big

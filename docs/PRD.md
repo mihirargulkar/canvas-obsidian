@@ -118,7 +118,7 @@ asserted but not yet instrumented.
 | Recall@5 on the hardest third | no cliff | **0.88** (n=16, low-leakage queries) | Same, split by vocabulary overlap |
 | Index size per course | no bloat | **642 chunks** (was 1,339) | 51% was base64 image data |
 | Generic concepts excluded from graph | 6/6 | **6/6** | `tools/eval_graph.py` |
-| Meaningful concept links | 6/6 | **2/6** | Same. See regression note below. |
+| Meaningful concept links | 6/6 | **4/6** | Same. Was 2/6; see note below. |
 | Fresh install footprint | < 250 MB | **~170 MB**, 74 packages | Down from 1.3 GB / 122 packages |
 | Test suite | Green in CI | **45 passing** | GitHub Actions on every push |
 | Re-sync cost when nothing changed | Zero model calls | **Zero** | Content hash cache, verified by run summary |
@@ -148,12 +148,20 @@ to use day to day.** The judge is now a cross check, not the instrument.
 failures are API errors, independent of whether retrieval succeeded, so the
 estimate over the remaining 51 is not biased by them. It is still a partial run.
 
-**Concept link quality has regressed and is the top known gap.** When the
-extraction prompt was tuned, the gold set scored 5/6. On the current 155 concept
-vault it scores 2/6: "Learning Rate" is no longer extracted as a node at all,
-and Gradient Descent to Derivative is unreachable. Generic exclusion still holds
-at 6/6, so the prompt has not become noisy, it has become less complete as the
-corpus grew. Owner: section 12, R1.
+**Concept links: 2/6 to 4/6, and the instrument is the limiting factor.**
+Bisecting the regression showed extraction was never at fault: "Learning Rate"
+was present in the cached pass 1 output all along, and a prompt edit had dropped
+it. Three fixes, each defensible on its own terms rather than against the test:
+pass 2 now adds subsumption edges ("L2 Regularization" to "Regularization"),
+merges synonym nodes via an `aka` field, and the prompt no longer tells the model
+to prefer field-standard terms over the note's own wording, which is what had
+turned "Basis Function" into "Feature Map".
+
+One pair regressed in the same run, from direct to 3 hops. That edge came from
+the model's `related` list and simply was not emitted the second time, so
+**extraction is nondeterministic and a 6 pair test cannot separate a real change
+from run to run variance.** Growing this gold set is now worth more than any
+further prompt work. Owner: section 12, R1.
 
 ### Asserted, not yet measured
 

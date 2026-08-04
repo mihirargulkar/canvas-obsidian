@@ -42,8 +42,9 @@ From the lecture note below, extract the SUBSTANTIVE concepts a student would
 want as nodes in a concept map.
 
 For each concept return:
-- "name": canonical short noun phrase, Title Case. Use the standard term for the
-  field, not the slide's phrasing, so the same idea gets the SAME name across lectures.
+- "name": canonical short noun phrase, Title Case. When the note uses a standard
+  term for the idea, keep THAT term; only normalise when the note's wording is
+  ad hoc, so the same idea gets the SAME name across lectures.
 - "definition": 1-2 sentences grounded in this note.
 - "related": names of OTHER concepts it directly depends on, is part of, or uses.
 
@@ -63,12 +64,21 @@ RELATED-LINK RULES (recall matters — a concept map is edges, not just nodes):
 NAMING RULES (the SAME idea must get the SAME name across lectures):
 - Use the concept's standard, widely-used name and keep it stable.
 - Do NOT invent a synonym when the lecture already uses a standard term.
+- If the note uses two names for one idea, pick the one it uses MOST and put the
+  other in "aka" (illustrative: a note saying both "basis function" and "feature
+  map" should not silently become whichever the model prefers).
+
+ALSO EXTRACT (these were being dropped as too small to matter, but a student
+tuning a model needs them, and they are what the surrounding method is about):
+- Named quantities you must CHOOSE or TUNE (illustrative: a step size, a penalty
+  strength, a number of neighbours), when the note names them.
 
 STRICT EXCLUSIONS:
 - Only real domain concepts. EXCLUDE: agendas, "topics for today", instructor
   bio, course logistics, poll/exercise headers, named examples, section-title filler.
 - 5-15 concepts per lecture. Do not dump every heading.
-Return ONLY a JSON array: [{"name":..,"definition":..,"related":[..]}]."""
+Return ONLY a JSON array: [{"name":..,"definition":..,"related":[..],"aka":[..]}].
+"aka" is other names THIS note uses for the same idea; omit it or use [] if none."""
 
 
 def canon(name: str) -> str:
@@ -143,6 +153,69 @@ def pass1(slug):
     return out, failed
 
 
+def merge_aliases(nodes) -> int:
+    """Fold nodes that are two names for one idea into a single node.
+
+    Lectures use synonyms ("basis function" and "feature map" appear in the same
+    deck), and which one comes out of pass 1 varies by lecture. That splits one
+    idea across two nodes, each holding half its lectures and half its edges,
+    which is exactly the cross-lecture merging the graph exists to do.
+
+    The surviving name is the one covering more lectures, so the graph settles on
+    whichever term the course actually leans on rather than on call ordering.
+    """
+    merged = 0
+    for key in sorted(nodes, key=lambda k: (-len(nodes[k]["lectures"]), k)):
+        if key not in nodes:
+            continue                              # already folded into another
+        for alias in sorted(nodes[key].get("aka", ())):
+            other = nodes.get(alias)
+            if alias == key or other is None:
+                continue
+            if len(other["lectures"]) > len(nodes[key]["lectures"]):
+                continue                          # the alias is the better-attested name
+            nodes[key]["lectures"] |= other["lectures"]
+            nodes[key]["related"] |= other["related"]
+            nodes[key].setdefault("aka", set()).update(other.get("aka", ()))
+            del nodes[alias]
+            merged += 1
+    if merged:                                    # repoint edges at the survivor
+        alias_of = {a: k for k, n in nodes.items() for a in n.get("aka", ())}
+        for n in nodes.values():
+            n["related"] = {alias_of.get(r, r) for r in n["related"]}
+    return merged
+
+
+def add_subsumption_links(nodes) -> int:
+    """Link every specific concept to the general one its name contains.
+
+    "L2 Regularization" -> "Regularization", "Partial Derivative" -> "Derivative",
+    "Gradient Descent" -> "Gradient". The extraction prompt already asks for this
+    ("if a concept is a specific VARIANT of a more general one, link to the
+    general concept") but pass 1 sees one lecture at a time, so it can only make
+    the link when both concepts happen to appear in the same lecture. Whether a
+    cross-lecture edge exists is then down to whether the model guessed the exact
+    name another lecture used. Cross-lecture links are the entire point of the
+    graph, so they should not be left to chance when the names already state the
+    relationship.
+
+    Matches whole tokens, never substrings: "Rate" must not link to "Iterate".
+
+    ponytail: O(n^2) over ~200 concepts, which is instant. Only worth indexing by
+    token if a vault ever holds tens of thousands of concepts.
+    """
+    toks = {k: tuple(k.split()) for k in nodes}
+    added = 0
+    for a, ta in toks.items():
+        for b, tb in toks.items():
+            if a == b or len(tb) >= len(ta) or b in nodes[a]["related"]:
+                continue
+            if any(ta[i:i + len(tb)] == tb for i in range(len(ta) - len(tb) + 1)):
+                nodes[a]["related"].add(b)
+                added += 1
+    return added
+
+
 def pass2(slug, per_lecture: dict, complete: bool = True):
     """Merge concepts across lectures by canonical name, write vault/<slug>/.
 
@@ -159,8 +232,13 @@ def pass2(slug, per_lecture: dict, complete: bool = True):
                 nodes[k] = {"name": c["name"].strip(), "definition": c.get("definition", ""),
                             "related": set(), "lectures": set()}
             nodes[k]["lectures"].add(stem)
+            nodes[k].setdefault("aka", set()).update(
+                canon(a) for a in c.get("aka", []) if canon(a) != k)
             for r in c.get("related", []):
                 nodes[k]["related"].add(canon(r))
+
+    merge_aliases(nodes)
+    add_subsumption_links(nodes)
 
     (vault / "concepts").mkdir(parents=True, exist_ok=True)
     (vault / "lectures").mkdir(parents=True, exist_ok=True)
