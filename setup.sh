@@ -52,8 +52,16 @@ else
   cp .env.example .env
   echo "  Two values are needed. Both stay in .env on this machine and are gitignored."
   echo
-  read -rp "  Canvas URL [https://northeastern.instructure.com]: " CANVAS_URL
-  CANVAS_URL="${CANVAS_URL:-https://northeastern.instructure.com}"
+  # No default. This used to default to the author's own university, so anyone
+  # else pressing Enter silently configured the wrong institution and got auth
+  # errors with nothing pointing at the cause.
+  echo "  Canvas URL — your school's Canvas, e.g. https://yourschool.instructure.com"
+  while :; do
+    read -rp "  Canvas URL: " CANVAS_URL
+    CANVAS_URL="${CANVAS_URL%/}"
+    [[ "$CANVAS_URL" == https://*.* ]] && break
+    echo "    needs to be a full https:// URL"
+  done
   echo "  Canvas token — Canvas > Account > Settings > New Access Token"
   read -rsp "  Canvas token (hidden): " CANVAS_TOKEN; echo
   echo "  Gemini key (free tier) — https://aistudio.google.com/app/apikey"
