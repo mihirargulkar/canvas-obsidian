@@ -26,7 +26,7 @@ Everything stays on the student's machine as plain markdown. No hosting, no
 second subscription, no vendor holding the notes.
 
 **Current state:** v0.2 is running daily against two live courses. 2,077 lines
-of Python, 54 tests, seven MCP tools, and a working end to end pipeline. Section
+of Python, 55 tests, seven MCP tools, and a working end to end pipeline. Section
 5 states exactly which quality claims are measured and which are not.
 
 ## 2. Problem
@@ -118,9 +118,10 @@ asserted but not yet instrumented.
 | Recall@5 on the hardest third | no cliff | **0.88** (n=16, low-leakage queries) | Same, split by vocabulary overlap |
 | Index size per course | no bloat | **642 chunks** (was 1,339) | 51% was base64 image data |
 | Generic concepts excluded from graph | 6/6 | **6/6** | `tools/eval_graph.py` |
-| Meaningful concept links | 6/6 | **4/6** | Same. Was 2/6; see note below. |
+| Meaningful concept links | lift over random | **61%** (67/109) vs **8%** random, lift +53 pts | 109 generated pairs, `tools/make_graph_eval.py` |
+| Concept node recall | few gaps | **24/109 pairs name a missing node** | Same; dominant failure mode |
 | Fresh install footprint | < 250 MB | **~170 MB**, 74 packages | Down from 1.3 GB / 122 packages |
-| Test suite | Green in CI | **54 passing** | GitHub Actions on every push |
+| Test suite | Green in CI | **55 passing** | GitHub Actions on every push |
 | Re-sync cost when nothing changed | Zero model calls | **Zero** | Content hash cache, verified by run summary |
 
 **The hand set is a smoke test, not an instrument.** Ten queries carries a 95%
@@ -156,11 +157,17 @@ merges synonym nodes via an `aka` field, and the prompt no longer tells the mode
 to prefer field-standard terms over the note's own wording, which is what had
 turned "Basis Function" into "Feature Map".
 
-One pair regressed in the same run, from direct to 3 hops. That edge came from
-the model's `related` list and simply was not emitted the second time, so
-**extraction is nondeterministic and a 6 pair test cannot separate a real change
-from run to run variance.** Growing this gold set is now worth more than any
-further prompt work. Owner: section 12, R1.
+The 6 pair test could not separate a real change from run to run variance, so
+it was replaced by 109 pairs generated from the lecture notes, with the
+generator never shown the graph. Crucially the harness now also scores 400
+**random** concept pairs: "within 2 hops" is trivially won by adding edges, and
+subsumption linking had just added 25% more of them. The gold pairs sit at 61%
+against a random baseline of 8%, so the structure is real rather than dense.
+
+The larger set immediately localised the problem. **24 of the 42 failures are
+pairs naming a concept that was never extracted at all**, against 18 that are
+genuine missing edges. Node recall, not edge recall, is where the graph loses,
+which an edge-only metric had been hiding. Owner: section 12, R1.
 
 ### Asserted, not yet measured
 

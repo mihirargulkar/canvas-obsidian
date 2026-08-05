@@ -1,16 +1,27 @@
 #!/usr/bin/env python3
-"""DEVELOPMENT TOOL — scores a course's concept graph against a hand-labelled
-gold set, turning "are these links meaningful?" into pass/fail.
+"""DEVELOPMENT TOOL — scores a course's concept graph, turning "are these links
+meaningful?" into a number with a control.
 
-    python eval_graph.py [--course SLUG]
+    python eval_graph.py [--course SLUG] [-v]
 
-NOTE: the gold set below is hand-written for ONE specific course (DS4400,
-machine learning). It is not meaningful for any other course as-is — to use
-this on your own class, replace GOOD_PAIRS/BAD_CONCEPTS with pairs you would
-draw yourself from one of its lectures. This is a tool for iterating on
-extraction quality, not something end users need to run.
+Uses tools/graph_pairs.json if present (generate it with make_graph_eval.py),
+otherwise the 6 hand written pairs below. The hand set caught one real
+regression and could not tell improvement from run-to-run variance, because
+extraction is nondeterministic and six pairs is not a sample.
+
+READ THE LIFT, NOT THE PERCENTAGE. "Within 2 hops" is trivially gamed by adding
+edges: connect everything and score 100%. So every run also scores 400 random
+concept pairs. The gold score only means something as the margin over that
+baseline. Currently 61% against a random 8%.
+
+The pairs are generated from the lecture notes and the generator never sees the
+graph, so a pair may name a concept that was never extracted. That is the point:
+missing nodes are the dominant failure mode and an edge-only metric hides them.
+
+NOTE: gold pairs are per-course. Regenerate for your own classes.
 """
 import argparse
+import json
 import sys
 import re
 from pathlib import Path
@@ -84,11 +95,47 @@ def distance(a, b, adj):
     return None
 
 
+def random_baseline(nodes, adj, trials=400, seed=3):
+    """Fraction of RANDOM concept pairs that sit within 2 hops.
+
+    Without this the headline number is uninterpretable. "<=2 hops" is easy to
+    win by adding edges: a dense enough graph connects everything to everything
+    and scores 100% while meaning nothing. Subsumption linking in pass 2 raised
+    edge count by a quarter, which is exactly the kind of change that could buy
+    a better score without encoding any more real structure.
+
+    A gold pair score is only evidence if it clears this by a wide margin.
+    """
+    import random as _r
+    keys = list(nodes)
+    if len(keys) < 4:
+        return 0.0
+    rng = _r.Random(seed)
+    near = 0
+    for _ in range(trials):
+        a, b = rng.sample(keys, 2)
+        d = distance(a, b, adj)
+        near += bool(d and d <= 2)
+    return near / trials
+
+
+def load_pairs(path):
+    """Generated pairs if present, else the hand written ones."""
+    if path and Path(path).exists():
+        rows = json.loads(Path(path).read_text())
+        return [(r["a"], r["b"]) for r in rows], f"{path} (generated, n={len(rows)})"
+    return GOOD_PAIRS, f"built-in hand written (n={len(GOOD_PAIRS)})"
+
+
 def main():
     p = argparse.ArgumentParser(description=__doc__.split("\n")[1],
                                 formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--course", default=GOLD_COURSE,
                    help=f"course slug to score (default {GOLD_COURSE})")
+    p.add_argument("--pairs", default="tools/graph_pairs.json",
+                   help="generated pair set to use if present")
+    p.add_argument("-v", "--verbose", action="store_true",
+                   help="print every pair, not just the summary")
     args = p.parse_args()
 
     vault = Path("vault") / args.course / "concepts"
@@ -102,23 +149,32 @@ def main():
     nodes, adj = load_graph(vault)
     print(f"{args.course}: {len(nodes)} concept nodes, {len(adj)} unique edges\n")
 
-    print("GOOD PAIRS (want a meaningful connection, <=2 hops):")
-    good_ok = 0
-    for a, b in GOOD_PAIRS:
+    pairs, label = load_pairs(args.pairs)
+    print(f"GOOD PAIRS (want a meaningful connection, <=2 hops)  [{label}]:")
+    good_ok, direct, missing, tally = 0, 0, 0, []
+    for a, b in pairs:
         ma, mb = match(a, nodes), match(b, nodes)
         if not ma or not mb:
-            miss = a if not ma else b
-            print(f"  FAIL  {a} — {b}   (no node for '{miss}')")
+            missing += 1
+            tally.append(("FAIL", a, b, f"no node for '{a if not ma else b}'"))
             continue
         d = distance(ma, mb, adj)
         if d and d <= 2:
             good_ok += 1
-            hop = "direct" if d == 1 else f"{d} hops"
-            print(f"  PASS  {a} — {b}   ({hop})")
-        elif d:
-            print(f"  WEAK  {a} — {b}   ({d} hops apart)")
+            direct += d == 1
+            tally.append(("PASS", a, b, "direct" if d == 1 else f"{d} hops"))
         else:
-            print(f"  FAIL  {a} — {b}   (unreachable)")
+            tally.append(("WEAK" if d else "FAIL", a, b,
+                          f"{d} hops apart" if d else "unreachable"))
+    for verdict, a, b, note in (tally if args.verbose or len(tally) <= 12 else []):
+        print(f"  {verdict}  {a} — {b}   ({note})")
+    if not args.verbose and len(tally) > 12:
+        shown = [t for t in tally if t[0] != "PASS"][:10]
+        print(f"  {good_ok}/{len(pairs)} within 2 hops ({direct} direct). "
+              f"{missing} pair(s) name a concept with no node. Failures:")
+        for verdict, a, b, note in shown:
+            print(f"    {verdict}  {a} — {b}   ({note})")
+        print("  (-v for the full list)")
 
     print("\nBAD CONCEPTS (want ABSENT as nodes):")
     bad_ok = 0
@@ -130,8 +186,16 @@ def main():
         else:
             print(f"  FAIL  '{b}' present as node '{nodes[m]}'")
 
-    print(f"\nSCORE: good links {good_ok}/{len(GOOD_PAIRS)} | "
+    base = random_baseline(nodes, adj)
+    hit = good_ok / len(pairs) if pairs else 0.0
+    print(f"\nSCORE: good links {good_ok}/{len(pairs)} ({hit:.0%}) | "
           f"generic excluded {bad_ok}/{len(BAD_CONCEPTS)}")
+    print(f"       random-pair baseline {base:.0%} within 2 hops  ->  "
+          f"lift {hit - base:+.0%}")
+    if base > 0.5:
+        print("       WARNING: over half of all random pairs are within 2 hops. "
+              "The graph is dense enough that this metric is close to meaningless; "
+              "tighten the edges or score on direct links only.")
 
 
 if __name__ == "__main__":

@@ -1,0 +1,656 @@
+[
+ {
+  "a": "prediction error",
+  "b": "Bias",
+  "why": "Bias is a component of the total prediction error decomposition.",
+  "lecture": "Bias-variance-error-correction"
+ },
+ {
+  "a": "prediction error",
+  "b": "Variance",
+  "why": "Variance is a component of the total prediction error decomposition.",
+  "lecture": "Bias-variance-error-correction"
+ },
+ {
+  "a": "prediction error",
+  "b": "Irreducible noise",
+  "why": "Irreducible noise is a component of prediction error that cannot be eliminated.",
+  "lecture": "Bias-variance-error-correction"
+ },
+ {
+  "a": "expectation",
+  "b": "Variance",
+  "why": "Variance is defined using the mathematical expectation operator.",
+  "lecture": "Bias-variance-error-correction"
+ },
+ {
+  "a": "Regularization",
+  "b": "Overfitting",
+  "why": "Regularization adds constraints to objective functions to prevent model overfitting.",
+  "lecture": "Lectura6-DS4400"
+ },
+ {
+  "a": "L1 norm",
+  "b": "Lasso",
+  "why": "Lasso regression uses the L1 norm constraint as its penalty.",
+  "lecture": "Lectura6-DS4400"
+ },
+ {
+  "a": "L2 norm",
+  "b": "Ridge",
+  "why": "Ridge regression uses the L2 norm constraint as its penalty.",
+  "lecture": "Lectura6-DS4400"
+ },
+ {
+  "a": "Lasso",
+  "b": "Elastic Net",
+  "why": "Elastic Net combines both Lasso and Ridge regularization penalties.",
+  "lecture": "Lectura6-DS4400"
+ },
+ {
+  "a": "Ridge",
+  "b": "Elastic Net",
+  "why": "Elastic Net combines both Ridge and Lasso regularization penalties.",
+  "lecture": "Lectura6-DS4400"
+ },
+ {
+  "a": "Validation Set",
+  "b": "Hyperparameter Tuning Procedure",
+  "why": "Validation sets are used to evaluate best performing hyperparameter configurations.",
+  "lecture": "Lectura6-DS4400"
+ },
+ {
+  "a": "Lasso",
+  "b": "Feature selection",
+  "why": "Lasso performs feature selection by shrinking small weights to zero.",
+  "lecture": "Lectura6-DS4400"
+ },
+ {
+  "a": "derivative",
+  "b": "Loss",
+  "why": "Derivatives indicate how to adjust machine parameters to reduce Loss.",
+  "lecture": "Lecture1-DS4400"
+ },
+ {
+  "a": "gradient",
+  "b": "Multivariable Functions",
+  "why": "The derivative of a multivariable function is represented as a gradient.",
+  "lecture": "Lecture1-DS4400"
+ },
+ {
+  "a": "Product Rule",
+  "b": "Basic Derivative Rules",
+  "why": "The Product Rule is a specific basic derivative rule.",
+  "lecture": "Lecture1-DS4400"
+ },
+ {
+  "a": "natural log",
+  "b": "Logarithmic Functions",
+  "why": "Natural log is a specific logarithmic function with base e.",
+  "lecture": "Lecture1-DS4400"
+ },
+ {
+  "a": "autograd",
+  "b": "derivative",
+  "why": "Autograd is a Python library used to automatically compute derivatives.",
+  "lecture": "Lecture1-DS4400"
+ },
+ {
+  "a": "Bernoulli Distribution",
+  "b": "Categorical Distribution",
+  "why": "Bernoulli is a special case of Categorical with two outcomes.",
+  "lecture": "Lecture10-11-DS4400"
+ },
+ {
+  "a": "Categorical Distribution",
+  "b": "Uniform Distribution (Discrete)",
+  "why": "Discrete Uniform is a Categorical distribution with equal probabilities.",
+  "lecture": "Lecture10-11-DS4400"
+ },
+ {
+  "a": "Gaussian Distribution",
+  "b": "Standard Normal",
+  "why": "Standard Normal is a special Gaussian with mean 0 and variance 1.",
+  "lecture": "Lecture10-11-DS4400"
+ },
+ {
+  "a": "Maximum Likelihood Estimation (MLE)",
+  "b": "Log-Likelihood",
+  "why": "MLE uses monotonic log transformations to optimize joint likelihood.",
+  "lecture": "Lecture10-11-DS4400"
+ },
+ {
+  "a": "Kernel Density Estimation (KDE)",
+  "b": "Bandwidth Trade-off (h)",
+  "why": "Bandwidth h controls smoothness and overfitting in KDE.",
+  "lecture": "Lecture10-11-DS4400"
+ },
+ {
+  "a": "Maximum Likelihood Estimation (MLE)",
+  "b": "Kernel Density Estimation (KDE)",
+  "why": "Both are data-driven methods for estimating probability density functions.",
+  "lecture": "Lecture10-11-DS4400"
+ },
+ {
+  "a": "Inversion Sampling",
+  "b": "Monte Carlo Sampling Methods",
+  "why": "Inversion Sampling is a specific variant of Monte Carlo sampling.",
+  "lecture": "Lecture12-DS4400"
+ },
+ {
+  "a": "Rejection Sampling",
+  "b": "Monte Carlo Sampling Methods",
+  "why": "Rejection Sampling is a specific variant of Monte Carlo sampling.",
+  "lecture": "Lecture12-DS4400"
+ },
+ {
+  "a": "Importance Sampling",
+  "b": "Monte Carlo Sampling Methods",
+  "why": "Importance Sampling is a specific variant of Monte Carlo sampling.",
+  "lecture": "Lecture12-DS4400"
+ },
+ {
+  "a": "Kernel Density Estimation (KDE) Sampling",
+  "b": "Monte Carlo Sampling Methods",
+  "why": "KDE Sampling is a specific variant of Monte Carlo sampling.",
+  "lecture": "Lecture12-DS4400"
+ },
+ {
+  "a": "Cumulative Distribution Function (CDF)",
+  "b": "Inversion Sampling",
+  "why": "Inverting the CDF is a core component of Inversion Sampling.",
+  "lecture": "Lecture12-DS4400"
+ },
+ {
+  "a": "proposal distribution",
+  "b": "Rejection Sampling",
+  "why": "Rejection Sampling relies on drawing samples from a proposal distribution.",
+  "lecture": "Lecture12-DS4400"
+ },
+ {
+  "a": "importance weight",
+  "b": "Importance Sampling",
+  "why": "Importance weights are a core mathematical component of Importance Sampling.",
+  "lecture": "Lecture12-DS4400"
+ },
+ {
+  "a": "Law of Large Numbers (LLN)",
+  "b": "Monte Carlo Sampling Methods",
+  "why": "The LLN provides the mathematical foundation for Monte Carlo integral approximations.",
+  "lecture": "Lecture12-DS4400"
+ },
+ {
+  "a": "Self-Information",
+  "b": "Entropy",
+  "why": "Entropy is the expected value of self-information across a distribution.",
+  "lecture": "Lecture13-DS4400-class-new"
+ },
+ {
+  "a": "Entropy",
+  "b": "Cross Entropy",
+  "why": "Cross entropy equals entropy plus KL divergence between distributions.",
+  "lecture": "Lecture13-DS4400-class-new"
+ },
+ {
+  "a": "Cross Entropy",
+  "b": "KL Divergence",
+  "why": "KL divergence is calculated as cross entropy minus entropy.",
+  "lecture": "Lecture13-DS4400-class-new"
+ },
+ {
+  "a": "Gibbs' inequality",
+  "b": "KL Divergence",
+  "why": "Gibbs' inequality proves KL divergence is always non-negative.",
+  "lecture": "Lecture13-DS4400-class-new"
+ },
+ {
+  "a": "Discrete Entropy",
+  "b": "Entropy",
+  "why": "Discrete entropy is a specific variant of entropy for discrete variables.",
+  "lecture": "Lecture13-DS4400-class-new"
+ },
+ {
+  "a": "Continuous Entropy",
+  "b": "Entropy",
+  "why": "Continuous entropy is a specific variant of entropy for continuous variables.",
+  "lecture": "Lecture13-DS4400-class-new"
+ },
+ {
+  "a": "Classification",
+  "b": "Supervised Learning",
+  "why": "Classification is a main subcategory of supervised learning.",
+  "lecture": "Lecture14-DS4400"
+ },
+ {
+  "a": "Euclidean distance",
+  "b": "K-Nearest Neighbours (K-NN)",
+  "why": "Euclidean distance is a distance metric used to identify neighbors.",
+  "lecture": "Lecture14-DS4400"
+ },
+ {
+  "a": "Distance-Weighted K-NN",
+  "b": "K-Nearest Neighbours (K-NN)",
+  "why": "Distance-Weighted K-NN is a specific variant of K-NN.",
+  "lecture": "Lecture14-DS4400"
+ },
+ {
+  "a": "Sigmoid / Logistic Function",
+  "b": "Logistic Regression",
+  "why": "The sigmoid function maps linear outputs to probabilities in logistic regression.",
+  "lecture": "Lecture14-DS4400"
+ },
+ {
+  "a": "Cross Entropy",
+  "b": "Logistic Regression",
+  "why": "Cross entropy serves as the loss function for logistic regression.",
+  "lecture": "Lecture14-DS4400"
+ },
+ {
+  "a": "Confusion Matrix",
+  "b": "Evaluation Metrics for Classification",
+  "why": "Confusion matrix provides the counts used to evaluate classification performance.",
+  "lecture": "Lecture14-DS4400"
+ },
+ {
+  "a": "N-gram",
+  "b": "Bag of Words",
+  "why": "N-grams are context-preserving sequence extensions of bag of words features.",
+  "lecture": "Lecture15-DS4400"
+ },
+ {
+  "a": "Unigram",
+  "b": "N-gram",
+  "why": "Unigram is a specific variant of N-gram where n equals one.",
+  "lecture": "Lecture15-DS4400"
+ },
+ {
+  "a": "Bigram",
+  "b": "N-gram",
+  "why": "Bigram is a specific variant of N-gram where n equals two.",
+  "lecture": "Lecture15-DS4400"
+ },
+ {
+  "a": "Score(x)",
+  "b": "Logistic Function",
+  "why": "Score(x) is the input transformed by the logistic function into probability.",
+  "lecture": "Lecture15-DS4400"
+ },
+ {
+  "a": "Logistic Function",
+  "b": "Logistic Regression Classifier",
+  "why": "Logistic function is a core component used to model probabilities.",
+  "lecture": "Lecture15-DS4400"
+ },
+ {
+  "a": "Likelihood",
+  "b": "LogLoss",
+  "why": "LogLoss is derived by taking the negative log of likelihood.",
+  "lecture": "Lecture15-DS4400"
+ },
+ {
+  "a": "Support Vector Machine",
+  "b": "Soft Margin Classifier",
+  "why": "Soft Margin Classifier is a specific variant of Support Vector Machine.",
+  "lecture": "Lecture16-DS4400 copy"
+ },
+ {
+  "a": "Support Vector Machine",
+  "b": "Linearly Separable Classifier",
+  "why": "Linearly Separable Classifier is a basic variant of Support Vector Machine.",
+  "lecture": "Lecture16-DS4400 copy"
+ },
+ {
+  "a": "unit vector",
+  "b": "vector normalization",
+  "why": "Vector normalization is the process used to obtain a unit vector.",
+  "lecture": "Lecture16-DS4400 copy"
+ },
+ {
+  "a": "margin",
+  "b": "support vectors",
+  "why": "Support vectors are the closest data points that bound the margin.",
+  "lecture": "Lecture16-DS4400 copy"
+ },
+ {
+  "a": "optimal hyperplane",
+  "b": "margin",
+  "why": "The optimal hyperplane is identified by maximizing the margin.",
+  "lecture": "Lecture16-DS4400 copy"
+ },
+ {
+  "a": "hard-margin SVM",
+  "b": "Soft-Margin SVM",
+  "why": "Soft-Margin SVM is a variant that allows margin violations.",
+  "lecture": "Lecture16-DS4400 copy"
+ },
+ {
+  "a": "Non-Parametric Models",
+  "b": "Decision Trees",
+  "why": "Decision trees are a specific variant of non-parametric models.",
+  "lecture": "Lecture17-DS4400"
+ },
+ {
+  "a": "Entropy",
+  "b": "Conditional Entropy",
+  "why": "Conditional entropy calculates entropy after observing another variable.",
+  "lecture": "Lecture17-DS4400"
+ },
+ {
+  "a": "Entropy",
+  "b": "Information Gain",
+  "why": "Information gain is defined using entropy minus conditional entropy.",
+  "lecture": "Lecture17-DS4400"
+ },
+ {
+  "a": "Conditional Entropy",
+  "b": "Information Gain",
+  "why": "Information gain subtracts conditional entropy from initial entropy.",
+  "lecture": "Lecture17-DS4400"
+ },
+ {
+  "a": "Information Gain",
+  "b": "Decision Trees",
+  "why": "Decision trees choose dataset splits that maximize information gain.",
+  "lecture": "Lecture17-DS4400"
+ },
+ {
+  "a": "Decision Trees",
+  "b": "Pure Node",
+  "why": "Pure nodes are terminal nodes in decision trees with zero entropy.",
+  "lecture": "Lecture17-DS4400"
+ },
+ {
+  "a": "Variance",
+  "b": "Covariance",
+  "why": "Covariance generalizes variance to measure how two features vary together.",
+  "lecture": "Lecture18-DS4400 copy"
+ },
+ {
+  "a": "Covariance",
+  "b": "Correlation",
+  "why": "Correlation is created by scaling covariance using standard deviations.",
+  "lecture": "Lecture18-DS4400 copy"
+ },
+ {
+  "a": "Kullback-Leibler Divergence",
+  "b": "Mutual Information",
+  "why": "Mutual Information is calculated as the KL divergence between joint and product distributions.",
+  "lecture": "Lecture18-DS4400 copy"
+ },
+ {
+  "a": "Mutual Information",
+  "b": "Normalized Mutual Information",
+  "why": "Normalized Mutual Information scales Mutual Information to a range between 0 and 1.",
+  "lecture": "Lecture18-DS4400 copy"
+ },
+ {
+  "a": "Principal Component Analysis (PCA)",
+  "b": "dimensionality reduction technique",
+  "why": "PCA is a specific type of dimensionality reduction technique.",
+  "lecture": "Lecture19-DS4400"
+ },
+ {
+  "a": "covariance matrix",
+  "b": "eigenvalues and eigenvectors",
+  "why": "PCA computes eigenvalues and eigenvectors from the covariance matrix.",
+  "lecture": "Lecture19-DS4400"
+ },
+ {
+  "a": "eigenvectors",
+  "b": "principal components",
+  "why": "The eigenvectors of the covariance matrix are called principal components.",
+  "lecture": "Lecture19-DS4400"
+ },
+ {
+  "a": "centering matrix",
+  "b": "centered data",
+  "why": "The centering matrix is used to transform raw data into centered data.",
+  "lecture": "Lecture19-DS4400"
+ },
+ {
+  "a": "standardization",
+  "b": "centering data",
+  "why": "Centering data is a required component step of standardization.",
+  "lecture": "Lecture19-DS4400"
+ },
+ {
+  "a": "Principal Component Analysis (PCA)",
+  "b": "Linear Discriminant Analysis (LDA)",
+  "why": "LDA is a task-aligned alternative to PCA for dimensionality reduction.",
+  "lecture": "Lecture19-DS4400"
+ },
+ {
+  "a": "column vector",
+  "b": "Matrix",
+  "why": "A collection of column vectors forms a matrix.",
+  "lecture": "Lecture2-DS4400-new"
+ },
+ {
+  "a": "Vector Dot Product",
+  "b": "Vector Inner Product",
+  "why": "Inner product generalizes the dot product to abstract vector spaces.",
+  "lecture": "Lecture2-DS4400-new"
+ },
+ {
+  "a": "Matrix Diagonal",
+  "b": "Matrix Trace",
+  "why": "Matrix trace is the sum of the matrix diagonal elements.",
+  "lecture": "Lecture2-DS4400-new"
+ },
+ {
+  "a": "Matrix Trace",
+  "b": "Matrix Inner Product",
+  "why": "Matrix inner product is defined as the trace of XY^T.",
+  "lecture": "Lecture2-DS4400-new"
+ },
+ {
+  "a": "Vector Hadamard Product",
+  "b": "Matrix Hadamard Product",
+  "why": "Matrix Hadamard product extends element-wise vector multiplication to matrices.",
+  "lecture": "Lecture2-DS4400-new"
+ },
+ {
+  "a": "L_p norms",
+  "b": "L_1 Norm",
+  "why": "L_1 Norm is a specific variant of L_p norms.",
+  "lecture": "Lecture3-DS4400-new"
+ },
+ {
+  "a": "L_p norms",
+  "b": "L_2 Norm",
+  "why": "L_2 Norm is a specific variant of L_p norms.",
+  "lecture": "Lecture3-DS4400-new"
+ },
+ {
+  "a": "L_p norms",
+  "b": "L_\\infty Norm",
+  "why": "L_\\infty Norm is a specific variant of L_p norms.",
+  "lecture": "Lecture3-DS4400-new"
+ },
+ {
+  "a": "dot product",
+  "b": "linear model",
+  "why": "Dot product provides a compact representation for a linear model.",
+  "lecture": "Lecture3-DS4400-new"
+ },
+ {
+  "a": "error vector",
+  "b": "Loss Function",
+  "why": "Loss function is built by taking norm of error vector.",
+  "lecture": "Lecture3-DS4400-new"
+ },
+ {
+  "a": "partial derivatives",
+  "b": "gradients",
+  "why": "Gradients are vectors formed by partial derivatives.",
+  "lecture": "Lecture3-DS4400-new"
+ },
+ {
+  "a": "feature map",
+  "b": "basis functions",
+  "why": "The feature map is formed by applying basis functions to inputs.",
+  "lecture": "Lecture4-DS4400-new"
+ },
+ {
+  "a": "Linear Regression",
+  "b": "Mean Squared Error (MSE)",
+  "why": "MSE is the loss function minimized to train linear regression models.",
+  "lecture": "Lecture4-DS4400-new"
+ },
+ {
+  "a": "Gradient descent",
+  "b": "learning rate",
+  "why": "The learning rate scales derivative steps taken within gradient descent.",
+  "lecture": "Lecture4-DS4400-new"
+ },
+ {
+  "a": "Polynomial regression",
+  "b": "Linear Regression",
+  "why": "Polynomial regression uses nonlinear basis functions within linear regression framework.",
+  "lecture": "Lecture4-DS4400-new"
+ },
+ {
+  "a": "Gradient descent",
+  "b": "Mean Squared Error (MSE)",
+  "why": "Gradient descent is an optimization algorithm used to minimize MSE.",
+  "lecture": "Lecture4-DS4400-new"
+ },
+ {
+  "a": "Data Pre-Processing",
+  "b": "One-Hot Encoding",
+  "why": "One-Hot Encoding is a specific technique used in data pre-processing.",
+  "lecture": "Lecture5-DS4400"
+ },
+ {
+  "a": "Data Pre-Processing",
+  "b": "Standardization",
+  "why": "Standardization is a method for scaling data during data pre-processing.",
+  "lecture": "Lecture5-DS4400"
+ },
+ {
+  "a": "Data Pre-Processing",
+  "b": "Min-Max Scaling",
+  "why": "Min-Max Scaling is a specific feature scaling technique in pre-processing.",
+  "lecture": "Lecture5-DS4400"
+ },
+ {
+  "a": "Variance",
+  "b": "Standard Deviation",
+  "why": "Standard deviation is computed directly as the square root of variance.",
+  "lecture": "Lecture5-DS4400"
+ },
+ {
+  "a": "Determinant",
+  "b": "Inverse of a Matrix",
+  "why": "The determinant determines whether a matrix inverse exists.",
+  "lecture": "Lecture5-DS4400"
+ },
+ {
+  "a": "Mean Squared Error (MSE)",
+  "b": "Closed-Form Solution",
+  "why": "The closed-form solution directly optimizes the MSE objective function.",
+  "lecture": "Lecture5-DS4400"
+ },
+ {
+  "a": "Random Variables",
+  "b": "Discrete Random Variable",
+  "why": "Discrete random variable is a specific type of random variable.",
+  "lecture": "Lecture7-DS4400"
+ },
+ {
+  "a": "Random Variables",
+  "b": "Continuous Random Variable",
+  "why": "Continuous random variable is a specific type of random variable.",
+  "lecture": "Lecture7-DS4400"
+ },
+ {
+  "a": "Discrete Random Variable",
+  "b": "Probability Mass Function (PMF)",
+  "why": "PMF measures the probability of discrete random variable outcomes.",
+  "lecture": "Lecture7-DS4400"
+ },
+ {
+  "a": "Continuous Random Variable",
+  "b": "Probability Density Function (PDF)",
+  "why": "PDF measures probability behavior for continuous random variables.",
+  "lecture": "Lecture7-DS4400"
+ },
+ {
+  "a": "Joint Distributions",
+  "b": "Marginalization",
+  "why": "Marginalization extracts individual distributions from a joint distribution.",
+  "lecture": "Lecture7-DS4400"
+ },
+ {
+  "a": "Joint Distributions",
+  "b": "Conditional Probability",
+  "why": "Conditional probability is computed using joint and marginal probabilities.",
+  "lecture": "Lecture7-DS4400"
+ },
+ {
+  "a": "sample",
+  "b": "empirical (sample) mean",
+  "why": "The empirical mean is computed directly from sample data.",
+  "lecture": "Lecture8-DS4400"
+ },
+ {
+  "a": "population",
+  "b": "expectation",
+  "why": "Expectation is the mean calculated over an entire population.",
+  "lecture": "Lecture8-DS4400"
+ },
+ {
+  "a": "empirical (sample) mean",
+  "b": "inference",
+  "why": "Inference uses empirical mean to estimate population expectation.",
+  "lecture": "Lecture8-DS4400"
+ },
+ {
+  "a": "empirical (sample) mean",
+  "b": "Law of Large Numbers",
+  "why": "The law states sample mean converges to population expectation.",
+  "lecture": "Lecture8-DS4400"
+ },
+ {
+  "a": "bias",
+  "b": "underfitting",
+  "why": "High bias causes a model to underfit data.",
+  "lecture": "Lecture8-DS4400"
+ },
+ {
+  "a": "variance",
+  "b": "overfitting",
+  "why": "High variance causes a model to overfit data.",
+  "lecture": "Lecture8-DS4400"
+ },
+ {
+  "a": "cross validation",
+  "b": "cross validation error",
+  "why": "Cross validation error is the average error computed from cross validation.",
+  "lecture": "Lecture8-DS4400"
+ },
+ {
+  "a": "Bernoulli Variable",
+  "b": "Bernoulli Distribution",
+  "why": "Repeated independent Bernoulli trials create a Bernoulli distribution.",
+  "lecture": "Lecture9-DS4400"
+ },
+ {
+  "a": "Categorical Variable",
+  "b": "Categorical Distribution",
+  "why": "Repeated categorical trials form a categorical distribution.",
+  "lecture": "Lecture9-DS4400"
+ },
+ {
+  "a": "Discrete PMF",
+  "b": "Continuous PDF",
+  "why": "Both are probability functions used to describe data distributions.",
+  "lecture": "Lecture9-DS4400"
+ },
+ {
+  "a": "Poisson Distribution",
+  "b": "Exponential Distribution",
+  "why": "Poisson models event counts while Exponential models wait time between events.",
+  "lecture": "Lecture9-DS4400"
+ }
+]

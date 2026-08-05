@@ -4,6 +4,8 @@ These cover the modules that previously had no tests at all (store, updates,
 dashboard, sync paths) because they used to need a live Canvas account and a
 vision model. The fixtures in conftest.py replace both.
 """
+import pathlib
+
 import numpy as np
 import pytest
 
@@ -249,3 +251,24 @@ def test_alias_merge_keeps_the_name_with_more_lectures():
     }
     extract.merge_aliases(nodes)
     assert "basis function" in nodes, "the better-attested name must win"
+
+
+def test_graph_eval_reports_a_random_baseline(tmp_path):
+    """"Within 2 hops" is trivially won by adding edges, so the gold score is
+    uninterpretable without a control. A fully connected graph must show ~no lift
+    even though every gold pair "passes"."""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(
+        "eval_graph", pathlib.Path(__file__).parent.parent / "tools" / "eval_graph.py")
+    eg = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(eg)
+
+    names = [f"c{i}" for i in range(12)]
+    complete = {frozenset((a, b)) for a in names for b in names if a != b}
+    assert eg.random_baseline(dict.fromkeys(names), complete, trials=50) == 1.0
+
+    star = {frozenset(("c0", n)) for n in names[1:]}      # hub: all pairs are 2 hops
+    assert eg.random_baseline(dict.fromkeys(names), star, trials=50) == 1.0
+
+    sparse = {frozenset(("c0", "c1")), frozenset(("c2", "c3"))}
+    assert eg.random_baseline(dict.fromkeys(names), sparse, trials=200) < 0.2

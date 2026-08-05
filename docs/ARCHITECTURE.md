@@ -415,9 +415,10 @@ memorise one student's corpus, need retraining weekly, and lose citations.
 
 **How do you know it works?** recall@5 of 0.90 and MRR 0.69 on 100 synthetic
 queries with pooled relevance labels, holding at 0.88 on the hardest third. The
-concept graph scores 4 of 6 link tests, up from 2, with generic concepts still
-6/6 excluded. That test is only 6 pairs and extraction is nondeterministic, so
-treat it as a smoke test.
+concept graph links 61% of 109 generated concept pairs within 2 hops, against
+an 8% random-pair baseline, with generic concepts still 6/6 excluded. Its
+weakness is node recall: a quarter of the pairs name a concept that was never
+extracted.
 
 **What would you do next?** Fix the concept-link regression, then tune the RRF
 fusion weights, which were never tuned because until now no gold set was big
