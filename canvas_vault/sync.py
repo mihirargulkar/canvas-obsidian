@@ -18,6 +18,7 @@ from . import chdir_root
 from . import chat
 from . import changes
 from . import dashboard
+from . import canvas as canvas_api
 from .course import Course
 
 
@@ -64,7 +65,13 @@ def main():
     p.add_argument("--quiet", action="store_true",
                    help="suppress output unless something changed (for scheduled runs)")
     a = p.parse_args()
+    try:
+        _run(a)
+    except canvas_api.CanvasError as e:
+        raise SystemExit(f"\n{e}")
 
+
+def _run(a):
     if a.list:
         courses = Course.current()
         print(f"{len(courses)} current class(es):")

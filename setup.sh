@@ -29,7 +29,7 @@ say "Installing dependencies"
 [[ -d .venv ]] || "$PY_BIN" -m venv .venv
 ./.venv/bin/pip install -q --upgrade pip
 ./.venv/bin/pip install -q -r requirements.txt
-ok "virtualenv ready at .venv (torch comes with sentence-transformers, so this is the slow part)"
+ok "virtualenv ready at .venv (~170MB, no PyTorch)"
 
 # --- LibreOffice (needed to turn .pptx/.docx into PDF for transcription) -------
 say "Checking LibreOffice"

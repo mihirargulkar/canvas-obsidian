@@ -108,6 +108,35 @@ def gemini_key():
     return key
 
 
+class CanvasError(RuntimeError):
+    """A Canvas call failed for a reason the user can actually fix.
+
+    get_client() already handles *missing* credentials. Wrong ones were the gap:
+    a typo'd CANVAS_URL surfaced as a raw canvasapi traceback ending in
+    "ResourceDoesNotExist: Not Found", which says nothing about what to change.
+    Found by running setup.sh on a clean clone the way a new user would.
+    """
+
+
+def _explain(exc) -> str:
+    name, text = type(exc).__name__, str(exc)
+    url = os.getenv("CANVAS_URL") or "(unset)"
+    if "DoesNotExist" in name or "404" in text:
+        return (f"Canvas returned 'not found' for {url}\n"
+                f"CANVAS_URL is probably wrong. It should be just your school's "
+                f"Canvas host, e.g. https://yourschool.instructure.com — no path, "
+                f"no /courses. Fix it in .env and try again.")
+    if "Unauthorized" in name or "InvalidAccessToken" in name or "401" in text:
+        return ("Canvas rejected your access token.\n"
+                "Generate a new one at Canvas > Account > Settings > New Access "
+                "Token, then update CANVAS_TOKEN in .env. Tokens can expire.")
+    if "Forbidden" in name or "403" in text:
+        return ("Canvas refused the request (403). The token may lack permission, "
+                "or your institution restricts API access.")
+    return (f"Canvas request to {url} failed: {name}: {text[:160]}\n"
+            f"Check CANVAS_URL and CANVAS_TOKEN in .env.")
+
+
 def current_courses(canvas, include_all=False):
     """The classes you're taking now (or every active course, if include_all).
 
@@ -119,7 +148,13 @@ def current_courses(canvas, include_all=False):
       3. if no term names carry digits, fall back to the highest term id
          (Canvas term ids increase over time).
     """
-    courses = list(canvas.get_courses(enrollment_state="active", include=["term"]))
+    try:
+        courses = list(canvas.get_courses(enrollment_state="active", include=["term"]))
+    except Exception as e:
+        # Every path that reaches Canvas comes through here, so one guard covers
+        # the CLIs, the sync and the MCP tools. Raised, not sys.exit: this is
+        # library code and the MCP server must survive a bad call.
+        raise CanvasError(_explain(e)) from e
     if include_all:
         return courses
 
@@ -307,7 +342,10 @@ def main():
     pd.set_defaults(func=cmd_due)
 
     args = p.parse_args()
-    args.func(args)
+    try:
+        args.func(args)
+    except CanvasError as e:
+        sys.exit(f"\n{e}")
 
 
 if __name__ == "__main__":

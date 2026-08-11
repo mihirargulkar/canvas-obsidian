@@ -304,3 +304,38 @@ def test_recipe_does_not_cover_text_extraction():
     import hashlib
     assert ingest.recipe() == hashlib.sha256(
         (ingest.PROMPT + ingest.MODEL).encode()).hexdigest()[:12]
+
+
+def test_wrong_credentials_explain_themselves(monkeypatch):
+    """A typo'd CANVAS_URL surfaced as a raw canvasapi traceback ending in
+    "ResourceDoesNotExist: Not Found", which names nothing the user can change.
+    Found by running setup.sh against a clean clone the way a new user would."""
+    monkeypatch.setenv("CANVAS_URL", "https://typo.instructure.com")
+
+    class ResourceDoesNotExist(Exception): pass
+    class InvalidAccessToken(Exception): pass
+    class Forbidden(Exception): pass
+
+    assert "CANVAS_URL is probably wrong" in canvas._explain(ResourceDoesNotExist("Not Found"))
+    assert "https://typo.instructure.com" in canvas._explain(ResourceDoesNotExist("Not Found"))
+    assert "CANVAS_TOKEN" in canvas._explain(InvalidAccessToken("401"))
+    assert "403" in canvas._explain(Forbidden("403 forbidden"))
+    assert "CANVAS_URL" in canvas._explain(ValueError("something unexpected"))
+
+
+def test_canvas_failure_raises_rather_than_exits():
+    """The MCP server must survive a bad Canvas call. sys.exit in library code
+    would kill the server for the rest of the session, and this codebase has
+    shipped that bug twice already."""
+    class Boom:
+        def get_courses(self, **kw):
+            raise RuntimeError("connection reset")
+
+    try:
+        canvas.current_courses(Boom())
+    except canvas.CanvasError as e:
+        assert "connection reset" in str(e)
+    except SystemExit:
+        raise AssertionError("must not sys.exit from library code")
+    else:
+        raise AssertionError("should have raised")
