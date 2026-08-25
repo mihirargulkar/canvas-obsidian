@@ -83,10 +83,18 @@ and VS Code (`.vscode/mcp.json`, though it uses `"servers"` instead of `"mcpServ
 - What do I need to understand before MLE makes sense?
 - What is homework 3 actually asking for?
 
-Grades come straight from Canvas and are never recalculated here. You get both the
-score on graded work and the score if everything unsubmitted counted as zero, since
-early in a term those are very different numbers. Bear in mind grades are sent to
-whichever LLM client you connect.
+Grades are off over MCP unless you turn them on, since they're a different kind of
+private than lecture notes and enabling them means handing them to whichever client
+you've connected. Put `CANVAS_ENABLE_GRADES=1` in `.env` and restart the client. The
+local CLI works either way and sends nothing anywhere:
+
+```bash
+.venv/bin/python -m canvas_vault.canvas grades
+```
+
+Either way they come straight from Canvas and are never recalculated here. You get
+both the score on graded work and the score if everything unsubmitted counted as
+zero, since early in a term those are very different numbers.
 
 Answers about course content cite the lecture and section they came from, so you can go
 check. If something isn't in your notes it'll say so instead of making it up.

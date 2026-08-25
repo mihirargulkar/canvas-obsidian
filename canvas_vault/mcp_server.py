@@ -29,6 +29,24 @@ from .course import Course
 
 MAX_TEXT = 2000        # per-chunk cap: keep tool results well under client size limits
 
+
+def grades_enabled() -> bool:
+    """Whether to expose the grades tool over MCP. Off unless explicitly enabled.
+
+    Everything else here is course material. Grades are a different sensitivity
+    class, and exposing them means handing them to whichever LLM client is
+    connected. That should be a decision someone makes, not one they inherit
+    from a default, so this is opt-in rather than opt-out.
+
+    Only the MCP surface is gated. `python -m canvas_vault.canvas grades` and
+    Course.grades() stay available, because running a local CLI on your own
+    machine sends nothing anywhere.
+    """
+    from dotenv import load_dotenv
+    load_dotenv()
+    return os.getenv("CANVAS_ENABLE_GRADES", "").strip().lower() in {
+        "1", "true", "yes", "on"}
+
 server = MCPServer(
     name="canvas",
     version="0.2.0",
@@ -64,23 +82,29 @@ def upcoming_assignments(days: int = 7, course: str | None = None) -> list[dict]
             for d, c, n, p in rows]
 
 
-@server.tool()
-def grades(course: str | None = None, items: bool = True) -> list[dict]:
-    """The student's current grades, live from Canvas — ALL classes unless
-    `course` is given. Never computed here, only reported.
+if grades_enabled():
+    @server.tool()
+    def grades(course: str | None = None, items: bool = True) -> list[dict]:
+        """The student's current grades, live from Canvas — ALL classes unless
+        `course` is given. Never computed here, only reported.
 
-    Each class returns `current_score` (graded work only) and `final_score`
-    (ungraded counted as zero); quote whichever the question is actually about
-    and say which one it is, because early in a term they differ a lot. `items`
-    adds per-assignment scores, including work submitted but not marked yet.
+        Each class returns `current_score` (graded work only) and `final_score`
+        (ungraded counted as zero); quote whichever the question is actually about
+        and say which one it is, because early in a term they differ a lot. `items`
+        adds per-assignment scores, including work submitted but not marked yet.
 
-    A class whose instructor hides grades comes back with an `error` field and
-    no scores. Say so rather than treating it as a zero or as missing work.
-    """
-    rows = [_resolve(course).grades(items)] if course else canvas.grades(items=items)
-    for r in rows:
-        r["items"] = r.get("items", [])[:40]
-    return rows
+        A class whose instructor hides grades comes back with an `error` field and
+        no scores. Say so rather than treating it as a zero or as missing work.
+        """
+        rows = [_resolve(course).grades(items)] if course else canvas.grades(items=items)
+        for r in rows:
+            r["items"] = r.get("items", [])[:40]
+        return rows
+else:
+    # Say so on stderr. A silently absent tool looks like a bug to anyone
+    # wondering why their client cannot see their grades.
+    print("canvas: grades tool not exposed (set CANVAS_ENABLE_GRADES=1 in .env "
+          "to allow grades over MCP)", file=sys.stderr)
 
 
 @server.tool()

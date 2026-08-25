@@ -344,3 +344,38 @@ def test_excused_work_is_labelled_excused(hist_course):
     sub.excused = True
     hist_course._submissions = [sub]
     assert canvas.grades(courses=[hist_course])[0]["items"][0]["status"] == "excused"
+
+
+# --- grades are opt-in over MCP ------------------------------------------------
+
+def _mcp_with(monkeypatch, value):
+    """Import mcp_server fresh with CANVAS_ENABLE_GRADES set to `value`."""
+    import importlib, sys as _s
+    if value is None:
+        monkeypatch.delenv("CANVAS_ENABLE_GRADES", raising=False)
+    else:
+        monkeypatch.setenv("CANVAS_ENABLE_GRADES", value)
+    monkeypatch.setattr("dotenv.load_dotenv", lambda *a, **k: None)  # ignore a real .env
+    _s.modules.pop("canvas_vault.mcp_server", None)
+    return importlib.import_module("canvas_vault.mcp_server")
+
+
+def test_grades_tool_absent_unless_enabled(monkeypatch):
+    """Not registered rather than registered-and-refusing: a tool the model cannot
+    see cannot leak, and it costs no tokens in the tool list."""
+    assert not hasattr(_mcp_with(monkeypatch, None), "grades")
+    assert not hasattr(_mcp_with(monkeypatch, "0"), "grades")
+    assert not hasattr(_mcp_with(monkeypatch, "false"), "grades")
+
+
+def test_grades_tool_present_when_enabled(monkeypatch):
+    for value in ("1", "true", "YES", "on"):
+        assert hasattr(_mcp_with(monkeypatch, value), "grades"), value
+
+
+def test_local_grades_are_never_gated(monkeypatch):
+    """Only the MCP surface is gated. Running the CLI on your own machine sends
+    nothing anywhere, so gating it would be security theatre."""
+    monkeypatch.delenv("CANVAS_ENABLE_GRADES", raising=False)
+    assert callable(canvas.grades)
+    assert callable(canvas.cmd_grades)

@@ -280,6 +280,7 @@ name could produce `../../`.*
 | T2 | All student data is gitignored | P0 | `vault/`, `notes/`, `cache/`, `index/` never enter the repo |
 | T3 | Disclose that course content is sent to Gemini during transcription | P0 | Stated in the README |
 | T4 | Academic integrity is the student's call, stated plainly | P0 | One sentence, no lecture |
+| T5 | Grades are opt-in over MCP | P0 | Tool is not registered unless `CANVAS_ENABLE_GRADES=1`; local CLI unaffected |
 
 ## 7. How it works
 
@@ -322,7 +323,7 @@ indexed chunks, 178 concept nodes, 294 edges.
 |---|---|---|
 | `list_courses` | Current classes with slugs | Live API |
 | `upcoming_assignments` | Deadlines within N days, all classes by default | Live API |
-| `grades` | Current grade per class, plus per-assignment marks | Live API |
+| `grades` | Current grade per class, plus per-assignment marks. Off unless `CANVAS_ENABLE_GRADES=1` | Live API |
 | `announcements` | Recent professor updates | Live API |
 | `syllabus` | Course policies | Live API |
 | `search_notes` | Hybrid search over lectures, homework, notebooks | Local index |
