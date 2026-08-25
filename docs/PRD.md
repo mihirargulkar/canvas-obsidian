@@ -26,7 +26,7 @@ Everything stays on the student's machine as plain markdown. No hosting, no
 second subscription, no vendor holding the notes.
 
 **Current state:** v0.2 is running daily against two live courses. 2,077 lines
-of Python, 55 tests, seven MCP tools, and a working end to end pipeline. Section
+of Python, 64 tests, eight MCP tools, and a working end to end pipeline. Section
 5 states exactly which quality claims are measured and which are not.
 
 ## 2. Problem
@@ -121,7 +121,7 @@ asserted but not yet instrumented.
 | Meaningful concept links | lift over random | **61%** (67/109) vs **8%** random, lift +53 pts | 109 generated pairs, `tools/make_graph_eval.py` |
 | Concept node recall | few gaps | **24/109 pairs name a missing node** | Same; dominant failure mode |
 | Fresh install footprint | < 250 MB | **~170 MB**, 74 packages | Down from 1.3 GB / 122 packages |
-| Test suite | Green in CI | **55 passing** | GitHub Actions on every push |
+| Test suite | Green in CI | **64 passing** | GitHub Actions on every push |
 | Re-sync cost when nothing changed | Zero model calls | **Zero** | Content hash cache, verified by run summary |
 
 **The hand set is a smoke test, not an instrument.** Ten queries carries a 95%
@@ -221,6 +221,7 @@ Priority: **P0** ships or the product does not work; **P1** ships in v1.0;
 |---|---|---|---|
 | R1 | Deadline questions answered deterministically from the live API, never from the index | P0 | "What's due this week" matches Canvas exactly |
 | R2 | Backward looking deadline questions | P0 | "Am I overdue on anything" returns past due items, not a future window |
+| R8 | Grades reported, never recomputed | P0 | Both Canvas totals surfaced; hidden grades return an error, not a zero |
 | R3 | Conceptual questions answered from indexed material with lecture and section citations | P0 | Answer names the lecture it came from |
 | R4 | Hybrid retrieval: dense embeddings fused with BM25 | P0 | Exact term queries and paraphrases both work |
 | R5 | Say so when material is absent | P0 | A question about an untaught topic is declined, not invented |
@@ -251,7 +252,7 @@ not been posted". Silence about something never checked reads as evidence.*
 |---|---|---|---|
 | M1 | Detect the current term's courses without manual configuration | P0 | Correct courses found across schools that never set term end dates |
 | M2 | Per class isolation: one broken class cannot sink the others | P0 | A course with a restricted tab is skipped with a warning; the rest still report |
-| M3 | Every tool scopes to one class or spans all of them | P0 | Optional `course` slug on all seven MCP tools |
+| M3 | Every tool scopes to one class or spans all of them | P0 | Optional `course` slug on all eight MCP tools |
 | M4 | One filesystem safe slug definition, used everywhere | P0 | `DS 4400` resolves to `DS4400` in both the vault path and the link |
 | M5 | Cross class dashboard | P1 | One file lists deadlines across all classes by date |
 
@@ -321,6 +322,7 @@ indexed chunks, 178 concept nodes, 294 edges.
 |---|---|---|
 | `list_courses` | Current classes with slugs | Live API |
 | `upcoming_assignments` | Deadlines within N days, all classes by default | Live API |
+| `grades` | Current grade per class, plus per-assignment marks | Live API |
 | `announcements` | Recent professor updates | Live API |
 | `syllabus` | Course policies | Live API |
 | `search_notes` | Hybrid search over lectures, homework, notebooks | Local index |

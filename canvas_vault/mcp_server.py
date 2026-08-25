@@ -65,6 +65,25 @@ def upcoming_assignments(days: int = 7, course: str | None = None) -> list[dict]
 
 
 @server.tool()
+def grades(course: str | None = None, items: bool = True) -> list[dict]:
+    """The student's current grades, live from Canvas — ALL classes unless
+    `course` is given. Never computed here, only reported.
+
+    Each class returns `current_score` (graded work only) and `final_score`
+    (ungraded counted as zero); quote whichever the question is actually about
+    and say which one it is, because early in a term they differ a lot. `items`
+    adds per-assignment scores, including work submitted but not marked yet.
+
+    A class whose instructor hides grades comes back with an `error` field and
+    no scores. Say so rather than treating it as a zero or as missing work.
+    """
+    rows = [_resolve(course).grades(items)] if course else canvas.grades(items=items)
+    for r in rows:
+        r["items"] = r.get("items", [])[:40]
+    return rows
+
+
+@server.tool()
 def announcements(course: str, limit: int = 10) -> list[dict]:
     """Recent Canvas announcements for one class (cancellations, exam logistics,
     study guides, posted solutions), newest first."""

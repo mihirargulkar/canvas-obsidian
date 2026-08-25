@@ -35,6 +35,22 @@ class FakeFile:
         self.updated_at, self.size = updated_at, size
 
 
+class FakeEnrollment:
+    def __init__(self, current_score=None, final_score=None, current_grade=None,
+                 type="StudentEnrollment"):
+        self.type = type
+        self.grades = {"current_score": current_score, "final_score": final_score,
+                       "current_grade": current_grade}
+
+
+class FakeSubmission:
+    def __init__(self, name, score=None, points=None, graded_at=None,
+                 workflow_state="graded"):
+        self.assignment = {"name": name, "points_possible": points}
+        self.score, self.graded_at, self.workflow_state = score, graded_at, workflow_state
+        self.assignment_id = 1
+
+
 class FakeAnnouncement:
     def __init__(self, title, message, posted_at):
         self.title, self.message, self.posted_at = title, message, posted_at
@@ -45,11 +61,13 @@ class FakeCourse:
     instructor-restricted Files or Assignments tab does."""
 
     def __init__(self, id, name, course_code="", assignments=(), files=(),
-                 announcements=(), syllabus_body="", forbid=()):
+                 announcements=(), syllabus_body="", forbid=(),
+                 enrollments=(), submissions=()):
         self.id, self.name, self.course_code = id, name, course_code
         self.syllabus_body = syllabus_body
         self._assignments, self._files = list(assignments), list(files)
         self._announcements = list(announcements)
+        self._enrollments, self._submissions = list(enrollments), list(submissions)
         self._forbid = set(forbid)
 
     def _check(self, what):
@@ -63,6 +81,14 @@ class FakeCourse:
     def get_files(self):
         self._check("files")
         return list(self._files)
+
+    def get_enrollments(self, **kw):
+        self._check("grades")
+        return list(self._enrollments)
+
+    def get_multiple_submissions(self, **kw):
+        self._check("submissions")
+        return list(self._submissions)
 
     def get_discussion_topics(self, only_announcements=False):
         self._check("announcements")
@@ -84,7 +110,7 @@ def phys_course():
                              "2026-09-02T12:00:00Z"),
         ],
         syllabus_body="<p>Late work loses 10% per day.</p>",
-        forbid=["files"],
+        forbid=["files", "grades"],          # instructor hides the total
     )
 
 
@@ -98,6 +124,14 @@ def hist_course():
                FakeFile(9002, "readings.csv")],           # not ingestible, not "missing"
         announcements=[FakeAnnouncement("Reading list posted", "<p>See the syllabus.</p>",
                                         "2026-09-01T09:00:00Z")],
+        enrollments=[FakeEnrollment(current_score=91.5, final_score=64.0,
+                                    current_grade="A-")],
+        submissions=[
+            FakeSubmission("Essay 1", 23, 25, "2026-09-12T10:00:00Z"),
+            FakeSubmission("Quiz 1", 8, 10, "2026-09-05T10:00:00Z"),
+            FakeSubmission("Essay 2", None, 25, None, "submitted"),   # awaiting a mark
+            FakeSubmission("Extra credit", None, 5, None, "unsubmitted"),  # never attempted
+        ],
     )
 
 

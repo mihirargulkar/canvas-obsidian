@@ -272,3 +272,75 @@ def test_graph_eval_reports_a_random_baseline(tmp_path):
 
     sparse = {frozenset(("c0", "c1")), frozenset(("c2", "c3"))}
     assert eg.random_baseline(dict.fromkeys(names), sparse, trials=200) < 0.2
+
+
+# --- grades -------------------------------------------------------------------
+
+def test_grades_report_both_totals(hist_course):
+    """current_score counts graded work only; final_score treats ungraded as zero.
+    Early in a term these differ enormously (91.5 vs 64.0 here), so reporting one
+    without saying which would badly mislead."""
+    row = canvas.grades(courses=[hist_course])[0]
+    assert row["course"] == "HIST2200"
+    assert (row["current_score"], row["final_score"]) == (91.5, 64.0)
+    assert row["letter"] == "A-"
+
+
+def test_grades_list_marked_and_pending_work(hist_course):
+    """"What haven't I got back yet" is a grade question too, so submitted-but-
+    unmarked work is included with a null score. Never-attempted work is not,
+    since it isn't awaiting anything."""
+    items = canvas.grades(courses=[hist_course])[0]["items"]
+    by_name = {i["name"]: i for i in items}
+    assert by_name["Essay 1"]["score"] == 23 and by_name["Essay 1"]["out_of"] == 25
+    assert by_name["Essay 2"]["score"] is None
+    assert by_name["Essay 2"]["status"] == "submitted"
+    assert "Extra credit" not in by_name, "unsubmitted and unmarked is not a grade row"
+    assert [i["name"] for i in items][:2] == ["Essay 1", "Quiz 1"], "newest graded first"
+
+
+def test_hidden_grades_report_an_error_not_a_zero(phys_course, hist_course):
+    """An instructor hiding the total must not read as a zero, and must not take
+    down every other class's grades."""
+    rows = {r["course"]: r for r in canvas.grades(courses=[phys_course, hist_course])}
+    assert "error" in rows["PHYS1100"]
+    assert rows["PHYS1100"].get("current_score") is None
+    assert rows["HIST2200"]["current_score"] == 91.5, "one hidden class must not sink the rest"
+
+
+def test_grades_can_skip_the_per_assignment_call(hist_course):
+    """items=False exists so a totals-only question doesn't pay for a second
+    paginated request per course."""
+    row = canvas.grades(courses=[hist_course], items=False)[0]
+    assert "items" not in row
+    assert row["current_score"] == 91.5
+
+
+def test_pass_fail_work_keeps_its_result(hist_course):
+    """Complete/incomplete assignments carry the result in `grade`, not `score`.
+    Reading only `score` rendered a marked assignment as unmarked."""
+    from tests.conftest import FakeSubmission
+    sub = FakeSubmission("Reflection", None, None, "2026-09-20T10:00:00Z")
+    sub.grade = "complete"
+    hist_course._submissions = [sub]
+    item = canvas.grades(courses=[hist_course])[0]["items"][0]
+    assert item["grade"] == "complete"
+    assert item["status"] == "graded", "a complete/incomplete mark is a grade"
+
+
+def test_graded_with_no_mark_is_not_called_graded(hist_course):
+    """Canvas returns workflow_state=graded with neither score nor grade set.
+    Reporting that as "graded" implies a mark the student hasn't actually got."""
+    from tests.conftest import FakeSubmission
+    sub = FakeSubmission("Assessment", None, 10, "2026-09-20T10:00:00Z", "graded")
+    hist_course._submissions = [sub]
+    assert canvas.grades(courses=[hist_course])[0]["items"][0]["status"] == "no mark recorded"
+
+
+def test_excused_work_is_labelled_excused(hist_course):
+    """Excused is not a zero and not a pending mark."""
+    from tests.conftest import FakeSubmission
+    sub = FakeSubmission("Quiz 3", None, 10, None, "graded")
+    sub.excused = True
+    hist_course._submissions = [sub]
+    assert canvas.grades(courses=[hist_course])[0]["items"][0]["status"] == "excused"

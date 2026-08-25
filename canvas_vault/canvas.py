@@ -4,6 +4,7 @@
 Usage:
     python -m canvas_vault.canvas list [--all]
     python -m canvas_vault.canvas due  [--days N] [--all]
+    python -m canvas_vault.canvas grades [--summary]
 """
 import argparse
 import os
@@ -301,6 +302,108 @@ def upcoming(days, courses=None):
     return rows
 
 
+MAX_GRADE_ITEMS = 60      # a term's graded work; keeps the MCP payload small
+
+
+def grades(courses=None, items=True):
+    """Current grade per course, and optionally the individual graded items.
+
+    Canvas reports two totals and they answer different questions:
+      current_score — counts only what has been graded so far
+      final_score   — treats everything ungraded as a zero
+    Early in a term these diverge wildly, so reporting one alone is misleading.
+    Both are passed through unchanged; nothing here recomputes a grade, because
+    weighting rules live in the syllabus and guessing them would invent numbers.
+
+    A course whose grades the instructor hides returns an `error` string rather
+    than raising, so one restricted class cannot hide every other class's marks.
+    """
+    if courses is None:
+        courses = current_courses(get_client())
+    out = []
+    for c in courses:
+        row = {"course": slug_of(c), "name": course_label(c)}
+        try:
+            enr = next((e for e in c.get_enrollments(user_id="self")
+                        if getattr(e, "type", "") in ("StudentEnrollment", "")), None)
+            g = (getattr(enr, "grades", None) or {}) if enr else {}
+            row.update(current_score=g.get("current_score"),
+                       final_score=g.get("final_score"),
+                       letter=g.get("current_grade") or g.get("final_grade"))
+        except Exception as e:
+            row["error"] = f"grades unavailable ({type(e).__name__})"
+            print(f"  ! {row['course']}: {row['error']}", file=sys.stderr)
+        if items:
+            row["items"] = _graded_items(c)
+        out.append(row)
+    return out
+
+
+def _graded_items(c):
+    """Per-assignment scores for this course, most recently graded first.
+
+    Ungraded-but-submitted work is included with score None: "what have I not
+    got back yet" is as much a grade question as "what did I score".
+    """
+    try:
+        subs = list(c.get_multiple_submissions(student_ids=["self"],
+                                               include=["assignment"]))
+    except Exception as e:
+        print(f"  ! {slug_of(c)}: submissions unavailable ({type(e).__name__})",
+              file=sys.stderr)
+        return []
+    rows = []
+    for s in subs:
+        a = getattr(s, "assignment", None) or {}
+        score, state = getattr(s, "score", None), getattr(s, "workflow_state", None)
+        if score is None and state in (None, "unsubmitted"):
+            continue                      # never attempted and never marked
+        # Pass/fail work carries its result in `grade` ("complete"), not `score`,
+        # so scoring alone renders a marked assignment as if it were unmarked.
+        grade = getattr(s, "grade", None)
+        if getattr(s, "excused", False):
+            status = "excused"
+        elif score is not None or grade:
+            status = "graded"
+        elif state == "graded":
+            # Canvas really does return workflow_state=graded with neither score
+            # nor grade set. Calling that "graded" implies a mark that isn't
+            # there, and a student reading it would think they had been marked.
+            status = "no mark recorded"
+        else:
+            status = state or "pending"
+        rows.append({"name": a.get("name") or f"assignment {getattr(s, 'assignment_id', '?')}",
+                     "score": score,
+                     "grade": grade,
+                     "out_of": a.get("points_possible"),
+                     "graded_at": getattr(s, "graded_at", None),
+                     "status": status})
+    rows.sort(key=lambda r: (r["graded_at"] or ""), reverse=True)
+    return rows[:MAX_GRADE_ITEMS]
+
+
+def cmd_grades(args):
+    rows = grades(items=not args.summary)
+    for r in rows:
+        if r.get("error"):
+            print(f"{r['course']:<12} {r['error']}")
+            continue
+        cur, fin = r.get("current_score"), r.get("final_score")
+        cur_s = f"{cur:g}%" if cur is not None else "n/a"
+        fin_s = f"{fin:g}%" if fin is not None else "n/a"
+        letter = f"  {r['letter']}" if r.get("letter") else ""
+        print(f"{r['course']:<12} current {cur_s:>6}   if-unsubmitted-zero {fin_s:>6}{letter}")
+        for it in r.get("items", [])[:12]:
+            if it["score"] is not None:
+                got = (f"{it['score']:g}/{it['out_of']:g}" if it["out_of"]
+                       else f"{it['score']:g}")
+            else:
+                got = it["grade"] or it["status"]
+            print(f"    {got:>12}  {it['name'][:52]}")
+    if not rows:
+        print("(no current courses)")
+
+
 def cmd_list(args):
     canvas = get_client()
     courses = current_courses(canvas, include_all=args.all)
@@ -340,6 +443,10 @@ def main():
     pd.add_argument("--days", type=int, default=7)
     pd.add_argument("--all", action="store_true", help="check all active courses, not just current term")
     pd.set_defaults(func=cmd_due)
+
+    pg = sub.add_parser("grades", help="current grade per class")
+    pg.add_argument("--summary", action="store_true", help="totals only, no per-assignment rows")
+    pg.set_defaults(func=cmd_grades)
 
     args = p.parse_args()
     try:

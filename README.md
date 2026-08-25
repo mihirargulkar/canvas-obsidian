@@ -76,11 +76,17 @@ and VS Code (`.vscode/mcp.json`, though it uses `"servers"` instead of `"mcpServ
 
 - What's due this week?
 - Am I overdue on anything?
+- What's my grade in each class, and what's still unmarked?
 - Did I miss any announcements?
 - Explain gradient descent the way my professor did, not the textbook version
 - Here's the midterm topic list. Which of these do my notes barely cover?
 - What do I need to understand before MLE makes sense?
 - What is homework 3 actually asking for?
+
+Grades come straight from Canvas and are never recalculated here. You get both the
+score on graded work and the score if everything unsubmitted counted as zero, since
+early in a term those are very different numbers. Bear in mind grades are sent to
+whichever LLM client you connect.
 
 Answers about course content cite the lecture and section they came from, so you can go
 check. If something isn't in your notes it'll say so instead of making it up.

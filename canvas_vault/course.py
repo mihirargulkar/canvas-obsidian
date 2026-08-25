@@ -124,6 +124,10 @@ class Course:
         """
         return canvas_api.upcoming(days, courses=[self._api])
 
+    def grades(self, items: bool = True) -> dict:
+        """This course's current grade. Scoped, for the same reason as upcoming()."""
+        return canvas_api.grades(courses=[self._api], items=items)[0]
+
     def announcements(self, limit: int = 10) -> list[dict]:
         from . import updates
         return updates.fetch_updates(self.id)["announcements"][:limit]
