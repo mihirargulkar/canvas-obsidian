@@ -26,11 +26,12 @@ from dotenv import load_dotenv
 
 from . import chdir_root
 from . import ROOT
-from .canvas import get_client, course_label
+from .canvas import (get_client, course_label, is_locked,
+                     course_files as canvas_files)
 
 VISION_EXT = {".pdf", ".pptx", ".docx"}          # -> pdf -> Gemini vision
 IMAGE_EXT = {".png", ".jpg", ".jpeg", ".webp"}   # -> straight to Gemini (reads images natively)
-TEXT_EXT = {".ipynb", ".txt", ".md"}             # -> extracted directly, no model
+TEXT_EXT = {".ipynb", ".txt", ".md", ".xlsx"}     # -> extracted directly, no model
 INGEST_EXT = VISION_EXT | IMAGE_EXT | TEXT_EXT
 MODEL = os.getenv("GEMINI_MODEL", "gemini-flash-latest")
 SOFFICE_CANDIDATES = [                                   # checked after $PATH
@@ -180,8 +181,42 @@ def gemini_markdown(client, pdf_path: Path) -> str:
             time.sleep(wait)
 
 
+def xlsx_rows(path: Path) -> str:
+    """Spreadsheet -> markdown-ish rows, using stdlib only.
+
+    An .xlsx is a zip of XML. Course *schedules* live in these (exam dates,
+    homework deadlines, the week-by-week topic list), which is exactly the
+    content a student most wants searchable, so it is worth 25 lines rather
+    than an openpyxl dependency.
+    """
+    import zipfile
+    from xml.etree import ElementTree as ET
+    ns = "{http://schemas.openxmlformats.org/spreadsheetml/2006/main}"
+    with zipfile.ZipFile(path) as z:
+        shared = []
+        if "xl/sharedStrings.xml" in z.namelist():
+            shared = ["".join(t.text or "" for t in si.iter(ns + "t"))
+                      for si in ET.fromstring(z.read("xl/sharedStrings.xml"))]
+        sheets = [n for n in z.namelist() if n.startswith("xl/worksheets/sheet")]
+        out = []
+        for name in sorted(sheets):
+            for row in ET.fromstring(z.read(name)).iter(ns + "row"):
+                cells = []
+                for cell in row.iter(ns + "c"):
+                    v = cell.find(ns + "v")
+                    if v is None or v.text is None:
+                        continue
+                    text = (shared[int(v.text)] if cell.get("t") == "s" else v.text)
+                    cells.append(" ".join(text.split()))
+                if any(cells):
+                    out.append(" | ".join(cells))
+    return "\n".join(out)
+
+
 def extract_text(path: Path) -> str:
-    """Notebook / plain-text -> readable text (code cells fenced)."""
+    """Notebook / spreadsheet / plain-text -> readable text (code cells fenced)."""
+    if path.suffix.lower() == ".xlsx":
+        return xlsx_rows(path)
     if path.suffix.lower() == ".ipynb":
         nb = json.loads(path.read_text(errors="ignore"))
         parts = []
@@ -301,14 +336,16 @@ def ingest_course(course_id: int, limit=None):
     for d in (RAW / slug, PDF, MD, NOTES / slug):
         d.mkdir(parents=True, exist_ok=True)
 
-    try:
-        files = [f for f in course.get_files()
-                 if Path(f.display_name).suffix.lower() in INGEST_EXT]
-    except Exception as e:
-        # Files tab is often disabled by the instructor — keep going, the
-        # assignment prompts below are usually still readable.
-        print(f"{slug}: files unavailable ({type(e).__name__}) — assignments only")
-        files = []
+    every = [f for f in canvas_files(course)
+             if Path(f.display_name).suffix.lower() in INGEST_EXT]
+    files = [f for f in every if not is_locked(f)]
+    locked = [f.display_name for f in every if is_locked(f)]
+    if locked:
+        # Name them. Staying silent about a file the professor HAS posted is the
+        # bug that once had a client tell a student a lecture "hasn't been
+        # posted" when it was sitting on Canvas.
+        print(f"{slug}: {len(locked)} file(s) posted but not released to you yet: "
+              + ", ".join(sorted(locked)))
     if limit:
         files = files[:limit]
     print(f"{slug}: {len(files)} ingestible file(s)")
@@ -334,8 +371,17 @@ def ingest_course(course_id: int, limit=None):
             continue
 
         raw = RAW / slug / f.display_name
-        f.download(str(raw))
-        st, h = ingest_bytes(f.display_name, raw, slug, client, out_name)
+        try:
+            f.download(str(raw))
+            st, h = ingest_bytes(f.display_name, raw, slug, client, out_name)
+        except Exception as e:
+            # One unreadable file must not abort the course. It used to: a single
+            # locked lecture raised here and the whole ingest step was recorded
+            # as FAILED, so nothing after it was processed either.
+            print(f"  FAILED {f.display_name}: {type(e).__name__} {str(e)[:60]} "
+                  f"(retry next run)")
+            counts["fail"] += 1
+            continue
         if st != "fail":
             manifest[key] = h
         if st == "new":

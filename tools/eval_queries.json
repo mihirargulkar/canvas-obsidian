@@ -8,7 +8,8 @@
    "Lecture15-DS4400",
    "Lecture13-DS4400-class-new",
    "Lecture13-polls",
-   "Lecture17-DS4400"
+   "Lecture17-DS4400",
+   "Lecture10-11-DS4400"
   ]
  },
  {
@@ -30,7 +31,8 @@
   "section": "SVM_Walkthrough \u2014 part 1",
   "leakage": 0.29,
   "irrelevant": [
-   "Lecture16-DS4400 copy"
+   "Lecture16-DS4400 copy",
+   "Lecture16-polls"
   ]
  },
  {
@@ -41,10 +43,12 @@
   "irrelevant": [
    "hw-DS4400_HW2",
    "Lecture4-DS4400-new",
-   "Lecture4-polls"
+   "Lecture4-polls",
+   "chainrule"
   ],
   "relevant": [
-   "Lecture1-DS4400"
+   "Lecture1-DS4400",
+   "hw-DS4400_HW0_final"
   ]
  },
  {
@@ -67,7 +71,8 @@
    "Lecture13-DS4400-class-new",
    "Lecture1-DS4400",
    "Lecture13-polls",
-   "Lecture1-polls"
+   "Lecture1-polls",
+   "Lecture10-11-DS4400"
   ],
   "relevant": [
    "Lecture15-DS4400"
@@ -90,7 +95,9 @@
   "irrelevant": [
    "Lecture13-polls",
    "Lecture4-DS4400-new",
-   "Lecture17-DS4400"
+   "Lecture17-DS4400",
+   "Lecture9-DS4400",
+   "Lecture15-DS4400"
   ],
   "relevant": [
    "Lecture5-DS4400"
@@ -117,7 +124,12 @@
   "irrelevant": [
    "Lecture7-DS4400",
    "Lecture9-DS4400",
-   "Lecture10-11-DS4400"
+   "Lecture10-11-DS4400",
+   "Lecture15-DS4400",
+   "Lecture15-polls"
+  ],
+  "relevant": [
+   "Lecture7-polls"
   ]
  },
  {
@@ -129,7 +141,8 @@
    "code-m_knn"
   ],
   "irrelevant": [
-   "Lecture15-DS4400"
+   "Lecture15-DS4400",
+   "Lecture14-polls"
   ]
  },
  {
@@ -152,7 +165,9 @@
    "Lecture4-DS4400-new",
    "Lecture3-polls",
    "code-gradient_descent_epochs_sklearn",
-   "Lecture5-polls"
+   "Lecture5-polls",
+   "code-m_clustering",
+   "Lecture3-DS4400-new"
   ]
  },
  {
@@ -162,7 +177,8 @@
   "leakage": 0.2,
   "irrelevant": [
    "Lecture2-DS4400-new",
-   "Lecture3-DS4400-new"
+   "Lecture3-DS4400-new",
+   "Lecture20-DS4400-new"
   ]
  },
  {
@@ -174,7 +190,8 @@
    "Lecture3-polls",
    "Lecture5-polls",
    "code-no_input_file_mle_kde_m",
-   "Lecture3-DS4400-new"
+   "Lecture3-DS4400-new",
+   "Lecture15-DS4400"
   ]
  },
  {
@@ -201,7 +218,9 @@
   "irrelevant": [
    "code-SVM_Walkthrough",
    "Lecture10-11-DS4400",
-   "Lecture12-DS4400"
+   "Lecture12-DS4400",
+   "hw-Homework#3",
+   "chainrule"
   ]
  },
  {
@@ -212,7 +231,8 @@
   "irrelevant": [
    "Lecture7-DS4400",
    "Lecture9-DS4400",
-   "Lecture8-DS4400"
+   "Lecture8-DS4400",
+   "Lecture12-DS4400"
   ]
  },
  {
@@ -232,7 +252,8 @@
   "leakage": 0.6,
   "relevant": [
    "Lecture7-DS4400",
-   "Lecture3-DS4400-new"
+   "Lecture3-DS4400-new",
+   "Lecture14-polls"
   ],
   "irrelevant": [
    "Lecture8-DS4400",
@@ -250,7 +271,8 @@
   "irrelevant": [
    "code-norms_matcalc",
    "code-norms",
-   "Lecture2-polls"
+   "Lecture2-polls",
+   "hw-DS4400_HW1_updated"
   ]
  },
  {
@@ -263,6 +285,9 @@
    "code-numpy_examples",
    "Lecture16-DS4400 copy",
    "Lecture2-polls"
+  ],
+  "relevant": [
+   "DS4400_HW1_solutions"
   ]
  },
  {
@@ -274,7 +299,13 @@
    "Lecture10-11-DS4400",
    "Lecture1-DS4400",
    "Lecture5-DS4400",
-   "Lecture10-11-polls"
+   "Lecture10-11-polls",
+   "Lecture3-DS4400-new",
+   "Lecture15-DS4400",
+   "intro-to-DL"
+  ],
+  "relevant": [
+   "Lecture1-polls"
   ]
  },
  {
@@ -362,7 +393,8 @@
    "hw-Midterm1-coding",
    "hw-DS4400_HW1_updated",
    "hw-SummerB-2026-DS4400-midterm1-1",
-   "hw-Homework#3"
+   "hw-Homework#3",
+   "hw-DS4400_HW2"
   ],
   "relevant": [
    "hw-Midterm2-coding"
@@ -375,7 +407,8 @@
   "leakage": 0.27,
   "irrelevant": [
    "Lecture4-DS4400-new",
-   "Lecture4-polls"
+   "Lecture4-polls",
+   "hw-Midterm1-coding"
   ]
  },
  {
@@ -397,7 +430,9 @@
   "irrelevant": [
    "Lecture2-DS4400-new",
    "Lecture7-polls",
-   "Lecture9-DS4400"
+   "Lecture9-DS4400",
+   "Lecture12-DS4400",
+   "Lecture7-DS4400"
   ]
  },
  {
@@ -407,7 +442,9 @@
   "leakage": 0.44,
   "irrelevant": [
    "code-sampling_examples",
-   "code-autograd_example"
+   "code-autograd_example",
+   "hw-Homework#3",
+   "Lecture14-DS4400"
   ]
  },
  {
@@ -418,6 +455,10 @@
   "irrelevant": [
    "Lecture4-DS4400-new",
    "Lecture1-DS4400"
+  ],
+  "relevant": [
+   "Lecture1-polls",
+   "Lecture4-polls"
   ]
  },
  {
@@ -439,7 +480,8 @@
   "irrelevant": [
    "Lecture8-DS4400",
    "Lecture9-DS4400",
-   "Lecture2-polls"
+   "Lecture2-polls",
+   "Lecture12-DS4400"
   ],
   "relevant": [
    "code-no_input_file_mle_kde_m"
@@ -453,6 +495,9 @@
   "relevant": [
    "Lecture13-polls",
    "Lecture13-DS4400-class-new"
+  ],
+  "irrelevant": [
+   "Lecture7-polls"
   ]
  },
  {
@@ -464,7 +509,9 @@
    "Lecture14-DS4400"
   ],
   "irrelevant": [
-   "Lectura6-DS4400"
+   "Lectura6-DS4400",
+   "hw-Midterm2-coding",
+   "hw-Midterm1-coding"
   ]
  },
  {
@@ -484,11 +531,13 @@
   "section": "sampling_examples \u2014 part 2",
   "leakage": 0.43,
   "relevant": [
-   "code-autograd_example"
+   "code-autograd_example",
+   "hw-Homework#3"
   ],
   "irrelevant": [
    "Lecture12-DS4400",
-   "Lecture10-11-DS4400"
+   "Lecture10-11-DS4400",
+   "Lecture9-DS4400"
   ]
  },
  {
@@ -521,7 +570,8 @@
   "irrelevant": [
    "Lectura6-DS4400",
    "Lecture4-DS4400-new",
-   "Lecture14-DS4400"
+   "Lecture14-DS4400",
+   "hw-Midterm1-coding"
   ]
  },
  {
@@ -542,7 +592,9 @@
   "irrelevant": [
    "hw-Homework#3",
    "announcements",
-   "hw-DS4400_HW1_updated"
+   "hw-DS4400_HW1_updated",
+   "hw-DS4400_HW0_final",
+   "hw-Midterm1-coding"
   ]
  },
  {
@@ -585,7 +637,13 @@
    "Lecture12-polls",
    "Lecture3-DS4400-new",
    "Lecture5-DS4400",
-   "Lectura6-DS4400"
+   "Lectura6-DS4400",
+   "Lecture14-DS4400",
+   "hw-DS4400_HW0_final",
+   "intro-to-DL"
+  ],
+  "relevant": [
+   "Lecture1-polls"
   ]
  },
  {
@@ -594,7 +652,8 @@
   "section": "trees \u2014 part 2",
   "leakage": 0.12,
   "irrelevant": [
-   "Lecture17-DS4400"
+   "Lecture17-DS4400",
+   "Lecture17-polls"
   ]
  },
  {
@@ -633,7 +692,8 @@
   "irrelevant": [
    "Lecture14-DS4400",
    "Lecture3-DS4400-new",
-   "Lecture5-DS4400"
+   "Lecture5-DS4400",
+   "hw-Midterm2-coding"
   ]
  },
  {
@@ -643,7 +703,9 @@
   "leakage": 0.33,
   "irrelevant": [
    "Lecture8-DS4400",
-   "Lecture7-polls"
+   "Lecture7-polls",
+   "Lecture17-DS4400",
+   "Lecture7-DS4400"
   ]
  },
  {
@@ -679,7 +741,11 @@
   "leakage": 0.56,
   "relevant": [
    "code-mle_kde_m",
-   "code-no_input_file_mle_kde_m"
+   "code-no_input_file_mle_kde_m",
+   "Lecture15-polls"
+  ],
+  "irrelevant": [
+   "Lecture10-11-DS4400"
   ]
  },
  {
@@ -712,7 +778,8 @@
   "section": "Gradient Descent Algorithm (1D)",
   "leakage": 0.5,
   "irrelevant": [
-   "hw-DS4400_HW2"
+   "hw-DS4400_HW2",
+   "DS4400_HW2_solutions"
   ]
  },
  {
@@ -721,7 +788,9 @@
   "section": "4. Visualize the decision boundary",
   "leakage": 0.6,
   "irrelevant": [
-   "Lecture16-DS4400 copy"
+   "Lecture16-DS4400 copy",
+   "hw-DS4400-exam",
+   "Lecture14-DS4400"
   ]
  },
  {
@@ -763,7 +832,8 @@
   "section": "3. Train a soft-margin SVM",
   "leakage": 0.11,
   "irrelevant": [
-   "Lecture16-DS4400 copy"
+   "Lecture16-DS4400 copy",
+   "hw-DS4400-exam"
   ]
  },
  {
@@ -776,6 +846,9 @@
    "Lecture4-DS4400-new",
    "Lecture3-polls",
    "code-SVM_Walkthrough"
+  ],
+  "relevant": [
+   "Lecture16-DS4400 copy"
   ]
  },
  {
@@ -787,7 +860,8 @@
    "Lecture15-DS4400"
   ],
   "irrelevant": [
-   "Lecture13-DS4400-class-new"
+   "Lecture13-DS4400-class-new",
+   "Lecture15-polls"
   ]
  },
  {
@@ -807,14 +881,18 @@
   "irrelevant": [
    "code-mle_kde_m",
    "Lecture10-11-DS4400",
-   "Lecture12-DS4400"
+   "Lecture12-DS4400",
+   "Lecture14-DS4400"
   ]
  },
  {
   "query": "how to measure how much better a branch split is in decision trees",
   "source": "Lecture17-DS4400",
   "section": "Reading the Tree: The Entropy Calculation",
-  "leakage": 0.14
+  "leakage": 0.14,
+  "relevant": [
+   "hw-DS4400-exam"
+  ]
  },
  {
   "query": "why is my kernel density plot looking super bumpy and jagged",
@@ -823,7 +901,8 @@
   "leakage": 0.43,
   "irrelevant": [
    "Lecture10-11-DS4400",
-   "Lecture12-DS4400"
+   "Lecture12-DS4400",
+   "hw-Homework#3"
   ],
   "relevant": [
    "code-mle_kde_m"
@@ -838,7 +917,8 @@
    "Lecture4-polls",
    "Lecture16-DS4400 copy",
    "Lecture13-polls",
-   "Lecture4-DS4400-new"
+   "Lecture4-DS4400-new",
+   "Lecture15-polls"
   ]
  },
  {
@@ -862,7 +942,9 @@
   "leakage": 0.33,
   "irrelevant": [
    "Lecture3-DS4400-new",
-   "Lecture5-polls"
+   "Lecture5-polls",
+   "Lecture5-DS4400",
+   "Lecture14-polls"
   ],
   "relevant": [
    "Lecture2-polls"
@@ -901,7 +983,8 @@
   "section": "5. Effect of `C`",
   "leakage": 0.33,
   "irrelevant": [
-   "Lecture16-DS4400 copy"
+   "Lecture16-DS4400 copy",
+   "hw-DS4400-exam"
   ]
  },
  {
@@ -914,6 +997,9 @@
    "Lecture1-DS4400",
    "Lecture15-DS4400",
    "Lecture3-DS4400-new"
+  ],
+  "relevant": [
+   "Lecture14-DS4400"
   ]
  },
  {
@@ -922,14 +1008,21 @@
   "section": "data_preprocess \u2014 part 11",
   "leakage": 0.29,
   "irrelevant": [
-   "Lecture3-DS4400-new"
+   "Lecture3-DS4400-new",
+   "hw-Midterm1-coding"
+  ],
+  "relevant": [
+   "Lecture14-DS4400"
   ]
  },
  {
   "query": "which side of a decision tree split is yes",
   "source": "Lecture17-DS4400",
   "section": "Reading the Tree",
-  "leakage": 0.5
+  "leakage": 0.5,
+  "irrelevant": [
+   "Lecture17-polls"
+  ]
  },
  {
   "query": "how to code nearest neighbors distance calculation in numpy",
@@ -938,7 +1031,9 @@
   "leakage": 0.5,
   "irrelevant": [
    "Lecture14-DS4400",
-   "Lecture15-DS4400"
+   "Lecture15-DS4400",
+   "Lecture14-polls",
+   "code-m_clustering"
   ]
  },
  {
@@ -962,7 +1057,10 @@
    "Lecture10-11-DS4400"
   ],
   "irrelevant": [
-   "Lecture5-polls"
+   "Lecture5-polls",
+   "Lecture14-DS4400",
+   "Lectura6-DS4400",
+   "Lecture4-DS4400-new"
   ]
  },
  {
@@ -973,7 +1071,8 @@
   "irrelevant": [
    "Lecture4-DS4400-new",
    "Lecture3-DS4400-new",
-   "code-gradient_descent_epochs_matrix"
+   "code-gradient_descent_epochs_matrix",
+   "hw-DS4400_HW2"
   ],
   "relevant": [
    "Lecture5-DS4400"
@@ -996,7 +1095,11 @@
   "irrelevant": [
    "code-sampling_examples",
    "code-probability",
-   "Lecture7-DS4400"
+   "Lecture7-DS4400",
+   "Lecture12-DS4400"
+  ],
+  "relevant": [
+   "Lecture7-polls"
   ]
  },
  {
@@ -1007,7 +1110,11 @@
   "relevant": [
    "Lecture7-DS4400",
    "Lecture17-DS4400",
-   "Lecture13-DS4400-class-new"
+   "Lecture13-DS4400-class-new",
+   "Lecture17-polls"
+  ],
+  "irrelevant": [
+   "DS4400_HW2_solutions"
   ]
  },
  {
@@ -1031,7 +1138,9 @@
    "Lecture8-DS4400"
   ],
   "irrelevant": [
-   "Lecture15-DS4400"
+   "Lecture15-DS4400",
+   "intro-to-DL",
+   "Lecture10-11-polls"
   ]
  },
  {
@@ -1063,7 +1172,10 @@
    "Lecture4-polls",
    "Lecture2-polls",
    "Lecture15-DS4400",
-   "Lecture2-DS4400-new"
+   "Lecture2-DS4400-new",
+   "Lecture15-polls",
+   "Lecture1-polls",
+   "Lecture1-DS4400"
   ]
  },
  {
@@ -1074,7 +1186,8 @@
   "irrelevant": [
    "code-SVM_Walkthrough",
    "Lecture13-polls",
-   "Lecture17-DS4400"
+   "Lecture17-DS4400",
+   "Lecture21-DS4400"
   ]
  },
  {
@@ -1084,7 +1197,9 @@
   "leakage": 0.57,
   "irrelevant": [
    "announcements",
-   "code-logistic_regression_demo"
+   "code-logistic_regression_demo",
+   "Lecture15-polls",
+   "hw-DS4400-exam"
   ]
  },
  {
@@ -1095,6 +1210,9 @@
   "irrelevant": [
    "code-probability (1)",
    "code-sampling_examples"
+  ],
+  "relevant": [
+   "Lecture9-DS4400"
   ]
  },
  {
@@ -1106,7 +1224,10 @@
    "Lecture5-polls",
    "Lecture3-DS4400-new",
    "Lecture2-DS4400-new",
-   "Lecture10-11-DS4400"
+   "Lecture10-11-DS4400",
+   "hw-DS4400-exam",
+   "Lecture7-DS4400",
+   "Lecture16-polls"
   ]
  },
  {
@@ -1116,7 +1237,8 @@
   "leakage": 0.5,
   "irrelevant": [
    "code-probability",
-   "Lecture10-11-DS4400"
+   "Lecture10-11-DS4400",
+   "Lecture7-polls"
   ]
  }
 ]

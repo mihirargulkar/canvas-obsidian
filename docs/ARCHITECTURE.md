@@ -153,8 +153,11 @@ You get grounded, citable answers instead of plausible guesses.
 ### Chunking
 
 You don't embed whole documents, because a 40-slide lecture averaged into one
-vector means nothing. Notes are split on `## ` headings, so each chunk is one
-coherent section.
+vector means nothing. Notes are split on any heading of depth 2 or more (`##`, `###`), so each chunk
+is one coherent section. Matching only `## ` looked right until a real syllabus
+came back with one `##` and thirty-five `###`: 17KB collapsed into two
+8,400-char chunks, each averaging office hours, grading and academic integrity
+into a single vector that matched no question well.
 
 A bug worth remembering: notes using only `#` headings produced **zero** chunks
 and were invisible to search. Four notes were silently missing. The fix recovered
@@ -413,8 +416,8 @@ lookup and removes most of the dependency tree.
 **Why not fine-tune?** This is a search problem. A fine-tuned model would
 memorise one student's corpus, need retraining weekly, and lose citations.
 
-**How do you know it works?** recall@5 of 0.90 and MRR 0.69 on 100 synthetic
-queries with pooled relevance labels, holding at 0.88 on the hardest third. The
+**How do you know it works?** recall@5 of 0.89 and MRR 0.63 on 100 synthetic
+queries with pooled relevance labels. The
 concept graph links 61% of 109 generated concept pairs within 2 hops, against
 an 8% random-pair baseline, with generic concepts still 6/6 excluded. Its
 weakness is node recall: a quarter of the pairs name a concept that was never

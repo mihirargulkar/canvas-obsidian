@@ -339,3 +339,20 @@ def test_canvas_failure_raises_rather_than_exits():
         raise AssertionError("must not sys.exit from library code")
     else:
         raise AssertionError("should have raised")
+
+
+def test_deeper_headings_also_split_chunks():
+    """A real syllabus transcription came back with one '##' and thirty-five
+    '###'. Splitting on '## ' alone turned 17KB into two 8,400-char chunks, each
+    averaging unrelated policies into a single vector. Under-splitting doesn't
+    error, it just retrieves badly."""
+    note = ("---\nsource: syl.pdf\n---\n\n## Syllabus\n\nIntro paragraph here.\n\n"
+            "### Office Hours\n\n" + "Tuesday and Friday 11:15am in Meserve. " * 3 +
+            "\n\n### Late Work\n\n" + "No late homework is accepted, ever. " * 3 +
+            "\n\n### Grading\n\n" + "Exams are forty percent of the grade. " * 3)
+    chunks = chat.chunks_from_note(note, "syl", "DS4420")
+    sections = [c[2]["section"] for c in chunks]
+    assert "Office Hours" in sections and "Late Work" in sections, sections
+    assert all(len(c[1]) < 1000 for c in chunks), "no chunk should swallow the doc"
+    late = next(c[1] for c in chunks if c[2]["section"] == "Late Work")
+    assert "Meserve" not in late, "sections must not bleed into each other"

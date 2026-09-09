@@ -189,20 +189,21 @@ class Course:
         on Canvas "hasn't been posted".
         """
         from .ingest import INGEST_EXT, TEXT_EXT
-        try:
-            files = list(self._api.get_files())
-        except Exception:
-            return []                      # Files tab restricted; nothing to say
+        files = canvas_api.course_files(self._api)
         have = {p.stem for p in self.notes_dir.glob("*.md")}
         pending = []
         for f in files:
             name = f.display_name
-            stem = Path(name).stem
-            if Path(name).suffix.lower() not in INGEST_EXT:
+            stem, suffix = Path(name).stem, Path(name).suffix.lower()
+            if suffix not in INGEST_EXT:
                 continue                   # e.g. .csv — never transcribed, not "missing"
-            prefixed = f"code-{stem}" if Path(name).suffix.lower() in TEXT_EXT else stem
+            prefixed = f"code-{stem}" if suffix in TEXT_EXT else stem
             if prefixed not in have and stem not in have:
-                pending.append(name)
+                # Label only. A locked file is posted but not yet released, which
+                # is different from "not transcribed yet" and must not read as
+                # "not posted" — say which it is.
+                pending.append(name + (" (posted, not released to you yet)"
+                                       if canvas_api.is_locked(f) else ""))
         return pending
 
     def changes_since_last_sync(self):

@@ -26,7 +26,7 @@ Everything stays on the student's machine as plain markdown. No hosting, no
 second subscription, no vendor holding the notes.
 
 **Current state:** v0.2 is running daily against two live courses. 2,077 lines
-of Python, 64 tests, eight MCP tools, and a working end to end pipeline. Section
+of Python, 73 tests, eight MCP tools, and a working end to end pipeline. Section
 5 states exactly which quality claims are measured and which are not.
 
 ## 2. Problem
@@ -113,15 +113,15 @@ asserted but not yet instrumented.
 |---|---|---|---|
 | Retrieval recall@5, hand set | ≥ 0.90 | **1.00** (10/10) | Hand labelled gold set, `tools/eval_retrieval.py` |
 | Retrieval MRR, hand set | ≥ 0.85 | **0.90** sentence-transformers / **0.85** static + BM25 | Same |
-| Retrieval recall@5, realistic queries | ≥ 0.75 | **0.90** (90/100, CI 83-94%) | 100 query synthetic set, pooled relevance labels |
-| Retrieval MRR, realistic queries | ≥ 0.60 | **0.69** | Same |
+| Retrieval recall@5, realistic queries | ≥ 0.75 | **0.89** (89/100, CI 81-94%) | 100 query synthetic set, pooled relevance labels |
+| Retrieval MRR, realistic queries | ≥ 0.60 | **0.63** | Same |
 | Recall@5 on the hardest third | no cliff | **0.88** (n=16, low-leakage queries) | Same, split by vocabulary overlap |
 | Index size per course | no bloat | **642 chunks** (was 1,339) | 51% was base64 image data |
 | Generic concepts excluded from graph | 6/6 | **6/6** | `tools/eval_graph.py` |
 | Meaningful concept links | lift over random | **61%** (67/109) vs **8%** random, lift +53 pts | 109 generated pairs, `tools/make_graph_eval.py` |
 | Concept node recall | few gaps | **24/109 pairs name a missing node** | Same; dominant failure mode |
 | Fresh install footprint | < 250 MB | **~170 MB**, 74 packages | Down from 1.3 GB / 122 packages |
-| Test suite | Green in CI | **64 passing** | GitHub Actions on every push |
+| Test suite | Green in CI | **73 passing** | GitHub Actions on every push |
 | Re-sync cost when nothing changed | Zero model calls | **Zero** | Content hash cache, verified by run summary |
 
 **The hand set is a smoke test, not an instrument.** Ten queries carries a 95%
@@ -203,6 +203,8 @@ Priority: **P0** ships or the product does not work; **P1** ships in v1.0;
 | I6 | Survive a rate limit and resume | P0 | A run that hits 429 leaves prior work cached; the next run continues |
 | I7 | A cache key change must not strand existing work | P0 | Adding prompt and model to the key migrates old entries rather than re-billing the corpus |
 | I8 | Images (PNG, JPG, WEBP) go straight to the vision model | P1 | A scanned handout is transcribed |
+| I9 | Read files however the instructor exposed them | P0 | A 403 on the Files tab falls back to Modules; a course with restricted Files still ingests |
+| I10 | A file the instructor has not released is named, not silently dropped | P0 | Locked files are listed as "posted, not released to you yet"; one locked file never aborts the course |
 
 ### 6.2 Knowledge graph
 

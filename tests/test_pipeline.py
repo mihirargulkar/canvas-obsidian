@@ -199,12 +199,55 @@ def test_pending_files_ignores_non_ingestible(tmp_path, monkeypatch, hist_course
     assert "readings.csv" not in pending, ".csv is never transcribed, so it isn't missing"
 
 
-def test_pending_files_empty_when_files_restricted(tmp_path, monkeypatch, phys_course):
+def test_restricted_files_tab_falls_back_to_modules(tmp_path, monkeypatch, phys_course):
+    """A 403 on the Files tab does NOT mean the files are unreachable: anything
+    published in a Module is still fetchable by id. A real course returned zero
+    files this way while holding its lectures, syllabus and schedule in modules,
+    so the tool ingested nothing and pending_files() said [] — "nothing pending"
+    rather than "could not look"."""
     monkeypatch.chdir(tmp_path)
     (tmp_path / "notes" / "PHYS1100").mkdir(parents=True)
     c = Course.from_canvas(phys_course)
     monkeypatch.setattr(type(c), "_api", property(lambda self: phys_course))
-    assert c.pending_files() == []
+    assert sorted(c.pending_files()) == ["Lecture1-Newton.pptx", "Syllabus.pdf"]
+
+
+def test_course_files_dedupes_across_both_sources(hist_course):
+    """A file listed in the Files tab AND in a module is one file."""
+    from tests.conftest import FakeModule, FakeModuleItem
+    hist_course._modules = [FakeModule("M", [FakeModuleItem("Lecture1-Revolutions.pptx", 9001)])]
+    names = [f.display_name for f in canvas.course_files(hist_course)]
+    assert names.count("Lecture1-Revolutions.pptx") == 1
+
+
+def test_course_files_survives_both_sources_failing(phys_course):
+    """Files 403 and modules disabled must yield [], not an exception."""
+    phys_course._forbid |= {"modules"}
+    assert canvas.course_files(phys_course) == []
+
+
+def test_xlsx_is_extracted_without_a_dependency(tmp_path):
+    """Course schedules live in .xlsx (exam dates, deadlines, weekly topics),
+    which is exactly what a student searches for. An xlsx is a zip of XML, so
+    stdlib is enough and openpyxl is not worth the install."""
+    import zipfile
+    from canvas_vault import ingest
+    f = tmp_path / "sched.xlsx"
+    with zipfile.ZipFile(f, "w") as z:
+        z.writestr("xl/sharedStrings.xml",
+                   '<sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
+                   '<si><t>Date</t></si><si><t>Topic</t></si>'
+                   '<si><t>Oct. 16</t></si><si><t>Midterm Exam</t></si></sst>')
+        z.writestr("xl/worksheets/sheet1.xml",
+                   '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
+                   '<sheetData>'
+                   '<row><c r="A1" t="s"><v>0</v></c><c r="B1" t="s"><v>1</v></c></row>'
+                   '<row><c r="A2" t="s"><v>2</v></c><c r="B2" t="s"><v>3</v></c></row>'
+                   '</sheetData></worksheet>')
+    out = ingest.extract_text(f)
+    assert "Date | Topic" in out
+    assert "Oct. 16 | Midterm Exam" in out
+    assert ".xlsx" in str(ingest.TEXT_EXT)
 
 
 # --- cross-lecture linking ----------------------------------------------------
@@ -379,3 +422,40 @@ def test_local_grades_are_never_gated(monkeypatch):
     monkeypatch.delenv("CANVAS_ENABLE_GRADES", raising=False)
     assert callable(canvas.grades)
     assert callable(canvas.cmd_grades)
+
+
+def test_locked_files_are_skipped_not_fatal(tmp_path, monkeypatch, phys_course):
+    """Instructors gate lectures behind module dates. Canvas returns full
+    metadata with locked_for_user set and an EMPTY url, so download() raises
+    ResourceDoesNotExist — which once aborted the entire course ingest, so every
+    file queued after the locked one was skipped too."""
+    from tests.conftest import FakeFile, FakeModule, FakeModuleItem
+    locked = FakeFile(7003, "Lecture2.pdf", locked=True)
+    phys_course._files.append(locked)
+    phys_course._modules.append(FakeModule("L2", [FakeModuleItem("Lecture2.pdf", 7003)]))
+    assert canvas.is_locked(locked)
+    assert not canvas.is_locked(FakeFile(7004, "Lecture3.pdf"))
+
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "notes" / "PHYS1100").mkdir(parents=True)
+    c = Course.from_canvas(phys_course)
+    monkeypatch.setattr(type(c), "_api", property(lambda self: phys_course))
+    pending = c.pending_files()
+    assert any(p.startswith("Lecture2.pdf") and "not released" in p for p in pending), pending
+    assert "Lecture1-Newton.pptx" in pending, "unlocked files still listed plainly"
+
+
+def test_locked_label_does_not_break_the_already_have_check(tmp_path, monkeypatch, phys_course):
+    """The label is presentation only. Folding it into the name before taking
+    Path().stem would break the lookup against notes already on disk."""
+    from tests.conftest import FakeFile, FakeModule, FakeModuleItem
+    phys_course._files.append(FakeFile(7003, "Lecture2.pdf", locked=True))
+    phys_course._modules.append(FakeModule("L2", [FakeModuleItem("Lecture2.pdf", 7003)]))
+    monkeypatch.chdir(tmp_path)
+    d = tmp_path / "notes" / "PHYS1100"
+    d.mkdir(parents=True)
+    (d / "Lecture2.md").write_text("already transcribed")
+    c = Course.from_canvas(phys_course)
+    monkeypatch.setattr(type(c), "_api", property(lambda self: phys_course))
+    assert not any("Lecture2" in p for p in c.pending_files()), \
+        "a note already on disk must not be reported as pending"

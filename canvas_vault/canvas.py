@@ -302,6 +302,56 @@ def upcoming(days, courses=None):
     return rows
 
 
+def is_locked(f) -> bool:
+    """True if Canvas lists this file but will not serve it to this student.
+
+    Instructors gate lectures behind module dates, so Canvas returns full
+    metadata with `locked_for_user` set and an EMPTY url. Calling download() on
+    that raises ResourceDoesNotExist, which reads like a missing file rather
+    than an unreleased one.
+    """
+    return bool(getattr(f, "locked_for_user", False)) or not getattr(f, "url", "")
+
+
+def course_files(c):
+    """Every file in a course, however the instructor chose to expose it.
+
+    get_files() 403s whenever the Files tab is restricted, which is common and
+    does NOT mean the files are unreachable: anything published in a Module is
+    still fetchable by id. A real course returned zero files this way while
+    holding its lectures, homework, syllabus and schedule in modules, and
+    pending_files() reported [] — "nothing pending" rather than "could not
+    look", which is the failure shape this codebase keeps having to fix.
+
+    Deduplicated by file id, so a file listed in both places appears once.
+    """
+    out, seen = [], set()
+    try:
+        for f in c.get_files():
+            if f.id not in seen:
+                seen.add(f.id)
+                out.append(f)
+    except Exception as e:
+        print(f"  ! {slug_of(c)}: Files tab unavailable ({type(e).__name__}), "
+              f"reading modules instead", file=sys.stderr)
+    try:
+        for m in c.get_modules():
+            for i in m.get_module_items():
+                fid = getattr(i, "content_id", None)
+                if getattr(i, "type", "") != "File" or fid is None or fid in seen:
+                    continue
+                seen.add(fid)
+                try:
+                    out.append(c.get_file(fid))
+                except Exception as e:
+                    print(f"  ! {slug_of(c)}: module file {i.title!r} unreadable "
+                          f"({type(e).__name__})", file=sys.stderr)
+    except Exception as e:
+        print(f"  ! {slug_of(c)}: modules unavailable ({type(e).__name__})",
+              file=sys.stderr)
+    return out
+
+
 MAX_GRADE_ITEMS = 60      # a term's graded work; keeps the MCP payload small
 
 

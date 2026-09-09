@@ -70,14 +70,20 @@ def _collection():
 
 
 def chunks_from_note(text, source, course):
-    """Split a note into (id, text, meta) chunks, one per '## section'.
+    """Split a note into (id, text, meta) chunks, one per section heading.
 
-    parts[0] is whatever precedes the first '## ' heading, and it used to be
-    dropped. A note written with only '#' headings then produced ZERO chunks and
-    was invisible to search with no warning — the vision prompt asks for headings
+    parts[0] is whatever precedes the first heading, and it used to be dropped.
+    A note written with only '#' headings then produced ZERO chunks and was
+    invisible to search with no warning — the vision prompt asks for headings
     "mirroring the slides", so `#`-only transcriptions happen regularly.
+
+    Splits on '##' AND deeper ('###', '####'). Matching '## ' alone looked fine
+    until a real syllabus came back with one '##' and thirty-five '###': 17KB
+    collapsed into two 8,400-char chunks, each averaging office hours, grading
+    and academic integrity into one vector that matched no question precisely.
+    A chunker that under-splits does not fail loudly, it just retrieves badly.
     """
-    parts = re.split(r"(?m)^(##\s+.+)$", text)
+    parts = re.split(r"(?m)^(#{2,}\s+.+)$", text)
     out = []
 
     def add(section, body, i):

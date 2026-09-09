@@ -30,9 +30,16 @@ class FakeAssignment:
 
 
 class FakeFile:
-    def __init__(self, id, display_name, updated_at="2026-07-01T00:00:00Z", size=1024):
+    """A real Canvas file always carries a download url. A file the instructor
+    has gated returns locked_for_user=True and an EMPTY url, which is the shape
+    that made download() raise and abort a whole course ingest."""
+
+    def __init__(self, id, display_name, updated_at="2026-07-01T00:00:00Z", size=1024,
+                 locked=False):
         self.id, self.display_name = id, display_name
         self.updated_at, self.size = updated_at, size
+        self.locked_for_user = locked
+        self.url = "" if locked else f"https://canvas.test/files/{id}/download"
 
 
 class FakeEnrollment:
@@ -51,6 +58,19 @@ class FakeSubmission:
         self.assignment_id = 1
 
 
+class FakeModuleItem:
+    def __init__(self, title, content_id, type="File"):
+        self.title, self.content_id, self.type = title, content_id, type
+
+
+class FakeModule:
+    def __init__(self, name, items=()):
+        self.name, self._items = name, list(items)
+
+    def get_module_items(self):
+        return list(self._items)
+
+
 class FakeAnnouncement:
     def __init__(self, title, message, posted_at):
         self.title, self.message, self.posted_at = title, message, posted_at
@@ -62,12 +82,13 @@ class FakeCourse:
 
     def __init__(self, id, name, course_code="", assignments=(), files=(),
                  announcements=(), syllabus_body="", forbid=(),
-                 enrollments=(), submissions=()):
+                 enrollments=(), submissions=(), modules=()):
         self.id, self.name, self.course_code = id, name, course_code
         self.syllabus_body = syllabus_body
         self._assignments, self._files = list(assignments), list(files)
         self._announcements = list(announcements)
         self._enrollments, self._submissions = list(enrollments), list(submissions)
+        self._modules = list(modules)
         self._forbid = set(forbid)
 
     def _check(self, what):
@@ -90,6 +111,16 @@ class FakeCourse:
         self._check("submissions")
         return list(self._submissions)
 
+    def get_modules(self):
+        self._check("modules")
+        return list(self._modules)
+
+    def get_file(self, file_id):
+        for f in self._files:
+            if f.id == file_id:
+                return f
+        raise LookupError(f"no file {file_id}")
+
     def get_discussion_topics(self, only_announcements=False):
         self._check("announcements")
         return list(self._announcements)
@@ -110,7 +141,11 @@ def phys_course():
                              "2026-09-02T12:00:00Z"),
         ],
         syllabus_body="<p>Late work loses 10% per day.</p>",
-        forbid=["files", "grades"],          # instructor hides the total
+        files=[FakeFile(7001, "Lecture1-Newton.pptx"), FakeFile(7002, "Syllabus.pdf")],
+        modules=[FakeModule("Admin", [FakeModuleItem("Syllabus.pdf", 7002),
+                                      FakeModuleItem("Office Hours", 0, "ExternalUrl")]),
+                 FakeModule("Lectures", [FakeModuleItem("Lecture1-Newton.pptx", 7001)])],
+        forbid=["files", "grades"],   # Files tab hidden; the same files live in modules
     )
 
 
