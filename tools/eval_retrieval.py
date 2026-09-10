@@ -194,10 +194,10 @@ def corpus_size(course):
     """How many chunks the query had to choose between."""
     import canvas_vault.chat as chat
     try:
-        store = chat._collection()
-        return store.db.execute(
-            "SELECT COUNT(*) FROM chunks WHERE json_extract(meta,'$.course') = ?",
-            (course,)).fetchone()[0]
+        with chat._collection().connect() as db:
+            return db.execute(
+                "SELECT COUNT(*) FROM chunks WHERE json_extract(meta,'$.course') = ?",
+                (course,)).fetchone()[0]
     except Exception:
         return 0
 

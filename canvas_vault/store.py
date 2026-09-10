@@ -17,6 +17,7 @@ import math
 import re
 import sqlite3
 from collections import Counter
+from contextlib import contextmanager
 from pathlib import Path
 
 import numpy as np
@@ -90,41 +91,72 @@ class VectorStore:
         self.path = Path(path)
         self.path.parent.mkdir(parents=True, exist_ok=True)
         self._embed = embed
-        self.db = sqlite3.connect(self.path)
-        self.db.executescript(SCHEMA)
+        with self.connect() as db:
+            db.executescript(SCHEMA)
+            row = db.execute("SELECT v FROM meta WHERE k='embedder'").fetchone()
+            if row and row[0] != embedder_id:
+                db.execute("DELETE FROM chunks")
+            db.execute("INSERT INTO meta (k, v) VALUES ('embedder', ?) "
+                       "ON CONFLICT(k) DO UPDATE SET v=excluded.v", (embedder_id,))
+            db.commit()
 
-        row = self.db.execute("SELECT v FROM meta WHERE k='embedder'").fetchone()
-        if row and row[0] != embedder_id:
-            self.db.execute("DELETE FROM chunks")
-        self.db.execute("INSERT INTO meta (k, v) VALUES ('embedder', ?) "
-                        "ON CONFLICT(k) DO UPDATE SET v=excluded.v", (embedder_id,))
-        self.db.commit()
+    @contextmanager
+    def connect(self):
+        """A fresh connection per operation, not one cached for the process life.
+
+        A cached handle broke two ways at once under MCP. The server answers
+        tool calls on a thread pool, and sqlite3 refuses a connection used off
+        the thread that made it ("SQLite objects created in a thread can only be
+        used in that same thread"), which is what made search fail. And a server
+        that lives for days holds its handle across every reindex.
+
+        Connecting costs microseconds next to embedding a query, so there is no
+        reason to keep one. timeout lets a concurrent writer finish instead of
+        failing instantly; the daily sync and an MCP refresh do overlap.
+        """
+        db = sqlite3.connect(self.path, timeout=30)
+        try:
+            db.execute("PRAGMA journal_mode=WAL")   # readers don't block a writer
+            yield db
+        finally:
+            db.close()
+
+    @property
+    def db(self):
+        raise AttributeError(
+            "VectorStore.db was a cached connection and is gone: it broke across "
+            "threads under MCP and went stale across reindexes. Use `with "
+            "store.connect() as db:` instead.")
 
     # --- writes ----------------------------------------------------------
 
     def upsert(self, ids, documents, metadatas):
         vecs = self._encode(documents)
-        self.db.executemany(
+        with self.connect() as db:
+            db.executemany(
             "INSERT INTO chunks (id, doc, meta, vec) VALUES (?,?,?,?) "
             "ON CONFLICT(id) DO UPDATE SET doc=excluded.doc, meta=excluded.meta, "
             "vec=excluded.vec",
-            [(i, d, json.dumps(m), v.astype(np.float32).tobytes())
-             for i, d, m, v in zip(ids, documents, metadatas, vecs)])
-        self.db.commit()
+                [(i, d, json.dumps(m), v.astype(np.float32).tobytes())
+                 for i, d, m, v in zip(ids, documents, metadatas, vecs)])
+            db.commit()
 
     def delete(self, ids):
-        self.db.executemany("DELETE FROM chunks WHERE id = ?", [(i,) for i in ids])
-        self.db.commit()
+        with self.connect() as db:
+            db.executemany("DELETE FROM chunks WHERE id = ?", [(i,) for i in ids])
+            db.commit()
 
     # --- reads -----------------------------------------------------------
 
     def get(self):
         """Every id and document, for the incremental-index diff."""
-        rows = self.db.execute("SELECT id, doc FROM chunks").fetchall()
+        with self.connect() as db:
+            rows = db.execute("SELECT id, doc FROM chunks").fetchall()
         return {"ids": [r[0] for r in rows], "documents": [r[1] for r in rows]}
 
     def count(self):
-        return self.db.execute("SELECT COUNT(*) FROM chunks").fetchone()[0]
+        with self.connect() as db:
+            return db.execute("SELECT COUNT(*) FROM chunks").fetchone()[0]
 
     def query(self, query_texts, n_results=5, where=None):
         """Nearest chunks to each query. Shapes match what the callers expect:
@@ -134,7 +166,8 @@ class VectorStore:
             (field, value), = where.items()
             sql += " WHERE json_extract(meta, ?) = ?"
             params = [f"$.{field}", value]
-        rows = self.db.execute(sql, params).fetchall()
+        with self.connect() as db:
+            rows = db.execute(sql, params).fetchall()
         if not rows:
             return {"documents": [[] for _ in query_texts],
                     "metadatas": [[] for _ in query_texts]}

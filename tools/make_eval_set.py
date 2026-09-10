@@ -60,32 +60,42 @@ Return ONLY a JSON array of objects: [{"n": <excerpt number>, "query": "..."}]
 
 
 def kind(source):
-    """Coarse material type, used to keep the sample balanced."""
+    """Coarse material type. Reporting only — see stratify() for the sampling."""
     s = source.lower()
     for prefix, name in (("code-", "notebook"), ("hw-", "homework")):
         if s.startswith(prefix):
             return name
     for needle, name in (("announce", "admin"), ("syllab", "admin"),
-                         ("poll", "poll"), ("solution", "solution")):
+                         ("assignment", "admin"), ("website", "admin"),
+                         ("schedule", "admin"), ("poll", "poll"),
+                         ("solution", "solution")):
         if needle in s:
             return name
     return "lecture"
 
 
 def stratify(pool):
-    """Round-robin across material types instead of sampling the corpus flat.
+    """Round-robin across SOURCE FILES instead of sampling the corpus flat.
 
-    A flat sample looked fine and wasn't: notebooks produce long chunks, the
-    generator only considers chunks over 400 chars, and 52 of the first 70
-    queries came out of notebooks — most from a single sampling notebook. The
-    set was measuring one file. Round-robin gives every type a turn, so a type
-    with few long chunks still gets represented.
+    A flat sample looked fine and wasn't: 52 of the first 70 queries came out of
+    notebooks, most from a single sampling notebook, so the set was measuring
+    one file. Grouping by material type fixed the worst of that but not the
+    thing you actually want, which is that every file gets asked about. A course
+    website page that is 4 chunks of 35 still only earned 3 of 33 queries, so
+    the one source whose retrieval was in doubt was the one barely measured.
+
+    Round-robin by source guarantees each file contributes before any file
+    contributes twice, which both prevents domination and gives per-source
+    coverage. Sources are visited in a shuffled order so the head of the set
+    isn't always the same file.
     """
     from itertools import zip_longest
     buckets = {}
     for item in pool:
-        buckets.setdefault(kind(item[1]["source"]), []).append(item)
-    return [x for row in zip_longest(*buckets.values()) for x in row if x]
+        buckets.setdefault(item[1]["source"], []).append(item)
+    order = list(buckets)
+    random.shuffle(order)
+    return [x for row in zip_longest(*(buckets[k] for k in order)) for x in row if x]
 
 
 def leakage(query, chunk):

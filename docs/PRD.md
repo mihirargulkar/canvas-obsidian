@@ -26,7 +26,7 @@ Everything stays on the student's machine as plain markdown. No hosting, no
 second subscription, no vendor holding the notes.
 
 **Current state:** v0.2 is running daily against two live courses. 2,077 lines
-of Python, 80 tests, eight MCP tools, and a working end to end pipeline. Section
+of Python, 85 tests, eight MCP tools, and a working end to end pipeline. Section
 5 states exactly which quality claims are measured and which are not.
 
 ## 2. Problem
@@ -122,7 +122,7 @@ asserted but not yet instrumented.
 | Meaningful concept links | lift over random | **61%** (67/109) vs **8%** random, lift +53 pts | 109 generated pairs, `tools/make_graph_eval.py` |
 | Concept node recall | few gaps | **24/109 pairs name a missing node** | Same; dominant failure mode |
 | Fresh install footprint | < 250 MB | **~170 MB**, 74 packages | Down from 1.3 GB / 122 packages |
-| Test suite | Green in CI | **80 passing** | GitHub Actions on every push |
+| Test suite | Green in CI | **85 passing** | GitHub Actions on every push |
 | Re-sync cost when nothing changed | Zero model calls | **Zero** | Content hash cache, verified by run summary |
 
 **The hand set is a smoke test, not an instrument.** Ten queries carries a 95%
@@ -394,8 +394,10 @@ correctly invalidates.
 | Canvas API changes | Sync breaks | `canvasapi` is pinned below the next major | Mitigated |
 | Setup friction (terminal, two keys, client config) | Users drop off before first value | `setup.sh` one shot | Partially mitigated; not observed with real users |
 | External course sites are untrusted input | Fetched page text reaches the LLM | Same-host, same-path, no crawl, capped at 40 files | Partially mitigated; the page itself is still instructor-controlled content |
-| Concurrent write between the daily job and an MCP `refresh` | Corrupt cache state | None. No lockfile. | **Open** |
+| Concurrent write between the daily job and an MCP `refresh` | Corrupt cache state | WAL journal mode, 30s busy timeout, a fresh connection per operation | Mitigated |
+| The repo living under a TCC-protected directory (`~/Documents`) | The MCP client can read the vault but never write it, and SQLite calls that "readonly database" | `refresh` probes writability and explains the permission rather than surfacing a corruption-shaped error | Mitigated (the permission itself is the user's to grant) |
 | Non-atomic `cache/*.json` writes | Crash mid write corrupts state | Corrupt state is caught and treated as empty | Partially mitigated |
+| Stale MCP servers accumulating | Three were running at once, the oldest six days old, each with its own view of the index | Per-operation connections mean an old process still reads current data | Partially mitigated; the process leak is the client's lifecycle |
 
 ## 10. Open questions
 

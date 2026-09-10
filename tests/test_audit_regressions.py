@@ -378,3 +378,25 @@ def test_ingest_asks_canvas_for_the_syllabus_body():
     from canvas_vault import ingest
     src = inspect.getsource(ingest.ingest_course)
     assert "api_get_course(course_id)" in src, "must use the helper that includes syllabus_body"
+
+
+def test_refresh_explains_an_unwritable_vault_instead_of_failing_raw(monkeypatch, tmp_path):
+    """SQLite reports a sandboxed/TCC-protected directory as "attempt to write a
+    readonly database", which reads like a corrupt index. It is a permission,
+    and the reply must say so AND say the Canvas check did not happen, rather
+    than let "no new files" be read as confirmation."""
+    import canvas_vault.mcp_server as m
+    monkeypatch.setattr(m, "_writable", lambda *a: False)
+    out = m.refresh()
+    assert "permission" in out.lower()
+    assert "unverified" in out.lower(), "must not imply Canvas was checked"
+
+
+def test_writable_probe_detects_a_read_only_directory(tmp_path):
+    import canvas_vault.mcp_server as m
+    assert m._writable(str(tmp_path))
+    tmp_path.chmod(0o555)
+    try:
+        assert not m._writable(str(tmp_path))
+    finally:
+        tmp_path.chmod(0o755)

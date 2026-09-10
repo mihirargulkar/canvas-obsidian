@@ -1,54 +1,92 @@
 [
  {
-  "query": "that 1950s article about computer brains walking and talking",
+  "query": "what did newspapers in the 50s think about the brain-like computer invention",
   "source": "Ds4440-f26-l1-intro-logistics-slides",
   "section": "Historical Reception & Media Coverage (1958)",
-  "leakage": 0.57
+  "leakage": 0.38
  },
  {
-  "query": "perceptron forward pass equations",
-  "source": "Ds4440-f26-l1-intro-logistics-slides",
-  "section": "Perceptron Learning Algorithm",
-  "leakage": 0.25,
-  "relevant": [
-   "DS4440-f26-l1-supervised-review-clauded"
-  ]
- },
- {
-  "query": "how does updating weights actually push the score closer to the right threshold",
-  "source": "DS4440-f26-l1-supervised-review",
-  "section": "Derivation for Mistake on a Positive Example",
-  "leakage": 0.38,
-  "relevant": [
-   "DS4440-f26-l1-supervised-review-clauded"
-  ],
+  "query": "how does adjusting weights after a wrong guess make it right the next time",
+  "source": "DS4440-f26-l1-supervised-review-clauded",
+  "section": "The update always helps that example",
+  "leakage": 0.11,
   "irrelevant": [
    "Ds4440-f26-l1-intro-logistics-slides"
   ]
  },
  {
-  "query": "the book that killed neural networks in the 60s",
+  "query": "perceptron correction dot product proof positive sample",
+  "source": "DS4440-f26-l1-supervised-review",
+  "section": "Derivation for Mistake on a Positive Example",
+  "leakage": 0.43,
+  "irrelevant": [
+   "Ds4440-f26-l1-intro-logistics-slides",
+   "DS4440-f26-l1-supervised-review-clauded"
+  ]
+ },
+ {
+  "query": "can we use chatgpt to do our homework sets and do they count for our grade",
+  "source": "course-website",
+  "section": "course-website \u2014 part 2",
+  "leakage": 0.22,
+  "irrelevant": [
+   "Ds4440-f26-l1-intro-logistics-slides"
+  ]
+ },
+ {
+  "query": "what does a simple perceptron output and what are its inputs",
+  "source": "Ds4440-f26-l1-intro-logistics-slides",
+  "section": "Perceptron Learning Algorithm",
+  "leakage": 0.4,
+  "relevant": [
+   "DS4440-f26-l1-supervised-review-clauded"
+  ]
+ },
+ {
+  "query": "why can't we just use a lookup table for training data",
+  "source": "DS4440-f26-l1-supervised-review-clauded",
+  "section": "1. The setup",
+  "leakage": 0.57,
+  "irrelevant": [
+   "DS4440-f26-l1-supervised-review",
+   "course-website"
+  ]
+ },
+ {
+  "query": "when is the first quiz on mlps scheduled",
+  "source": "course-website",
+  "section": "course-website \u2014 part 3",
+  "leakage": 0.5,
+  "irrelevant": [
+   "Ds4440-f26-l1-intro-logistics-slides"
+  ]
+ },
+ {
+  "query": "the 1969 book that killed neural networks for a while",
   "source": "Ds4440-f26-l1-intro-logistics-slides",
   "section": "Minsky and Papert (1969)",
-  "leakage": 0.4,
+  "leakage": 0.5,
   "irrelevant": [
    "course-website"
   ]
  },
  {
-  "query": "can a perceptron update ruin other correct answers",
+  "query": "difference between validation and test sets why do we need both",
   "source": "DS4440-f26-l1-supervised-review-clauded",
-  "section": "The update always helps that example",
-  "leakage": 0.17,
+  "section": "2. Train, dev, test",
+  "leakage": 0.14,
+  "relevant": [
+   "DS4440-f26-l1-supervised-review"
+  ],
   "irrelevant": [
    "Ds4440-f26-l1-intro-logistics-slides"
   ]
  },
  {
-  "query": "dev vs test set",
+  "query": "data partitioning split types",
   "source": "DS4440-f26-l1-supervised-review",
   "section": "Dataset Splits",
-  "leakage": 0.5,
+  "leakage": 0.0,
   "relevant": [
    "DS4440-f26-l1-supervised-review-clauded"
   ],
@@ -57,56 +95,25 @@
   ]
  },
  {
-  "query": "hype about gpt-4 making songs and taking jobs",
+  "query": "where did we talk about newspapers writing about how ai is changing society",
   "source": "Ds4440-f26-l1-intro-logistics-slides",
   "section": "Generative AI: All the Hype",
-  "leakage": 0.5,
+  "leakage": 0.11,
   "irrelevant": [
-   "DS4440-f26-l1-supervised-review-clauded"
+   "course-website"
   ]
  },
  {
-  "query": "memorizing data vs generalizing",
+  "query": "formula for choosing model parameters by minimizing mistake penalty",
   "source": "DS4440-f26-l1-supervised-review-clauded",
-  "section": "1. The setup",
-  "leakage": 0.25,
+  "section": "3. What \u201clearning\u201d means",
+  "leakage": 0.12,
   "irrelevant": [
-   "Ds4440-f26-l1-intro-logistics-slides"
+   "DS4440-f26-l1-supervised-review"
   ]
  },
  {
-  "query": "syllabus grading breakdown and requirements",
-  "source": "course-website",
-  "section": "course-website \u2014 part 2",
-  "leakage": 0.25,
-  "relevant": [
-   "Ds4440-f26-l1-intro-logistics-slides"
-  ],
-  "irrelevant": [
-   "syllabus"
-  ]
- },
- {
-  "query": "what is the northeastern api for studying model behavior",
-  "source": "Ds4440-f26-l1-intro-logistics-slides",
-  "section": "Course Aims & Scope",
-  "leakage": 0.6,
-  "irrelevant": [
-   "course-website",
-   "DS4440-f26-l1-supervised-review-clauded"
-  ]
- },
- {
-  "query": "equation for a single node activation",
-  "source": "Ds4440-f26-l1-intro-logistics-slides",
-  "section": "Feedforward Representation / Single Neuron Diagram",
-  "leakage": 0.5,
-  "irrelevant": [
-   "DS4440-f26-l1-supervised-review-clauded"
-  ]
- },
- {
-  "query": "how does the simple classifier update its parameters when it gets an example wrong",
+  "query": "how to update weights when the classifier makes an error",
   "source": "DS4440-f26-l1-supervised-review",
   "section": "Learning Algorithm ($\\Theta = w$)",
   "leakage": 0.0,
@@ -118,71 +125,29 @@
   ]
  },
  {
-  "query": "threshold function that outputs positive one or negative one",
-  "source": "DS4440-f26-l1-supervised-review",
-  "section": "Model Architecture",
-  "leakage": 0.14,
-  "irrelevant": [
-   "DS4440-f26-l1-supervised-review-clauded",
-   "Ds4440-f26-l1-intro-logistics-slides"
-  ]
- },
- {
-  "query": "the old 1950s model with the retina and association parts",
-  "source": "Ds4440-f26-l1-intro-logistics-slides",
-  "section": "Learning Concept (1958)",
-  "leakage": 0.17
- },
- {
-  "query": "where are the professor's office hours held",
+  "query": "when do we learn about human feedback training",
   "source": "course-website",
-  "section": "course-website \u2014 part 1",
-  "leakage": 0.33,
+  "section": "course-website \u2014 part 4",
+  "leakage": 0.2,
   "irrelevant": [
    "Ds4440-f26-l1-intro-logistics-slides"
   ]
  },
  {
-  "query": "why do we need a separate dev set if we already have a test set",
-  "source": "DS4440-f26-l1-supervised-review-clauded",
-  "section": "2. Train, dev, test",
-  "leakage": 0.38,
-  "irrelevant": [
-   "DS4440-f26-l1-supervised-review",
-   "Ds4440-f26-l1-intro-logistics-slides",
-   "course-website"
-  ]
- },
- {
-  "query": "news articles about ai replacing software engineers",
-  "source": "Ds4440-f26-l1-intro-logistics-slides",
-  "section": "Language modeling, circa fall 2024",
-  "leakage": 0.14
- },
- {
-  "query": "what does argmin actually mean in the context of training a model",
-  "source": "DS4440-f26-l1-supervised-review-clauded",
-  "section": "3. What \u201clearning\u201d means",
-  "leakage": 0.0,
-  "irrelevant": [
-   "Ds4440-f26-l1-intro-logistics-slides"
-  ]
- },
- {
-  "query": "how to fold the bias into the input weights",
+  "query": "the trick where you add a 1 to your inputs to handle the threshold",
   "source": "DS4440-f26-l1-supervised-review-clauded",
   "section": "Learning the weights",
-  "leakage": 0.6,
+  "leakage": 0.25,
   "irrelevant": [
-   "DS4440-f26-l1-supervised-review",
-   "Ds4440-f26-l1-intro-logistics-slides"
+   "Ds4440-f26-l1-intro-logistics-slides",
+   "DS4440-f26-l1-supervised-review"
   ]
  },
  {
-  "query": "formal math definition of machine learning",
+  "query": "binary classification with step function",
   "source": "DS4440-f26-l1-supervised-review",
-  "section": "Definition of Learning",
-  "leakage": 0.6,
+  "section": "Model Architecture",
+  "leakage": 0.5,
   "relevant": [
    "DS4440-f26-l1-supervised-review-clauded"
   ],
@@ -191,25 +156,78 @@
   ]
  },
  {
-  "query": "who is the TA for the deep learning class",
-  "source": "Ds4440-f26-l1-intro-logistics-slides",
-  "section": "Ds4440-f26-l1-intro-logistics-slides",
-  "leakage": 0.2,
-  "relevant": [
-   "course-website"
-  ]
- },
- {
-  "query": "loss function that just counts correct vs incorrect",
+  "query": "what do you call the cost function that is just zero or one",
   "source": "DS4440-f26-l1-supervised-review-clauded",
   "section": "4. One choice: the perceptron",
-  "leakage": 0.29,
+  "leakage": 0.33,
   "relevant": [
    "DS4440-f26-l1-supervised-review"
   ]
  },
  {
-  "query": "how much is the class project worth",
+  "query": "what is the formal math definition of machine learning with argmin",
+  "source": "DS4440-f26-l1-supervised-review",
+  "section": "Definition of Learning",
+  "leakage": 0.5,
+  "relevant": [
+   "DS4440-f26-l1-supervised-review-clauded"
+  ],
+  "irrelevant": [
+   "Ds4440-f26-l1-intro-logistics-slides",
+   "course-website"
+  ]
+ },
+ {
+  "query": "what are the s and a units in old neural nets",
+  "source": "Ds4440-f26-l1-intro-logistics-slides",
+  "section": "Learning Concept (1958)",
+  "leakage": 0.4,
+  "irrelevant": [
+   "DS4440-f26-l1-supervised-review-clauded"
+  ]
+ },
+ {
+  "query": "geometric relationship between weight vector and classification line",
+  "source": "DS4440-f26-l1-supervised-review-clauded",
+  "section": "5. Why does this work?",
+  "leakage": 0.29,
+  "relevant": [
+   "DS4440-f26-l1-supervised-review"
+  ],
+  "irrelevant": [
+   "Ds4440-f26-l1-intro-logistics-slides"
+  ]
+ },
+ {
+  "query": "why is the weight vector at a 90 degree angle to the classifier line",
+  "source": "DS4440-f26-l1-supervised-review",
+  "section": "Geometric Intuition",
+  "leakage": 0.25,
+  "irrelevant": [
+   "DS4440-f26-l1-supervised-review-clauded",
+   "Ds4440-f26-l1-intro-logistics-slides"
+  ]
+ },
+ {
+  "query": "stanford study where ai did better than legal experts",
+  "source": "Ds4440-f26-l1-intro-logistics-slides",
+  "section": "Language modeling, circa fall 2024",
+  "leakage": 0.38,
+  "irrelevant": [
+   "course-website"
+  ]
+ },
+ {
+  "query": "who is byron wallace's teaching assistant",
+  "source": "Ds4440-f26-l1-intro-logistics-slides",
+  "section": "Ds4440-f26-l1-intro-logistics-slides",
+  "leakage": 0.33,
+  "relevant": [
+   "course-website"
+  ]
+ },
+ {
+  "query": "what percentage of my final grade is the project",
   "source": "Ds4440-f26-l1-intro-logistics-slides",
   "section": "Grading Scheme",
   "leakage": 0.5,
@@ -218,90 +236,36 @@
   ]
  },
  {
-  "query": "that news article about ai solving a famous math problem",
+  "query": "what famous math mystery did openai claim to crack",
   "source": "Ds4440-f26-l1-intro-logistics-slides",
   "section": "Language modeling, circa now",
-  "leakage": 0.25,
+  "leakage": 0.33,
   "irrelevant": [
-   "course-website"
-  ]
- },
- {
-  "query": "old math model of a brain cell with a step function",
-  "source": "Ds4440-f26-l1-intro-logistics-slides",
-  "section": "The McCullough-Pitts Neuron",
-  "leakage": 0.43,
-  "relevant": [
-   "DS4440-f26-l1-supervised-review",
+   "course-website",
    "DS4440-f26-l1-supervised-review-clauded"
   ]
  },
  {
-  "query": "the twitter bot that generated fake political tweets years ago",
-  "source": "Ds4440-f26-l1-intro-logistics-slides",
-  "section": "Language modeling, circa 2017",
-  "leakage": 0.12,
-  "irrelevant": [
-   "DS4440-f26-l1-supervised-review-clauded"
-  ]
- },
- {
-  "query": "the funny prompt about fixing an old cassette player written like the bible",
-  "source": "Ds4440-f26-l1-intro-logistics-slides",
-  "section": "Language modeling, circa spring 2023",
-  "leakage": 0.2
- },
- {
-  "query": "why can't a basic classifier handle overlapping or alternating data groups",
+  "query": "why can't a single layer neural network solve xor",
   "source": "Ds4440-f26-l1-intro-logistics-slides",
   "section": "Linear Separability Failure",
-  "leakage": 0.12,
+  "leakage": 0.57
+ },
+ {
+  "query": "do i need to know calculus and python before taking this",
+  "source": "Ds4440-f26-l1-intro-logistics-slides",
+  "section": "Prerequisites & Assumed Knowledge",
+  "leakage": 0.33,
   "irrelevant": [
+   "course-website",
    "DS4440-f26-l1-supervised-review-clauded"
   ]
  },
  {
-  "query": "why does the line rotate when we update weights",
-  "source": "DS4440-f26-l1-supervised-review-clauded",
-  "section": "5. Why does this work?",
-  "leakage": 0.25,
-  "irrelevant": [
-   "Ds4440-f26-l1-intro-logistics-slides"
-  ]
- },
- {
-  "query": "direction of the dividing line compared to the weights",
-  "source": "DS4440-f26-l1-supervised-review",
-  "section": "Geometric Intuition",
-  "leakage": 0.0,
-  "irrelevant": [
-   "DS4440-f26-l1-supervised-review-clauded",
-   "Ds4440-f26-l1-intro-logistics-slides"
-  ]
- },
- {
-  "query": "when do we cover diffusion models in the schedule",
-  "source": "course-website",
-  "section": "course-website \u2014 part 4",
-  "leakage": 0.5,
-  "irrelevant": [
-   "Ds4440-f26-l1-intro-logistics-slides"
-  ]
- },
- {
-  "query": "do i need to know multivariable calculus to take this course",
-  "source": "Ds4440-f26-l1-intro-logistics-slides",
-  "section": "Prerequisites & Assumed Knowledge",
-  "leakage": 0.17,
-  "irrelevant": [
-   "course-website"
-  ]
- },
- {
-  "query": "that platform for looking inside huge neural networks",
+  "query": "what is the computing platform for interpretability projects",
   "source": "Ds4440-f26-l1-intro-logistics-slides",
   "section": "About NDIF (National Deep Inference Fabric)",
-  "leakage": 0.0,
+  "leakage": 0.25,
   "irrelevant": [
    "course-website"
   ]

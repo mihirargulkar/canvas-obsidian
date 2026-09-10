@@ -524,3 +524,48 @@ def test_gold_sets_are_per_course():
     spec.loader.exec_module(mes)
     assert mes.out_path("DS4400") != mes.out_path("DS4440")
     assert "DS4440" in str(mes.out_path("DS4440"))
+
+
+def test_store_is_usable_from_another_thread(tmp_path, stub_embed):
+    """The MCP server answers tool calls on a thread pool, and sqlite3 refuses a
+    connection used off the thread that created it. A cached handle made every
+    search from a worker thread fail with ProgrammingError."""
+    import threading
+    s = VectorStore(tmp_path / "v.db", stub_embed, embedder_id="stub")
+    s.upsert(["a"], ["newton second law force equals mass"], [{"course": "P"}])
+
+    out, err = [], []
+
+    def worker():
+        try:
+            out.append(s.query(["force equals mass"], n_results=1)["documents"][0])
+            s.upsert(["b"], ["momentum is conserved here"], [{"course": "P"}])
+            out.append(s.count())
+        except Exception as e:
+            err.append(f"{type(e).__name__}: {e}")
+
+    t = threading.Thread(target=worker)
+    t.start(); t.join()
+    assert not err, err
+    assert out[1] == 2, "a write from another thread must land too"
+
+
+def test_store_sees_a_rebuild_by_another_process(tmp_path, stub_embed):
+    """A server that lives for days held one handle across every reindex. Each
+    operation opens its own connection, so external changes are picked up."""
+    import sqlite3
+    path = tmp_path / "v.db"
+    s = VectorStore(path, stub_embed, embedder_id="stub")
+    s.upsert(["a"], ["first document text here"], [{"course": "P"}])
+    assert s.count() == 1
+
+    other = sqlite3.connect(path)          # stand-in for the CLI reindexing
+    other.execute("DELETE FROM chunks"); other.commit(); other.close()
+    assert s.count() == 0, "the store must not serve a snapshot from startup"
+
+
+def test_cached_connection_attribute_is_gone():
+    """Guard against reintroducing it; the failure mode is silent and remote."""
+    import pytest as _p
+    with _p.raises(AttributeError, match="cached connection"):
+        VectorStore.db.fget(object())

@@ -11,9 +11,21 @@ flavoured examples in it, and it would be easy to quietly grow an assumption
 that every course looks like machine learning).
 """
 import hashlib
+from datetime import datetime, timedelta, timezone
 
 import numpy as np
 import pytest
+
+
+def in_days(n):
+    """A due date n days from now, ISO-8601 UTC the way Canvas sends it.
+
+    Fixtures used to hardcode dates like 2026-09-10. They worked until the
+    calendar reached them, and then upcoming() correctly returned nothing and a
+    test about 403 isolation failed for a reason that had nothing to do with
+    403s. A dated fixture is a test that fails on a date nobody chose.
+    """
+    return (datetime.now(timezone.utc) + timedelta(days=n)).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 # --- fake Canvas objects ------------------------------------------------------
 
@@ -132,8 +144,8 @@ def phys_course():
     return FakeCourse(
         id=1001, name="PHYS 1100 Classical Mechanics", course_code="PHYS1100.1.202610",
         assignments=[
-            FakeAssignment("Problem Set 1", "2026-09-05T03:59:00Z", 50),
-            FakeAssignment("Midterm", "2026-10-01T15:00:00Z", 100),
+            FakeAssignment("Problem Set 1", in_days(5), 50),
+            FakeAssignment("Midterm", in_days(30), 100),
             FakeAssignment("Attendance", None, 10),          # undated, must be skipped
         ],
         announcements=[
@@ -154,7 +166,7 @@ def hist_course():
     """A humanities course, to keep the pipeline honest about being general."""
     return FakeCourse(
         id=1002, name="HIST 2200 Modern Europe", course_code="HIST2200.7.202610",
-        assignments=[FakeAssignment("Essay 1", "2026-09-10T03:59:00Z", 25)],
+        assignments=[FakeAssignment("Essay 1", in_days(10), 25)],
         files=[FakeFile(9001, "Lecture1-Revolutions.pptx"),
                FakeFile(9002, "readings.csv")],           # not ingestible, not "missing"
         announcements=[FakeAnnouncement("Reading list posted", "<p>See the syllabus.</p>",

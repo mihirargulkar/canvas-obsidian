@@ -59,6 +59,24 @@ server = MCPServer(
 )
 
 
+def _writable(path="index") -> bool:
+    """Whether this process can actually write the vault.
+
+    Claude Desktop launches this server through a sandboxed helper, and on macOS
+    ~/Documents is TCC-protected, so a repo living there is readable but not
+    writable from the client while the CLI in a terminal works fine. SQLite
+    reports that as "attempt to write a readonly database", which reads like
+    corruption and is not.
+    """
+    import tempfile
+    try:
+        Path(path).mkdir(parents=True, exist_ok=True)
+        with tempfile.NamedTemporaryFile(dir=path):
+            return True
+    except OSError:
+        return False
+
+
 def _resolve(slug: str) -> Course:
     for c in Course.current():
         if c.slug.lower() == slug.lower():
@@ -153,6 +171,16 @@ def refresh(course: str | None = None) -> str:
     `python -m canvas_vault.sync`) transcribes it. Report a file as posted if it
     appears here, even though search_notes can't read it yet.
     """
+    if not _writable():
+        return ("Cannot write the local vault from this process, so nothing was "
+                "refreshed. This is a filesystem permission, not a corrupt index: "
+                "on macOS a repo under ~/Documents is TCC-protected and the client "
+                "that launched this server may not have write access, while the "
+                "same command works in a terminal. Either grant that app access to "
+                "your Documents folder, move the repo outside ~/Documents, or run "
+                "`python -m canvas_vault.sync` yourself. Canvas was NOT checked, so "
+                "treat 'no new files' as unverified.")
+
     import contextlib
     import io
 

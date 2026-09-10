@@ -241,10 +241,25 @@ def _sectioned(title: str, text: str, max_chars: int = 1200) -> str:
             lines.append(line[:max_chars]); line = line[max_chars:]
         lines.append(line)
     body, buf, size, n = [f"# {title}", ""], [], 0, 1
+
+    def label():
+        """Name the section after its own first real line, not "part 7".
+
+        The heading is prepended to the chunk before embedding, so a counter
+        adds noise carrying no signal while a lecture chunk gets "Grading
+        Scheme". Falls back to the counter when the section opens with
+        something unusable (a code fence, a bare number, a divider).
+        """
+        for line in buf:
+            t = line.strip().strip("#*|-= ").strip()
+            if len(t) >= 12 and not t.startswith("```") and any(ch.isalpha() for ch in t):
+                return f"{title} — {t[:60]}"
+        return f"{title} — part {n}"
+
     def flush():
         nonlocal buf, size, n
         if buf:
-            body.extend([f"## {title} — part {n}", *buf, ""]); n += 1; buf, size = [], 0
+            body.extend([f"## {label()}", *buf, ""]); n += 1; buf, size = [], 0
     for line in lines:
         if size + len(line) > max_chars:
             flush()
