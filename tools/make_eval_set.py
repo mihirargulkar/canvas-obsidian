@@ -35,7 +35,10 @@ from canvas_vault import chat  # noqa: E402
 from canvas_vault.canvas import gemini_key  # noqa: E402
 
 MODEL = "gemini-3.5-flash"
-OUT = Path("tools/eval_queries.json")
+def out_path(course):
+    """One gold set per course. A single shared file meant generating for a
+    second class silently destroyed the first one's pooled relevance labels."""
+    return Path(f"tools/eval_queries_{course}.json")
 
 PROMPT = """You are writing evaluation queries for a student's course search tool.
 
@@ -109,11 +112,13 @@ def main():
     p.add_argument("--max-leak", type=float, default=0.6,
                    help="discard queries whose words are this fraction copied from the chunk")
     p.add_argument("--seed", type=int, default=11)
+    p.add_argument("--min-chars", type=int, default=400,
+                   help="ignore chunks shorter than this; lower it for a small corpus")
     a = p.parse_args()
 
     ids, docs, metas, _ = chat._collect_chunks()
     pool = [(d, m) for d, m in zip(docs, metas)
-            if m["course"] == a.course and len(d) > 400]
+            if m["course"] == a.course and len(d) > a.min_chars]
     if not pool:
         sys.exit(f"no chunks for {a.course} — build the index first")
     random.seed(a.seed)
@@ -153,6 +158,7 @@ def main():
             break
 
     out = out[:a.n]
+    OUT = out_path(a.course)
     OUT.write_text(json.dumps(out, indent=1))
     avg = sum(o["leakage"] for o in out) / max(len(out), 1)
     print(f"\nwrote {OUT}: {len(out)} queries, mean vocabulary overlap {avg:.2f}")

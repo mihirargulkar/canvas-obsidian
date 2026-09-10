@@ -190,6 +190,18 @@ def evaluate_judged(course, k, gold):
     return hits, n
 
 
+def corpus_size(course):
+    """How many chunks the query had to choose between."""
+    import canvas_vault.chat as chat
+    try:
+        store = chat._collection()
+        return store.db.execute(
+            "SELECT COUNT(*) FROM chunks WHERE json_extract(meta,'$.course') = ?",
+            (course,)).fetchone()[0]
+    except Exception:
+        return 0
+
+
 def wilson(hits, n, z=1.96):
     """95% interval for a proportion. Small samples deserve error bars: 10/10 on
     ten queries and 100/100 on a hundred are not the same claim."""
@@ -228,8 +240,15 @@ def evaluate(course, k, gold=None, label="built-in"):
 
     n = len(gold)
     lo, hi = wilson(hits, n)
+    # Corpus size makes the number interpretable. recall@5 over 45 chunks is
+    # returning 11% of everything; over 1,236 it is 0.4%. Those are different
+    # tasks and their scores are not comparable, so print the denominator.
+    total = corpus_size(course)
     print(f"{course}: recall@{k} = {hits}/{n} ({hits / n:.0%}, 95% CI {lo:.0%}-{hi:.0%})"
           f"   MRR = {rr / n:.2f}   [{label}]")
+    if total:
+        print(f"       corpus {total} chunks, so top-{k} is {k / total:.1%} of it"
+              + ("   <- small corpus, recall is easy here" if total < 200 else ""))
     if gaps:
         # An unlabelled retrieved source is not evidence of a miss. Say so rather
         # than letting a thin judgement pool read as poor retrieval.
@@ -293,15 +312,17 @@ def main():
     p.add_argument("-k", type=int, default=5, help="top-k retrieved (default 5)")
     p.add_argument("--judged", action="store_true",
                    help="score with an LLM relevance judge instead of exact source match")
-    p.add_argument("--gold", default="tools/eval_queries.json",
-                   help="synthetic gold set to use if present")
+    p.add_argument("--gold", default=None,
+                   help="gold set path (default tools/eval_queries_<COURSE>.json)")
     p.add_argument("--relabel", action="store_true",
                    help="judge retrieved sources with no verdict yet and cache them "
                         "in the gold file, so later runs score for free")
     a = p.parse_args()
-    if a.course != GOLD_COURSE:
-        print(f"WARNING: gold set is written for {GOLD_COURSE}; results for "
-              f"{a.course} are meaningless until you replace GOLD.\n")
+    a.gold = a.gold or f"tools/eval_queries_{a.course}.json"
+    if a.course != GOLD_COURSE and not Path(a.gold).exists():
+        print(f"WARNING: no {a.gold}; falling back to the hand written set, which "
+              f"is about {GOLD_COURSE}. Generate one: python tools/make_eval_set.py "
+              f"--course {a.course}\n")
     try:
         gold, label = load_gold(a.course, a.gold)
         if a.relabel:

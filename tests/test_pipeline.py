@@ -511,3 +511,16 @@ def test_site_links_stay_on_the_professors_own_page():
     assert set(got.values()) == {"l1-slides.pdf", "l1-notes.pdf"}, got
     assert not any("nature.com" in u or "colab" in u for u in got), "must not leave the host"
     assert not any("other-course" in u for u in got), "must stay under the course path"
+
+
+def test_gold_sets_are_per_course():
+    """A single shared eval_queries.json meant generating a set for a second
+    class silently destroyed the first one's pooled relevance labels, which cost
+    real API calls to build."""
+    import importlib.util, pathlib as _p
+    spec = importlib.util.spec_from_file_location(
+        "make_eval_set", _p.Path(__file__).parent.parent / "tools" / "make_eval_set.py")
+    mes = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mes)
+    assert mes.out_path("DS4400") != mes.out_path("DS4440")
+    assert "DS4440" in str(mes.out_path("DS4440"))

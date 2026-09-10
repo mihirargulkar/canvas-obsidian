@@ -152,8 +152,9 @@ answer from a different file. Run `--relabel` once and a model decides which oth
 sources count, then caches that in the gold file so every run after is free. Until you
 do, the script reports its score as a lower bound and says so.
 
-Both gold sets are written for one course. Swap in your own if you want them to mean
-anything for your classes.
+Gold sets are per course (`tools/eval_queries_<CLASS>.json`), so generating one for a
+second class won't clobber the first. The score prints corpus size beside it, because
+recall over 45 chunks and recall over 1,200 are not the same achievement.
 
 Code lives in `canvas_vault/`, tests in `tests/`, dev scripts in `tools/`.
 

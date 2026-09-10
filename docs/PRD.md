@@ -26,7 +26,7 @@ Everything stays on the student's machine as plain markdown. No hosting, no
 second subscription, no vendor holding the notes.
 
 **Current state:** v0.2 is running daily against two live courses. 2,077 lines
-of Python, 79 tests, eight MCP tools, and a working end to end pipeline. Section
+of Python, 80 tests, eight MCP tools, and a working end to end pipeline. Section
 5 states exactly which quality claims are measured and which are not.
 
 ## 2. Problem
@@ -116,12 +116,13 @@ asserted but not yet instrumented.
 | Retrieval recall@5, realistic queries | ≥ 0.75 | **0.89** (89/100, CI 81-94%) | 100 query synthetic set, pooled relevance labels |
 | Retrieval MRR, realistic queries | ≥ 0.60 | **0.63** | Same |
 | Recall@5 on the hardest third | no cliff | **0.88** (n=16, low-leakage queries) | Same, split by vocabulary overlap |
+| Recall@5, a second real course | measured, not assumed | **1.00** (33/33) on DS4440 | 33 query set; NOT comparable, see below |
 | Index size per course | no bloat | **642 chunks** (was 1,339) | 51% was base64 image data |
 | Generic concepts excluded from graph | 6/6 | **6/6** | `tools/eval_graph.py` |
 | Meaningful concept links | lift over random | **61%** (67/109) vs **8%** random, lift +53 pts | 109 generated pairs, `tools/make_graph_eval.py` |
 | Concept node recall | few gaps | **24/109 pairs name a missing node** | Same; dominant failure mode |
 | Fresh install footprint | < 250 MB | **~170 MB**, 74 packages | Down from 1.3 GB / 122 packages |
-| Test suite | Green in CI | **79 passing** | GitHub Actions on every push |
+| Test suite | Green in CI | **80 passing** | GitHub Actions on every push |
 | Re-sync cost when nothing changed | Zero model calls | **Zero** | Content hash cache, verified by run summary |
 
 **The hand set is a smoke test, not an instrument.** Ten queries carries a 95%
@@ -134,6 +135,15 @@ the hand set was written by someone who knew what was in the corpus, so its
 queries share vocabulary with the notes. Split by vocabulary overlap, the
 hardest third of the synthetic set still scores 0.88, so there is no cliff.
 **Treat 0.90 recall and 0.69 MRR as the headline.**
+
+**A perfect score on a small corpus is not a good score.** DS4440 reads 1.00
+recall@5 against DS4400's 0.89, and the second course is not better. It holds
+45 chunks to DS4400's 1,204, so its top-5 is 11% of everything indexed versus
+0.4%. The eval now prints corpus size next to the score, because otherwise the
+two numbers invite a comparison that means nothing. It also answers open
+question 1 from the previous revision only partially: the pipeline demonstrably
+works on a second, differently-shaped course, but not yet at a size that tests
+retrieval.
 
 **Two numbers on the way here were wrong, in different ways.** The first, 14%,
 was arithmetic: the scorer looped over the 10 hand written pairs and divided by
@@ -397,11 +407,13 @@ correctly invalidates.
    queries come from the same model family that answers them, and the difficulty
    filter is a vocabulary-overlap heuristic. Real student query logs would settle
    it; there aren't any yet.
-3. **Does anyone finish setup?** Two API keys, a terminal, a client config, and
+3. **Does the pipeline hold up on a big second corpus?** DS4440 works but is
+   only 45 chunks. Re-measure once its lectures are released.
+4. **Does anyone finish setup?** Two API keys, a terminal, a client config, and
    optionally LibreOffice. Unknown drop off.
-4. **Is one shared vault right for a whole degree?** Currently scoped to the
+5. **Is one shared vault right for a whole degree?** Currently scoped to the
    current term. Four years of concepts might be more valuable, or unusable.
-5. **Do students want the graph, or just the answers?** The graph is the
+6. **Do students want the graph, or just the answers?** The graph is the
    expensive half of the pipeline and the least measured.
 
 ## 11. Dependencies and constraints
