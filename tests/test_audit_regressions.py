@@ -400,3 +400,17 @@ def test_writable_probe_detects_a_read_only_directory(tmp_path):
         assert not m._writable(str(tmp_path))
     finally:
         tmp_path.chmod(0o755)
+
+
+def test_quiet_sentinel_matches_what_summarise_returns():
+    """sync.py tested summary.startswith("No changes") while summarise() had
+    been reworded to "No new announcements...". The two drifted silently, so the
+    --quiet daily job logged on every no-op day and its output stopped carrying
+    information. Compare against the shared constant, never a literal."""
+    import inspect
+    from canvas_vault import changes, sync
+    assert changes.summarise({"X": {"announcements": [], "assignments": []}}, 0) \
+        == changes.NOTHING_NEW
+    src = inspect.getsource(sync)          # whole module: the check has moved once already
+    assert "changes.NOTHING_NEW" in src
+    assert '"No changes"' not in src, "no literal may re-introduce the drift"

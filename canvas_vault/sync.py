@@ -84,7 +84,7 @@ def _run(a):
         buf = io.StringIO()
         with contextlib.redirect_stdout(buf):
             courses, summary = run_sync(a.only, a.limit, not a.no_index)
-        if not summary.startswith("No changes"):
+        if summary != changes.NOTHING_NEW:
             print(f"[{datetime.now():%Y-%m-%d %H:%M}] "
                   f"{', '.join(c.slug for c in courses)}\n{summary}")
         return

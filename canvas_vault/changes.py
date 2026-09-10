@@ -61,6 +61,14 @@ def diff_course(slug, announcements, assignments, first_run_silent=True, complet
     return {"announcements": new_ann, "assignments": new_asg, "first_run": False}
 
 
+# The exact "nothing happened" summary. A shared constant because sync.py used
+# to test `summary.startswith("No changes")` while this function had been
+# reworded to "No new announcements...". The sentinel and its only caller
+# drifted apart silently, so the --quiet daily job logged every single day and
+# stopped meaning anything. Compare against this, never against a literal.
+NOTHING_NEW = "No new announcements, assignments or files since the last check."
+
+
 def summarise(per_course: dict, index_changed: int = 0) -> str:
     """Human-readable 'what changed' block for the end of a sync."""
     lines, any_news = [], False
@@ -87,7 +95,7 @@ def summarise(per_course: dict, index_changed: int = 0) -> str:
     if not any_news and not index_changed and not failures:
         # Say what was actually checked. "No changes" alone let a caller conclude
         # nothing had been posted when files simply hadn't been examined.
-        return "No new announcements, assignments or files since the last check."
+        return NOTHING_NEW
     head = "What's new:" if any_news else "No new course content."
     tail = (f"  index: {index_changed} chunk(s) updated" if index_changed else "")
     return "\n".join([head, *lines, tail]).rstrip()

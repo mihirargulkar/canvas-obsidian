@@ -502,6 +502,13 @@ def ingest_course(course_id: int, limit=None):
             continue
         if st != "fail":
             manifest[key] = h
+        # Text files are deliberately re-extracted every run (it is free), so
+        # ingest_bytes always calls them "new". Reported as-is, an unchanged
+        # spreadsheet announced itself as a new file on every single sync,
+        # forever — and the daily job only speaks when something changed, so it
+        # would have cried wolf daily. Byte-identical to last time is not new.
+        if st == "new" and known == h:
+            st = "cached"
         if st == "new":
             counts["new_files"].append(f.display_name)
         counts[st] += 1
