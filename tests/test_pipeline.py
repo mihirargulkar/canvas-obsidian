@@ -459,3 +459,55 @@ def test_locked_label_does_not_break_the_already_have_check(tmp_path, monkeypatc
     monkeypatch.setattr(type(c), "_api", property(lambda self: phys_course))
     assert not any("Lecture2" in p for p in c.pending_files()), \
         "a note already on disk must not be reported as pending"
+
+
+# --- courses that live on the professor's own website -------------------------
+
+def test_signpost_syllabus_yields_the_course_site(hist_course):
+    """Some instructors keep everything on their own page and leave the Canvas
+    syllabus as one line pointing at it. Canvas then has no files and no modules,
+    so the course looks empty when it is not."""
+    from canvas_vault import ingest
+    hist_course.syllabus_body = (
+        '<p>All materials and information at: '
+        '<a href="https://prof.example.com/ds4440/">https://prof.example.com/ds4440/</a></p>')
+    assert ingest.external_site(hist_course) == "https://prof.example.com/ds4440/"
+
+
+def test_a_real_syllabus_that_links_out_is_not_a_signpost(hist_course):
+    """A full syllabus links to Piazza and a textbook. Following those would
+    ingest the internet instead of the course."""
+    from canvas_vault import ingest
+    hist_course.syllabus_body = (
+        '<p>Join <a href="https://piazza.com/x">Piazza</a>.</p>' +
+        "<p>Late work loses 10% per day. </p>" * 60)
+    assert ingest.external_site(hist_course) is None
+
+
+def test_canvas_own_assets_are_not_mistaken_for_the_course_site(hist_course):
+    """Canvas injects its own stylesheet URLs into syllabus_body."""
+    from canvas_vault import ingest
+    hist_course.syllabus_body = (
+        '<link href="https://instructure-uploads.s3.amazonaws.com/a/dp_app.css">'
+        '<p>See <a href="https://prof.example.com/course/">the site</a></p>')
+    assert ingest.external_site(hist_course) == "https://prof.example.com/course/"
+
+
+def test_site_links_stay_on_the_professors_own_page():
+    """A course page links to arXiv, Colab, textbooks and blogs. None of that is
+    the student's course material, and following it turns a sync into a crawl."""
+    from canvas_vault import ingest
+    page = "https://prof.example.com/ds4440/"
+    body = '''
+      <a href="lecture-materials/l1-slides.pdf">Slides</a>
+      <a href="lecture-materials/l1-notes.pdf">Notes</a>
+      <a href="https://colab.research.google.com/drive/abc">HW 1</a>
+      <a href="https://www.nature.com/articles/323533a0.pdf">Rumelhart 1986</a>
+      <a href="https://prof.example.com/other-course/secret.pdf">Another course</a>
+      <a href="https://d2l.ai/chapter/index.html">Textbook</a>
+      <a href="lecture-materials/l1-slides.pdf">Slides again</a>
+    '''
+    got = dict(ingest.site_links(page, body))
+    assert set(got.values()) == {"l1-slides.pdf", "l1-notes.pdf"}, got
+    assert not any("nature.com" in u or "colab" in u for u in got), "must not leave the host"
+    assert not any("other-course" in u for u in got), "must stay under the course path"

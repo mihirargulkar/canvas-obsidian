@@ -26,7 +26,8 @@ from dotenv import load_dotenv
 
 from . import chdir_root
 from . import ROOT
-from .canvas import (get_client, course_label, is_locked,
+from .canvas import (get_client, course_label, is_locked, slug_of,
+                     get_course as api_get_course,
                      course_files as canvas_files)
 
 VISION_EXT = {".pdf", ".pptx", ".docx"}          # -> pdf -> Gemini vision
@@ -288,6 +289,102 @@ def ingest_bytes(name, raw: Path, slug, client, out_name=None) -> tuple[str, str
         return "fail", h
 
 
+# --- courses whose real content lives on the professor's own website ---------
+
+MAX_SITE_FILES = 40          # a term of slides; a guard against a runaway link farm
+
+
+def external_site(course) -> str | None:
+    """The course website, when Canvas is just a signpost to it.
+
+    Some instructors keep everything on their own page and leave the Canvas
+    syllabus as one line: "All materials and information at: <url>". Canvas then
+    has no files and no modules, so the course looks empty when it is not.
+
+    Only fires when the syllabus is SHORT. A real syllabus that happens to link
+    out (to Piazza, to a textbook) must not be mistaken for a signpost.
+    """
+    from .updates import strip_html
+    body = getattr(course, "syllabus_body", None) or ""
+    if not body or len(strip_html(body)) > 900:
+        return None
+    for url in re.findall(r'href="(https?://[^"]+)"', body):
+        host = re.sub(r"^https?://", "", url).split("/")[0].lower()
+        if "instructure" in host or "canvas" in host or url.endswith((".css", ".js")):
+            continue          # Canvas' own assets, not the course site
+        return url
+    return None
+
+
+def _fetch(url, timeout=25):
+    import urllib.request
+    req = urllib.request.Request(url, headers={
+        "User-Agent": "canvas-obsidian/0.2 (personal course sync; +https://github.com/mihirargulkar/canvas-obsidian)"})
+    with urllib.request.urlopen(req, timeout=timeout) as r:
+        return r.read()
+
+
+def site_links(page_url, body):
+    """Ingestible files on the SAME host and under the SAME path as the course page.
+
+    Deliberately does not crawl. A course page links to arXiv, Colab, textbooks
+    and blogs; none of that is the student's course material, and following it
+    would turn a sync into a web crawl. Only the professor's own uploads count.
+    """
+    from urllib.parse import urljoin, urlparse
+    base = urlparse(page_url)
+    root = page_url.rsplit("/", 1)[0] + "/"
+    out = {}
+    for href in re.findall(r'href="([^"]+)"', body):
+        full = urljoin(page_url, href).split("#")[0]
+        u = urlparse(full)
+        if u.netloc != base.netloc or not full.startswith(root):
+            continue
+        if Path(u.path).suffix.lower() not in INGEST_EXT:
+            continue
+        out.setdefault(full, Path(u.path).name)
+    return list(out.items())[:MAX_SITE_FILES]
+
+
+def ingest_site(url, slug, client, counts):
+    """Save the course page as a note, then ingest the files it hosts."""
+    from .updates import strip_html
+    print(f"{slug}: course website {url}")
+    try:
+        body = _fetch(url).decode("utf-8", "replace")
+    except Exception as e:
+        print(f"  FAILED to fetch {url}: {type(e).__name__} {str(e)[:60]}")
+        counts["fail"] += 1
+        return
+    # _sectioned, not one big heading: a stripped web page has no markdown
+    # headings left, so wrapping it in a single "## Course website" made the
+    # whole page one chunk. Its textbook, TA and homework links then lost every
+    # query to the lecture slides. Same under-splitting as the syllabus.
+    text = _sectioned("course-website", strip_html(body))
+    note = NOTES / slug / "course-website.md"
+    note.write_text(f"---\nsource: {url}\ncourse: {slug}\n---\n\n"
+                    f"Retrieved from {url}\n\n{text}\n")
+    print(f"  wrote course-website.md ({len(text)} chars)")
+
+    files = site_links(url, body)
+    print(f"  {len(files)} file(s) hosted on the course site")
+    for full, name in files:
+        out = NOTES / slug / (Path(name).stem + ".md")
+        raw = RAW / slug / name
+        try:
+            if not raw.exists():
+                raw.write_bytes(_fetch(full))
+            st, _ = ingest_bytes(name, raw, slug, client)
+        except Exception as e:
+            print(f"  FAILED {name}: {type(e).__name__} {str(e)[:60]}")
+            counts["fail"] += 1
+            continue
+        if st == "new":
+            counts["new_files"].append(name)
+        counts[st] += 1
+        print(f"  {st:6} {name}")
+
+
 def ingest_assignments(course, slug, client, counts):
     """Homework: assignment descriptions -> assignments.md, and the prompt PDFs
     linked in each description -> ingested via the vision path (prefixed 'hw-')."""
@@ -331,8 +428,14 @@ def ingest_course(course_id: int, limit=None):
     from .canvas import gemini_key
     client = genai.Client(api_key=gemini_key())
 
-    course = canvas.get_course(course_id)
-    slug = course_label(course).split()[0]
+    # api_get_course, not canvas.get_course: the shared helper asks for
+    # syllabus_body, without which external_site() cannot see a course whose
+    # content lives on the professor's own website. slug_of, not
+    # course_label().split()[0]: that was a second slug definition, and
+    # "DS 4400 Machine Learning" resolves to "DS" under it while every other
+    # caller says "DS4400" — the split-brain this codebase already fixed once.
+    course = api_get_course(course_id)
+    slug = slug_of(course)
     for d in (RAW / slug, PDF, MD, NOTES / slug):
         d.mkdir(parents=True, exist_ok=True)
 
@@ -389,6 +492,10 @@ def ingest_course(course_id: int, limit=None):
         counts[st] += 1
         print(f"  {st:6} {f.display_name}")
     _save_manifest(manifest)
+
+    site = external_site(course)
+    if site and not limit:
+        ingest_site(site, slug, client, counts)
 
     if not limit:
         ingest_assignments(course, slug, client, counts)

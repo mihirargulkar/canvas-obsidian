@@ -356,3 +356,25 @@ def test_deeper_headings_also_split_chunks():
     assert all(len(c[1]) < 1000 for c in chunks), "no chunk should swallow the doc"
     late = next(c[1] for c in chunks if c[2]["section"] == "Late Work")
     assert "Meserve" not in late, "sections must not bleed into each other"
+
+
+def test_ingest_uses_the_one_slug_definition():
+    """ingest_course derived its own slug as course_label(course).split()[0],
+    which gives "DS" for "DS 4400 Machine Learning" while every other caller
+    says "DS4400". That is the split-brain that once had half the code write to
+    vault/DS4400/ while the other half linked [[DS/Dashboard]]."""
+    import inspect
+    from canvas_vault import ingest
+    src = inspect.getsource(ingest.ingest_course)
+    assert "slug_of(course)" in src
+    assert "course_label(course).split()" not in src
+
+
+def test_ingest_asks_canvas_for_the_syllabus_body():
+    """external_site() reads syllabus_body to find a course whose content lives
+    on the professor's own site. canvas.get_course() omits it by default, so the
+    detection silently never fired."""
+    import inspect
+    from canvas_vault import ingest
+    src = inspect.getsource(ingest.ingest_course)
+    assert "api_get_course(course_id)" in src, "must use the helper that includes syllabus_body"

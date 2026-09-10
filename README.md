@@ -37,6 +37,11 @@ and LibreOffice if you want `.pptx` slides read (`brew install --cask libreoffic
 .venv/bin/python -m canvas_vault.sync --list     # just show what it found
 ```
 
+If your professor keeps everything on their own website and leaves the Canvas syllabus
+as a one-line pointer, that's handled: the page gets saved as a note and any slides or
+PDFs hosted on it get transcribed too. Only files on that same site are fetched, so a
+link to arXiv or a textbook stays a link rather than turning your sync into a crawl.
+
 First run is slow, since every slide deck goes through a vision model, and you might
 hit Gemini's free daily limit. That's fine. It caches everything, so run it again and
 it picks up where it stopped.

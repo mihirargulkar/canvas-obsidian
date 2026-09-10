@@ -26,7 +26,7 @@ Everything stays on the student's machine as plain markdown. No hosting, no
 second subscription, no vendor holding the notes.
 
 **Current state:** v0.2 is running daily against two live courses. 2,077 lines
-of Python, 73 tests, eight MCP tools, and a working end to end pipeline. Section
+of Python, 79 tests, eight MCP tools, and a working end to end pipeline. Section
 5 states exactly which quality claims are measured and which are not.
 
 ## 2. Problem
@@ -121,7 +121,7 @@ asserted but not yet instrumented.
 | Meaningful concept links | lift over random | **61%** (67/109) vs **8%** random, lift +53 pts | 109 generated pairs, `tools/make_graph_eval.py` |
 | Concept node recall | few gaps | **24/109 pairs name a missing node** | Same; dominant failure mode |
 | Fresh install footprint | < 250 MB | **~170 MB**, 74 packages | Down from 1.3 GB / 122 packages |
-| Test suite | Green in CI | **73 passing** | GitHub Actions on every push |
+| Test suite | Green in CI | **79 passing** | GitHub Actions on every push |
 | Re-sync cost when nothing changed | Zero model calls | **Zero** | Content hash cache, verified by run summary |
 
 **The hand set is a smoke test, not an instrument.** Ten queries carries a 95%
@@ -205,6 +205,7 @@ Priority: **P0** ships or the product does not work; **P1** ships in v1.0;
 | I8 | Images (PNG, JPG, WEBP) go straight to the vision model | P1 | A scanned handout is transcribed |
 | I9 | Read files however the instructor exposed them | P0 | A 403 on the Files tab falls back to Modules; a course with restricted Files still ingests |
 | I10 | A file the instructor has not released is named, not silently dropped | P0 | Locked files are listed as "posted, not released to you yet"; one locked file never aborts the course |
+| I11 | Courses whose content lives on the professor's own website are ingested | P1 | A signpost syllabus is followed; same-host files only, never a crawl |
 
 ### 6.2 Knowledge graph
 
@@ -382,6 +383,7 @@ correctly invalidates.
 | Concept extraction quality degrades as the corpus grows | Graph becomes less useful over a term | `eval_graph.py` catches it; it just did, at 2/6 | Detected, unfixed |
 | Canvas API changes | Sync breaks | `canvasapi` is pinned below the next major | Mitigated |
 | Setup friction (terminal, two keys, client config) | Users drop off before first value | `setup.sh` one shot | Partially mitigated; not observed with real users |
+| External course sites are untrusted input | Fetched page text reaches the LLM | Same-host, same-path, no crawl, capped at 40 files | Partially mitigated; the page itself is still instructor-controlled content |
 | Concurrent write between the daily job and an MCP `refresh` | Corrupt cache state | None. No lockfile. | **Open** |
 | Non-atomic `cache/*.json` writes | Crash mid write corrupts state | Corrupt state is caught and treated as empty | Partially mitigated |
 
