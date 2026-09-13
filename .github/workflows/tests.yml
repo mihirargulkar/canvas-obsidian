@@ -85,6 +85,10 @@ jobs:
             if ($out -notmatch [regex]::Escape($expect)) { throw "missing from output: $expect" }
           }
           Write-Host "setup.ps1 reached the credential check and failed correctly"
+          # GitHub's pwsh wrapper appends `exit $LASTEXITCODE`, which is still 1
+          # from setup.ps1. The assertions above already decided the verdict, so
+          # say so explicitly or a deliberate non-zero exit fails the step.
+          exit 0
 
       - name: it actually built a usable venv
         shell: pwsh
