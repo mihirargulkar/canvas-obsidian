@@ -77,7 +77,7 @@ jobs:
           # PASS condition here — it is the path a user with a typo hits.
           $out = & ./setup.ps1 -NoSync `
             -CanvasUrl "https://example.instructure.com" `
-            -CanvasToken "not-a-real-token" -GeminiKey "not-a-real-key" 2>&1 | Out-String
+            -CanvasToken "not-a-real-token" -GeminiKey "not-a-real-key" *>&1 | Out-String
           $code = $LASTEXITCODE
           Write-Host $out
           if ($code -ne 1) { throw "expected exit 1 from the credential check, got $code" }
@@ -112,7 +112,7 @@ jobs:
       - name: setup.ps1 is safe to re-run
         shell: pwsh
         run: |
-          $out = & ./setup.ps1 -NoSync 2>&1 | Out-String
+          $out = & ./setup.ps1 -NoSync *>&1 | Out-String
           Write-Host $out
           if ($out -notmatch "already exists") { throw "re-run should have kept the existing .env" }
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Course — the domain object for one Canvas class.
+"""Course - the domain object for one Canvas class.
 
 Owns the identity (canvas id, slug) and the paths that identity implies, and
 exposes the pipeline as behaviour:
@@ -39,7 +39,7 @@ class Course:
     @canvas_api.ttl_cache(300)
     def current(cls) -> list["Course"]:
         """Every course in the most recent term (all your classes this semester).
-        Cached briefly — every MCP tool call resolves a slug through this."""
+        Cached briefly - every MCP tool call resolves a slug through this."""
         client = canvas_api.get_client()
         return cls._disambiguate(
             [cls.from_canvas(c) for c in canvas_api.current_courses(client)])
@@ -109,7 +109,7 @@ class Course:
         return data
 
     def dashboard(self, days: int = 14):
-        """vault/<slug>/Dashboard.md — this class's deadlines + announcements."""
+        """vault/<slug>/Dashboard.md - this class's deadlines + announcements."""
         from . import dashboard
         return dashboard.course_dashboard(self, days)
 
@@ -156,7 +156,7 @@ class Course:
         Returns {"failed": [step names], "new_files": [filenames]} rather than
         storing anything on self — Course is frozen, so assignment would raise.
         """
-        print(f"\n=== {self.slug} — {self.name} ===")
+        print(f"\n=== {self.slug} - {self.name} ===")
         failed, new_files = [], []
         # deep=False skips the slow model work (file transcription, concept
         # extraction) and only re-reads Canvas metadata. That's what an
@@ -176,7 +176,7 @@ class Course:
                 reason = ("not permitted for this course (instructor restricted it)"
                           if "unauthorized" in str(e).lower() or "Forbidden" in type(e).__name__
                           else f"{type(e).__name__}: {str(e)[:80]}")
-                print(f"  ! {step} skipped — {reason}")
+                print(f"  ! {step} skipped - {reason}")
         return {"failed": failed, "new_files": new_files}
 
     def pending_files(self) -> list[str]:
@@ -196,7 +196,7 @@ class Course:
             name = f.display_name
             stem, suffix = Path(name).stem, Path(name).suffix.lower()
             if suffix not in INGEST_EXT:
-                continue                   # e.g. .csv — never transcribed, not "missing"
+                continue                   # e.g. .csv - never transcribed, not "missing"
             prefixed = f"code-{stem}" if suffix in TEXT_EXT else stem
             if prefixed not in have and stem not in have:
                 # Label only. A locked file is posted but not yet released, which

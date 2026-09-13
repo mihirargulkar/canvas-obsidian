@@ -30,7 +30,7 @@ def vault_dir(slug): return Path("vault") / slug
 
 
 def is_lecture(p: Path) -> bool:
-    """Lecture decks only — skip polls, solutions, announcements, syllabus,
+    """Lecture decks only - skip polls, solutions, announcements, syllabus,
     homework (hw-), and notebooks (code-): none are lecture concepts."""
     n = p.name.lower()
     skip = ("polls", "solution", "announcement", "syllabus", "assignment", "hw-", "code-")
@@ -285,7 +285,7 @@ def pass2(slug, per_lecture: dict, complete: bool = True):
                   + ", ".join(sorted(stuck)[:5]))
     elif stale:
         print(f"           kept {len(stale)} note(s) from previous runs "
-              f"(extraction incomplete — not purging)")
+              f"(extraction incomplete - not purging)")
 
     print(f"pass 2 [{slug}]: {len(nodes)} concept nodes, {edges} links -> {vault}/")
     return nodes

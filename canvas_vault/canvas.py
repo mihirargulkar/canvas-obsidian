@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Phase 1: deterministic Canvas due-date CLI. No LLM, no DB — live API only.
+"""Phase 1: deterministic Canvas due-date CLI. No LLM, no DB - live API only.
 
 Usage:
     python -m canvas_vault.canvas list [--all]
@@ -94,7 +94,7 @@ def get_client():
     load_dotenv()
     url, token = os.getenv("CANVAS_URL"), os.getenv("CANVAS_TOKEN")
     if not url or not token:
-        sys.exit("Missing CANVAS_URL / CANVAS_TOKEN in .env — copy .env.example to "
+        sys.exit("Missing CANVAS_URL / CANVAS_TOKEN in .env - copy .env.example to "
                  ".env and fill it in (Canvas -> Account -> Settings -> New Access Token).")
     return Canvas(url, token)
 
@@ -104,7 +104,7 @@ def gemini_key():
     load_dotenv()
     key = os.getenv("GEMINI_API_KEY")
     if not key:
-        sys.exit("Missing GEMINI_API_KEY in .env — get a free key at "
+        sys.exit("Missing GEMINI_API_KEY in .env - get a free key at "
                  "https://aistudio.google.com/app/apikey (used to transcribe slides).")
     return key
 
@@ -125,7 +125,7 @@ def _explain(exc) -> str:
     if "DoesNotExist" in name or "404" in text:
         return (f"Canvas returned 'not found' for {url}\n"
                 f"CANVAS_URL is probably wrong. It should be just your school's "
-                f"Canvas host, e.g. https://yourschool.instructure.com — no path, "
+                f"Canvas host, e.g. https://yourschool.instructure.com - no path, "
                 f"no /courses. Fix it in .env and try again.")
     if "Unauthorized" in name or "InvalidAccessToken" in name or "401" in text:
         return ("Canvas rejected your access token.\n"
@@ -320,7 +320,7 @@ def course_files(c):
     does NOT mean the files are unreachable: anything published in a Module is
     still fetchable by id. A real course returned zero files this way while
     holding its lectures, homework, syllabus and schedule in modules, and
-    pending_files() reported [] — "nothing pending" rather than "could not
+    pending_files() reported [] - "nothing pending" rather than "could not
     look", which is the failure shape this codebase keeps having to fix.
 
     Deduplicated by file id, so a file listed in both places appears once.
@@ -467,7 +467,7 @@ def cmd_list(args):
 def cmd_due(args):
     all_courses = current_courses(get_client(), include_all=True) if args.all else None
     rows = upcoming(args.days, all_courses)
-    print(f"Due in the next {args.days} day(s) — {len(rows)} item(s):\n")
+    print(f"Due in the next {args.days} day(s) - {len(rows)} item(s):\n")
     last_day = None
     for due, course, name, pts in rows:
         local = due.astimezone(local_tz())

@@ -140,7 +140,7 @@ def index(rebuild=False, quiet=False):
         # Not sys.exit: SystemExit isn't an Exception, so it sails through
         # course.sync's handler and out of the MCP tool that called us.
         if not quiet:
-            print("index: nothing to index yet — run the sync first")
+            print("index: nothing to index yet - run the sync first")
         return 0
 
     existing = col.get()
@@ -190,7 +190,7 @@ def answer_structured(query):
         if not rows:
             return {"mode": "deadline",
                     "answer": f"Nothing overdue in the last {back} days.", "sources": []}
-        lines = [f"- **{n}** — was due {d.astimezone(LOCAL_TZ):%a %b %d, %I:%M %p}  ({c})"
+        lines = [f"- **{n}** - was due {d.astimezone(LOCAL_TZ):%a %b %d, %I:%M %p}  ({c})"
                  for d, c, n, _p in rows]
         return {"mode": "deadline",
                 "answer": f"Overdue in the last {back} days:\n\n" + "\n".join(lines),
@@ -203,7 +203,7 @@ def answer_structured(query):
     rows = canvas.upcoming(days)
     if not rows:
         return {"mode": "deadline", "answer": f"Nothing due in the next {days} days.", "sources": []}
-    lines = [f"- **{n}** — {d.astimezone(LOCAL_TZ):%a %b %d, %I:%M %p}  ({c})"
+    lines = [f"- **{n}** - {d.astimezone(LOCAL_TZ):%a %b %d, %I:%M %p}  ({c})"
              for d, c, n, _p in rows]
     return {"mode": "deadline",
             "answer": f"Due in the next {days} days:\n\n" + "\n".join(lines), "sources": []}
@@ -218,8 +218,8 @@ def answer_semantic(query, k=5, course=None):
     docs, metas = res["documents"][0], res["metadatas"][0]
     if not docs:
         return {"mode": "semantic",
-                "answer": "No indexed material — run `python -m canvas_vault.chat index`.", "sources": []}
-    context = "\n\n".join(f"[{m['course']} · {m['source']} · {m['section']}]\n{d}"
+                "answer": "No indexed material - run `python -m canvas_vault.chat index`.", "sources": []}
+    context = "\n\n".join(f"[{m['course']} - {m['source']} - {m['section']}]\n{d}"
                           for d, m in zip(docs, metas))
     prompt = (
         "Answer the student's question using ONLY the course material below. "
@@ -231,7 +231,7 @@ def answer_semantic(query, k=5, course=None):
         text = client.models.generate_content(model=ANSWER_MODEL, contents=prompt).text or ""
     except Exception as e:
         msg = str(e)
-        friendly = ("The model is rate-limited right now — try again shortly."
+        friendly = ("The model is rate-limited right now - try again shortly."
                     if "429" in msg or "RESOURCE_EXHAUSTED" in msg else f"Model error: {msg[:120]}")
         return {"mode": "semantic", "answer": friendly, "sources": []}
     srcs = list(dict.fromkeys((m["course"], m["source"], m["section"]) for m in metas))
@@ -250,7 +250,7 @@ def cmd_ask(a):
     if res["sources"]:
         print("\nsources:")
         for s in res["sources"]:
-            print(f"  - {s['course']} · {s['source']} · {s['section']}")
+            print(f"  - {s['course']} - {s['source']} - {s['section']}")
 
 
 def main():

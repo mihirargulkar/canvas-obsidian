@@ -568,3 +568,25 @@ def test_rebuild_refuses_when_the_index_is_held_open(monkeypatch, tmp_path):
                         (_ for _ in ()).throw(PermissionError(32, "in use")))
     with pytest.raises(RuntimeError, match="open in another process"):
         chat.index(rebuild=True)
+
+
+def test_console_output_is_ascii():
+    """The Windows console is cp437/cp1252 by default, so an em dash in an error
+    message renders as a replacement character. Seen in CI: the "no path, no
+    /courses" hint — the message someone reads when they are already stuck —
+    came out mangled. Vault CONTENT stays unicode; only what is printed is
+    constrained."""
+    import ast
+    bad = []
+    for path in pathlib.Path("canvas_vault").glob("*.py"):
+        for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
+            is_out = isinstance(node, ast.Call) and (
+                (isinstance(node.func, ast.Name) and node.func.id == "print")
+                or (isinstance(node.func, ast.Attribute) and node.func.attr == "exit"))
+            if not is_out:
+                continue
+            for sub in ast.walk(node):
+                if isinstance(sub, ast.Constant) and isinstance(sub.value, str):
+                    bad += [f"{path.name}:{sub.lineno} {c!r}"
+                            for c in sub.value if ord(c) > 126]
+    assert not bad, f"non-ascii in console output: {sorted(set(bad))}"

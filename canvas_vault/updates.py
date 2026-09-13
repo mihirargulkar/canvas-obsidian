@@ -67,7 +67,7 @@ def write_notes(slug, data):
     index) and vault/updates/ (for Obsidian + filesystem MCP)."""
     ann_md = [f"# {slug} Announcements", ""]
     for a in data["announcements"]:
-        ann_md += [f"## {a['date']} — {a['title']}", a["body"], ""]
+        ann_md += [f"## {a['date']} - {a['title']}", a["body"], ""]
     ann_md = "\n".join(ann_md)
 
     syl_md = [f"# {slug} Syllabus", ""]

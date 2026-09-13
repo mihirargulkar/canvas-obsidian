@@ -157,7 +157,7 @@ def to_pdf(src: Path, out_dir: Path) -> Path:
     soffice = find_soffice()
     if not soffice:
         raise RuntimeError(
-            f"LibreOffice not found — needed to convert {src.name}. Install it "
+            f"LibreOffice not found - needed to convert {src.name}. Install it "
             "(macOS: brew install --cask libreoffice; Debian/Ubuntu: apt install "
             "libreoffice) or set SOFFICE=/path/to/soffice.")
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -258,8 +258,8 @@ def _sectioned(title: str, text: str, max_chars: int = 1200) -> str:
         for line in buf:
             t = line.strip().strip("#*|-= ").strip()
             if len(t) >= 12 and not t.startswith("```") and any(ch.isalpha() for ch in t):
-                return f"{title} — {t[:60]}"
-        return f"{title} — part {n}"
+                return f"{title} - {t[:60]}"
+        return f"{title} - part {n}"
 
     def flush():
         nonlocal buf, size, n
@@ -413,7 +413,7 @@ def ingest_assignments(course, slug, client, counts):
     try:
         assignments = list(course.get_assignments())
     except Exception as e:
-        print(f"  assignments unavailable ({type(e).__name__}) — skipped")
+        print(f"  assignments unavailable ({type(e).__name__}) - skipped")
         return
     for a in assignments:
         desc = getattr(a, "description", "") or ""

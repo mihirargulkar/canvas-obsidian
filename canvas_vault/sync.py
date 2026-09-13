@@ -50,7 +50,7 @@ def run_sync(only=None, limit=None, do_index=True, deep=True) -> tuple[list, str
     try:
         dashboard.overview()      # one restricted course must not sink the run
     except Exception as e:
-        print(f"  ! cross-class dashboard skipped — {type(e).__name__}: {str(e)[:80]}")
+        print(f"  ! cross-class dashboard skipped - {type(e).__name__}: {str(e)[:80]}")
     n_changed = chat.index(quiet=True) if do_index else 0
     return courses, changes.summarise(per_course, n_changed)
 

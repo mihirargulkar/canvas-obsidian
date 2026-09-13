@@ -75,9 +75,9 @@ def summarise(per_course: dict, index_changed: int = 0) -> str:
     for slug, d in sorted(per_course.items()):
         bits = []
         if d.get("first_run"):
-            bits.append("first sync — everything indexed")
+            bits.append("first sync - everything indexed")
         for a in d.get("announcements", []):
-            bits.append(f"announcement: {a['date']} — {a['title']}")
+            bits.append(f"announcement: {a['date']} - {a['title']}")
         for name in d.get("assignments", []):
             bits.append(f"new assignment: {name}")
         for f in d.get("files", []):
