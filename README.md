@@ -53,6 +53,9 @@ as a one-line pointer, that's handled: the page gets saved as a note and any sli
 PDFs hosted on it get transcribed too. Only files on that same site are fetched, so a
 link to arXiv or a textbook stays a link rather than turning your sync into a crawl.
 
+Files your professor has posted but not released yet get listed by name rather than
+skipped silently, so "nothing new" means it looked, not that it couldn't.
+
 First run is slow, since every slide deck goes through a vision model, and you might
 hit Gemini's free daily limit. That's fine. It caches everything, so run it again and
 it picks up where it stopped.
@@ -73,7 +76,8 @@ powershell -ExecutionPolicy Bypass -File tools\install-daily-sync.ps1   # Window
 The vault is exposed over MCP, so your existing Claude subscription or the free Gemini
 CLI does the chatting. No API bill.
 
-Claude Code picks it up automatically from `.mcp.json`. For Claude Desktop, add this to
+Claude Code picks it up automatically from `.mcp.json`. On Windows, change the one line
+in that file to `".venv\\Scripts\\python.exe"` first. For Claude Desktop, add this to
 `~/Library/Application Support/Claude/claude_desktop_config.json` and restart it:
 
 ```json
@@ -171,10 +175,15 @@ Gold sets are per course (`tools/eval_queries_<CLASS>.json`), so generating one 
 second class won't clobber the first. The score prints corpus size beside it, because
 recall over 45 chunks and recall over 1,200 are not the same achievement.
 
-Code lives in `canvas_vault/`, tests in `tests/`, dev scripts in `tools/`.
+`eval_retrieval.py` exits non-zero unless recall is perfect, so a script can gate on it.
+At 0.89 that means exit 1 on a healthy run, which is expected.
+
+Code lives in `canvas_vault/`, tests in `tests/`, dev scripts in `tools/`. Tests run on
+Linux and Windows in CI.
 
 The product thinking behind it, including which quality claims are actually
 measured and which aren't, is in [docs/PRD.pdf](docs/PRD.pdf). The markdown
-[source](docs/PRD.md) is what you edit; `tools/build-prd.sh` regenerates the PDF.
+[source](docs/PRD.md) is what you edit; `tools/build-prd.sh` regenerates the PDF (needs
+pandoc and Chrome).
 
 MIT licensed. See [LICENSE](LICENSE).

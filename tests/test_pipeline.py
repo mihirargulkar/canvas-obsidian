@@ -600,3 +600,15 @@ def test_soffice_lookup_covers_windows():
     assert "Program Files\\LibreOffice" in joined
     assert "Program Files (x86)" in joined
     assert any("soffice.exe" in c for c in ingest.SOFFICE_CANDIDATES)
+
+
+def test_readme_flags_the_windows_mcp_path():
+    """.mcp.json hardcodes .venv/bin/python, so "Claude Code picks it up
+    automatically" is false on Windows. Documented rather than fixed, because
+    MCP config has no way to branch on platform — but it must be documented."""
+    root = pathlib.Path(__file__).parent.parent
+    readme = (root / "README.md").read_text(encoding="utf-8")
+    mcp = (root / ".mcp.json").read_text(encoding="utf-8")
+    if ".venv/bin/python" in mcp:
+        assert "Scripts\\\\python.exe" in readme or "Scripts\\python.exe" in readme, \
+            "README must tell Windows users to edit .mcp.json"
