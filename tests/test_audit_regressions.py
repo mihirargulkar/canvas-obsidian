@@ -4,7 +4,10 @@ Each of these shipped once. They're grouped here so the failure modes stay
 described in one place rather than scattered across the suite.
 """
 import json
+import os
 import pathlib
+
+import pytest
 
 from canvas_vault import canvas, changes, chat, extract
 
@@ -392,9 +395,20 @@ def test_refresh_explains_an_unwritable_vault_instead_of_failing_raw(monkeypatch
     assert "unverified" in out.lower(), "must not imply Canvas was checked"
 
 
-def test_writable_probe_detects_a_read_only_directory(tmp_path):
+def test_writable_probe_accepts_a_writable_directory(tmp_path):
     import canvas_vault.mcp_server as m
     assert m._writable(str(tmp_path))
+    assert m._writable(str(tmp_path / "does" / "not" / "exist" / "yet")), \
+        "the probe creates the tree it is asked about"
+
+
+@pytest.mark.skipif(os.name == "nt", reason=
+                    "chmod(0o555) does not remove write access from a DIRECTORY on "
+                    "Windows, where that is an ACL not a mode bit, so the read-only "
+                    "case cannot be set up. _writable() does a real write probe, "
+                    "which is portable; only this test's setup is not.")
+def test_writable_probe_detects_a_read_only_directory(tmp_path):
+    import canvas_vault.mcp_server as m
     tmp_path.chmod(0o555)
     try:
         assert not m._writable(str(tmp_path))
