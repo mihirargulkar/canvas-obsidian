@@ -119,6 +119,10 @@ jobs:
           $out = & ./setup.ps1 -NoSync *>&1 | Out-String
           Write-Host $out
           if ($out -notmatch "already exists") { throw "re-run should have kept the existing .env" }
+          # Same as the first step: setup.ps1 exits 1 on the dummy credentials by
+          # design, and the pwsh wrapper would inherit that. The assertion above
+          # is the verdict.
+          exit 0
 
       - name: scheduled task registers, fires, and unregisters
         shell: pwsh
