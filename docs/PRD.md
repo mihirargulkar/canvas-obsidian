@@ -113,7 +113,9 @@ asserted but not yet instrumented.
 |---|---|---|---|
 | Retrieval recall@5, hand set | ≥ 0.90 | **1.00** (10/10) | Hand labelled gold set, `tools/eval_retrieval.py` |
 | Retrieval MRR, hand set | ≥ 0.85 | **0.90** sentence-transformers / **0.85** static + BM25 | Same |
-| Retrieval recall@5, realistic queries | ≥ 0.75 | **0.89** (89/100, CI 81-94%) | 100 query synthetic set, pooled relevance labels |
+| Retrieval recall@10, as the product serves it | ≥ 0.90 | **0.97** (97/100, CI 92-99%) | 100 query synthetic set, pooled relevance labels |
+| Retrieval recall@5, for comparison over time | ≥ 0.75 | **0.89** (89/100, CI 81-94%) | Same, k=5 |
+| Same, default static embedder | no cliff | **0.85** @10, **0.78** @5 | Same, model2vec |
 | Retrieval MRR, realistic queries | ≥ 0.60 | **0.63** | Same |
 | Recall@5 on the hardest third | no cliff | **0.88** (n=16, low-leakage queries) | Same, split by vocabulary overlap |
 | Recall@5, a second real course | measured, not assumed | **1.00** (33/33) on DS4440 | 33 query set; NOT comparable, see below |
@@ -438,7 +440,22 @@ installer is launchd only.
 **R1. Fix concept link recall (next).** Bisect the 5/6 to 2/6 regression. Exit
 criterion: back to 5/6 with generic exclusion still 6/6.
 
-**R2. Finish labelling, then raise recall.** Two steps, in order.
+**R2 measurement, and three things that did NOT work.** recall@20 is 1.00, so
+the correct chunk is always retrieved and the whole problem is ranking inside
+the top 5. Acting on that: serving 10 results instead of 5 takes recall from
+0.89 to 0.97 for ~950 tokens, because the consumer is a model that reads them
+all. This does not improve ranking; it stops discarding hits already found.
+
+Rejected after measuring, which is the point of having the harness:
+- Dropping BM25. It looks redundant under sentence-transformers (dense 0.89 =
+  fused 0.89 at k=5) but is worth **+0.14** under the default static embedder
+  (0.64 dense vs 0.78 fused). Optimising on the optional configuration would
+  have silently degraded every default install.
+- Larger static embedders. potion-base-32M and potion-retrieval-32M both score
+  0.75 at k=5 against potion-base-8M's 0.78. Within noise, and not better.
+- Tuning RRF weights. Best of 42 configurations beat the default by one query.
+
+**R2 remaining. Finish labelling, then raise recall.** Two steps, in order.
 
 *First, fix the instrument.* Error analysis on the 28 misses found 23 of them
 are the same artefact: the query was generated from a notebook, retrieval

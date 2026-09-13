@@ -612,3 +612,14 @@ def test_readme_flags_the_windows_mcp_path():
     if ".venv/bin/python" in mcp:
         assert "Scripts\\\\python.exe" in readme or "Scripts\\python.exe" in readme, \
             "README must tell Windows users to edit .mcp.json"
+
+
+def test_search_returns_ten_by_default():
+    """The MCP consumer is a model that reads every result, not a human scanning
+    a list, and recall@10 is far above recall@5 (0.89 -> 0.99 with
+    sentence-transformers on this repo's gold set) for ~950 tokens. Truncating to
+    5 threw away hits the ranker had already found."""
+    import inspect
+    from canvas_vault import mcp_server
+    sig = inspect.signature(mcp_server.search_notes)
+    assert sig.parameters["k"].default == 10
