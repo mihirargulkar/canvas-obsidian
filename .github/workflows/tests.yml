@@ -56,3 +56,76 @@ jobs:
       - name: Run tests
         # Tests needing a built vault or live Canvas credentials skip themselves.
         run: pytest -q
+
+  # The library is covered by the matrix above. This job covers the parts a
+  # Windows user touches FIRST and which the matrix never executes: the
+  # installer and the scheduled-task registration. Parsing a .ps1 proves only
+  # that it is syntactically valid.
+  windows-installer:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: setup.ps1 runs unattended and rejects bad credentials
+        shell: pwsh
+        run: |
+          # Deliberately bogus credentials: the script must get all the way to
+          # the Canvas check, fail there, and say what to fix. Exit 1 is the
+          # PASS condition here — it is the path a user with a typo hits.
+          $out = & ./setup.ps1 -NoSync `
+            -CanvasUrl "https://example.instructure.com" `
+            -CanvasToken "not-a-real-token" -GeminiKey "not-a-real-key" 2>&1 | Out-String
+          $code = $LASTEXITCODE
+          Write-Host $out
+          if ($code -ne 1) { throw "expected exit 1 from the credential check, got $code" }
+          foreach ($expect in @("virtualenv ready", "Could not list your classes")) {
+            if ($out -notmatch [regex]::Escape($expect)) { throw "missing from output: $expect" }
+          }
+          Write-Host "setup.ps1 reached the credential check and failed correctly"
+
+      - name: it actually built a usable venv
+        shell: pwsh
+        run: |
+          if (-not (Test-Path ".venv/Scripts/python.exe")) { throw "no venv" }
+          & ./.venv/Scripts/python.exe -c "import canvas_vault.mcp_server; print('package imports')"
+          if ($LASTEXITCODE -ne 0) { throw "package does not import from the venv it built" }
+
+      - name: .env is utf-8 with no BOM and dotenv reads it back
+        shell: pwsh
+        run: |
+          # python-dotenv silently mis-parses the first key when the file starts
+          # with a BOM, and Set-Content writes one by default.
+          $bytes = [System.IO.File]::ReadAllBytes((Resolve-Path ".env"))
+          if ($bytes[0] -eq 0xEF -and $bytes[1] -eq 0xBB -and $bytes[2] -eq 0xBF) {
+            throw ".env starts with a UTF-8 BOM"
+          }
+          $script = "import os; from dotenv import load_dotenv; load_dotenv('.env'); " +
+                    "u=os.getenv('CANVAS_URL'); t=os.getenv('CANVAS_TOKEN'); " +
+                    "assert u=='https://example.instructure.com', u; " +
+                    "assert t=='not-a-real-token', t; print('dotenv reads every key back')"
+          & ./.venv/Scripts/python.exe -c $script
+          if ($LASTEXITCODE -ne 0) { throw ".env did not round-trip through python-dotenv" }
+
+      - name: setup.ps1 is safe to re-run
+        shell: pwsh
+        run: |
+          $out = & ./setup.ps1 -NoSync 2>&1 | Out-String
+          Write-Host $out
+          if ($out -notmatch "already exists") { throw "re-run should have kept the existing .env" }
+
+      - name: scheduled task registers, fires, and unregisters
+        shell: pwsh
+        run: |
+          ./tools/install-daily-sync.ps1 -At 07:30
+          $task = Get-ScheduledTask -TaskName "canvas-obsidian daily sync" -ErrorAction Stop
+          Write-Host "registered: $($task.TaskName) [$($task.State)]"
+          $trigger = $task.Triggers[0].StartBoundary
+          if ($trigger -notmatch "T07:30") { throw "wrong trigger time: $trigger" }
+          ./tools/install-daily-sync.ps1 -Uninstall
+          if (Get-ScheduledTask -TaskName "canvas-obsidian daily sync" -ErrorAction SilentlyContinue) {
+            throw "uninstall left the task behind"
+          }
+          Write-Host "registered and removed cleanly"

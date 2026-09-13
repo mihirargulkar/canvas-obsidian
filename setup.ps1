@@ -4,7 +4,15 @@
 #   powershell -ExecutionPolicy Bypass -File setup.ps1 -NoSync
 #
 # Safe to re-run: it skips whatever is already in place. (macOS/Linux: ./setup.sh)
-param([switch]$NoSync)
+#
+# Unattended (also how CI exercises this script):
+#   ... -NoSync -CanvasUrl https://x.instructure.com -CanvasToken t -GeminiKey k
+param(
+  [switch]$NoSync,
+  [string]$CanvasUrl,
+  [string]$CanvasToken,
+  [string]$GeminiKey
+)
 $ErrorActionPreference = "Stop"
 Set-Location $PSScriptRoot
 
@@ -38,16 +46,22 @@ Say "Credentials"
 if (Test-Path ".env") { Ok ".env already exists - leaving it alone" } else {
   Copy-Item ".env.example" ".env"
   Write-Host "  Two values are needed. Both stay in .env on this machine and are gitignored.`n"
-  Write-Host "  Canvas URL - your school's Canvas, e.g. https://yourschool.instructure.com"
-  do {
-    $url = (Read-Host "  Canvas URL").TrimEnd("/")
-  } until ($url -match "^https://.+\..+")
-  Write-Host "  Canvas token - Canvas > Account > Settings > New Access Token"
-  $tok = [Runtime.InteropServices.Marshal]::PtrToStringAuto(
-    [Runtime.InteropServices.Marshal]::SecureStringToBSTR((Read-Host "  Canvas token" -AsSecureString)))
-  Write-Host "  Gemini key (free tier) - https://aistudio.google.com/app/apikey"
-  $key = [Runtime.InteropServices.Marshal]::PtrToStringAuto(
-    [Runtime.InteropServices.Marshal]::SecureStringToBSTR((Read-Host "  Gemini API key" -AsSecureString)))
+  if ($CanvasUrl -and $CanvasToken -and $GeminiKey) {
+    $url = $CanvasUrl.TrimEnd("/"); $tok = $CanvasToken; $key = $GeminiKey
+    if ($url -notmatch "^https://.+\..+") { throw "-CanvasUrl must be a full https:// URL" }
+    Ok "using credentials passed on the command line"
+  } else {
+    Write-Host "  Canvas URL - your school's Canvas, e.g. https://yourschool.instructure.com"
+    do {
+      $url = (Read-Host "  Canvas URL").TrimEnd("/")
+    } until ($url -match "^https://.+\..+")
+    Write-Host "  Canvas token - Canvas > Account > Settings > New Access Token"
+    $tok = [Runtime.InteropServices.Marshal]::PtrToStringAuto(
+      [Runtime.InteropServices.Marshal]::SecureStringToBSTR((Read-Host "  Canvas token" -AsSecureString)))
+    Write-Host "  Gemini key (free tier) - https://aistudio.google.com/app/apikey"
+    $key = [Runtime.InteropServices.Marshal]::PtrToStringAuto(
+      [Runtime.InteropServices.Marshal]::SecureStringToBSTR((Read-Host "  Gemini API key" -AsSecureString)))
+  }
   # utf8NoBOM: python's dotenv chokes on a BOM, and Set-Content writes one by default
   (Get-Content ".env" -Encoding utf8) | ForEach-Object {
     if ($_ -like "CANVAS_URL=*")       { "CANVAS_URL=$url" }

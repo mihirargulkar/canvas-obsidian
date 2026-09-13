@@ -26,6 +26,9 @@ git clone https://github.com/mihirargulkar/canvas-obsidian; cd canvas-obsidian
 powershell -ExecutionPolicy Bypass -File setup.ps1
 ```
 
+It can also run unattended, which is how CI exercises it:
+`setup.ps1 -CanvasUrl https://yourschool.instructure.com -CanvasToken ... -GeminiKey ...`
+
 The script sets up a virtualenv, installs everything, asks for your Canvas token and a
 Gemini API key, then offers to run the first sync. Safe to re-run.
 
