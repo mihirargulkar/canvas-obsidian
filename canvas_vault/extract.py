@@ -15,7 +15,7 @@ import time
 from pathlib import Path
 
 from . import chdir_root
-from . import ROOT
+from . import ROOT, remove_file
 
 from google import genai
 from google.genai import types
@@ -277,9 +277,12 @@ def pass2(slug, per_lecture: dict, complete: bool = True):
     # concepts, and purging against it deletes good notes.
     stale = [p for p in (vault / "concepts").glob("*.md") if p.stem not in written]
     if stale and complete:
-        for p in stale:
-            p.unlink()
-        print(f"           removed {len(stale)} stale concept note(s)")
+        # A locked note must not abort the vault rebuild that already succeeded.
+        stuck = [p.name for p in stale if not remove_file(p)]
+        print(f"           removed {len(stale) - len(stuck)} stale concept note(s)")
+        if stuck:
+            print(f"           could not remove {len(stuck)} (file in use): "
+                  + ", ".join(sorted(stuck)[:5]))
     elif stale:
         print(f"           kept {len(stale)} note(s) from previous runs "
               f"(extraction incomplete — not purging)")

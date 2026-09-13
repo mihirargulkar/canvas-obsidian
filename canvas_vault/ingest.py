@@ -25,7 +25,7 @@ from google import genai
 from dotenv import load_dotenv
 
 from . import chdir_root
-from . import ROOT
+from . import ROOT, remove_file, replace_file
 from .canvas import (get_client, course_label, is_locked, slug_of,
                      get_course as api_get_course,
                      course_files as canvas_files)
@@ -128,9 +128,9 @@ def _migrate_legacy_cache() -> int:
             continue                                  # already namespaced
         target = MD / f"{r}-{p.stem}.md"
         if target.exists():
-            p.unlink()                                # duplicate; keep the new one
+            remove_file(p)                            # duplicate; keep the new one
         else:
-            p.rename(target)
+            replace_file(p, target)
             moved += 1
     return moved
 
@@ -294,7 +294,7 @@ def ingest_bytes(name, raw: Path, slug, client, out_name=None) -> tuple[str, str
         else:
             pdf = to_pdf(raw, PDF) if ext != ".pdf" else raw
             if ext != ".pdf":
-                pdf = pdf.rename(PDF / f"{h}.pdf")
+                pdf = replace_file(pdf, PDF / f"{h}.pdf")
             body = gemini_markdown(client, pdf)
         # Applies to every model-transcribed branch, images included. Skipping this
         # for images cached the failure as a success: the note's body became the

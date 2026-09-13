@@ -16,7 +16,7 @@ import re
 import sys
 from pathlib import Path
 
-from . import chdir_root
+from . import chdir_root, remove_file
 from . import ROOT
 
 NOTES_ROOT = Path("notes")
@@ -124,9 +124,15 @@ def index(rebuild=False, quiet=False):
     chunker or embedding model changes).
     """
     if rebuild:
-        Path(DB).unlink(missing_ok=True)
+        # Windows will not delete a file another process has open, and the MCP
+        # server may be querying this index right now. Silently continuing would
+        # "rebuild" on top of the old database, which is worse than stopping.
         global _STORE
         _STORE = None
+        if not remove_file(DB):
+            raise RuntimeError(
+                f"cannot rebuild: {DB} is open in another process. Quit the MCP "
+                f"client (or whatever is holding it) and try again.")
     col = _collection()
 
     ids, docs, metas, courses = _collect_chunks()

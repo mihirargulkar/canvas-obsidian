@@ -458,3 +458,113 @@ def test_windows_reserved_filenames_are_escaped():
     assert extract.safe_filename("COM1") != "COM1"
     assert extract.safe_filename("Convolution") == "Convolution", "only exact names"
     assert extract.safe_filename("Gradient Descent ") == "Gradient Descent"
+
+
+# --- windows file locking -----------------------------------------------------
+
+def test_replace_file_overwrites_an_existing_target():
+    """Path.rename raises FileExistsError on Windows when the target exists,
+    where POSIX silently overwrites. ingest renamed a converted PDF onto a
+    hash-named path that already exists on any re-convert, so this worked on a
+    Mac and would have failed on the second Windows run."""
+    import tempfile
+    from canvas_vault import replace_file
+    d = pathlib.Path(tempfile.mkdtemp())
+    src, dst = d / "a.pdf", d / "b.pdf"
+    src.write_text("new", encoding="utf-8")
+    dst.write_text("old", encoding="utf-8")
+    assert replace_file(src, dst) == dst
+    assert dst.read_text(encoding="utf-8") == "new"
+    assert not src.exists()
+
+
+def test_locked_file_is_retried_then_succeeds(monkeypatch, tmp_path):
+    """Windows refuses to delete a file another process holds open (antivirus,
+    Obsidian, LibreOffice). The handle is normally released within a second, so
+    a short retry turns a hard failure into a pause. Simulated, because a real
+    WinError 32 cannot be produced on POSIX."""
+    from canvas_vault import remove_file
+    import canvas_vault as cv
+    monkeypatch.setattr(cv, "_BACKOFF", 0)          # don't actually sleep
+    f = tmp_path / "note.md"
+    f.write_text("x", encoding="utf-8")
+    calls = {"n": 0}
+    real = pathlib.Path.unlink
+
+    def flaky(self, *a, **k):
+        calls["n"] += 1
+        if calls["n"] < 3:
+            raise PermissionError(32, "The process cannot access the file")
+        return real(self, *a, **k)
+
+    monkeypatch.setattr(pathlib.Path, "unlink", flaky)
+    assert remove_file(f) is True
+    assert calls["n"] == 3, "should have retried, not given up or spun forever"
+
+
+def test_permanently_locked_file_does_not_raise(monkeypatch, tmp_path):
+    """A leftover stale note is a far smaller problem than aborting the vault
+    rebuild that already succeeded."""
+    from canvas_vault import remove_file
+    import canvas_vault as cv
+    monkeypatch.setattr(cv, "_BACKOFF", 0)
+    monkeypatch.setattr(pathlib.Path, "unlink", lambda self, *a, **k:
+                        (_ for _ in ()).throw(PermissionError(32, "in use")))
+    assert remove_file(tmp_path / "x.md") is False
+
+
+def test_purge_survives_a_locked_note(tmp_path, monkeypatch, capsys):
+    """Obsidian holding one vault note open must not abort the whole rebuild."""
+    import canvas_vault as cv
+    monkeypatch.setattr(cv, "_BACKOFF", 0)
+    monkeypatch.chdir(tmp_path)
+    concepts = tmp_path / "vault" / "T" / "concepts"
+    concepts.mkdir(parents=True)
+    for name in ("Stale1", "Stale2"):
+        (concepts / f"{name}.md").write_text("old", encoding="utf-8")
+
+    real = pathlib.Path.unlink
+
+    def locked(self, *a, **k):
+        if self.name == "Stale1.md":
+            raise PermissionError(32, "The process cannot access the file")
+        return real(self, *a, **k)
+
+    monkeypatch.setattr(pathlib.Path, "unlink", locked)
+    extract.pass2("T", {"L1": [{"name": "Fresh", "definition": "d", "related": []}]},
+                  complete=True)                     # must not raise
+    out = capsys.readouterr().out
+    assert "file in use" in out and "Stale1.md" in out
+    assert (concepts / "Fresh.md").exists(), "the rebuild still completed"
+
+
+def test_no_bare_unlink_or_rename_in_the_package():
+    """Path.unlink and Path.rename are the two calls Windows refuses on a file
+    another process holds open, and Path.rename additionally fails when the
+    target exists. Route both through the retrying helpers so a new call site
+    cannot reintroduce a bug that only shows up on someone else's machine."""
+    import ast
+    offenders = []
+    for path in pathlib.Path("canvas_vault").glob("*.py"):
+        if path.name == "__init__.py":
+            continue                           # where the helpers live
+        for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
+            if (isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute)
+                    and node.func.attr in ("unlink", "rename")):
+                offenders.append(f"{path.name}:{node.lineno} .{node.func.attr}()")
+    assert not offenders, f"use replace_file/remove_file instead: {offenders}"
+
+
+def test_rebuild_refuses_when_the_index_is_held_open(monkeypatch, tmp_path):
+    """chat.index(rebuild=True) deletes the SQLite file. Windows refuses that
+    while another process has it open — the MCP server may be querying right
+    now — and continuing anyway would "rebuild" on top of the old database."""
+    import canvas_vault as cv
+    monkeypatch.setattr(cv, "_BACKOFF", 0)
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(chat, "DB", tmp_path / "vectors.db")
+    (tmp_path / "vectors.db").write_text("stale", encoding="utf-8")
+    monkeypatch.setattr(pathlib.Path, "unlink", lambda self, *a, **k:
+                        (_ for _ in ()).throw(PermissionError(32, "in use")))
+    with pytest.raises(RuntimeError, match="open in another process"):
+        chat.index(rebuild=True)
