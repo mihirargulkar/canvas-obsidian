@@ -7,11 +7,20 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.10", "3.13"]   # README claims 3.10+; test both bounds
+        # Windows is here because it is the one platform whose default text
+        # encoding is NOT utf-8. 26 of this repo's own notes contain characters
+        # cp1252 cannot encode, so a missing encoding= argument fails there and
+        # nowhere else. A static test guards it, but only a real Windows run
+        # proves the claim.
+        os: [ubuntu-latest, windows-latest]
+        python-version: ["3.10", "3.13"]
+        exclude:
+          - os: windows-latest        # one Windows job is enough to catch encoding
+            python-version: "3.10"
 
     steps:
       - uses: actions/checkout@v4
@@ -31,6 +40,18 @@ jobs:
 
       - name: Syntax-check every module
         run: python -m compileall -q .
+
+      - name: PowerShell scripts parse
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          foreach ($f in @("setup.ps1", "tools/install-daily-sync.ps1")) {
+            $errors = $null
+            [System.Management.Automation.Language.Parser]::ParseFile(
+              (Resolve-Path $f), [ref]$null, [ref]$errors) | Out-Null
+            if ($errors) { Write-Error "$f : $($errors | Out-String)"; exit 1 }
+            Write-Host "$f parses"
+          }
 
       - name: Run tests
         # Tests needing a built vault or live Canvas credentials skip themselves.

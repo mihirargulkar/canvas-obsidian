@@ -82,7 +82,7 @@ def load_gold(course, path):
     configurations.
     """
     if path and Path(path).exists():
-        rows = json.loads(Path(path).read_text())
+        rows = json.loads(Path(path).read_text(encoding="utf-8"))
         return rows, f"{path} (synthetic)"
     return [{"query": q, "source": s} for q, s in GOLD], "built-in (hand written)"
 
@@ -301,7 +301,7 @@ def relabel(course, k, gold, path):
                 continue
             entry.setdefault("relevant" if got[i] else "irrelevant", []).append(src)
             done += 1
-        Path(path).write_text(json.dumps(gold, indent=1))   # checkpoint each batch
+        Path(path).write_text(json.dumps(gold, indent=1), encoding="utf-8")   # checkpoint each batch
     print(f"labelled {done}/{len(todo)}; written to {path}")
     return done, len(todo)
 

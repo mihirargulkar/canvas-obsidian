@@ -40,6 +40,8 @@ SOFFICE_CANDIDATES = [                                   # checked after $PATH
     "/usr/bin/soffice", "/usr/bin/libreoffice",                      # Linux
     "/snap/bin/libreoffice",                                         # Linux (snap)
     r"C:\Program Files\LibreOffice\program\soffice.exe",             # Windows
+    r"C:\Program Files (x86)\LibreOffice\program\soffice.exe",       # Windows 32-bit
+    os.path.expandvars(r"%LOCALAPPDATA%\Programs\LibreOffice\program\soffice.exe"),
 ]
 
 
@@ -49,7 +51,10 @@ def find_soffice():
     env = os.getenv("SOFFICE")
     if env and Path(env).exists():
         return env
-    on_path = shutil.which("soffice") or shutil.which("libreoffice")
+    # shutil.which finds soffice.exe on Windows via PATHEXT; soffice.com is the
+    # console build and is what actually honours --headless there.
+    on_path = (shutil.which("soffice") or shutil.which("libreoffice")
+               or shutil.which("soffice.com"))
     if on_path:
         return on_path
     return next((p for p in SOFFICE_CANDIDATES if Path(p).exists()), None)
@@ -131,12 +136,12 @@ def _migrate_legacy_cache() -> int:
 
 
 def _load_manifest() -> dict:
-    return json.loads(MANIFEST.read_text()) if MANIFEST.exists() else {}
+    return json.loads(MANIFEST.read_text(encoding="utf-8")) if MANIFEST.exists() else {}
 
 
 def _save_manifest(m: dict):
     MANIFEST.parent.mkdir(parents=True, exist_ok=True)
-    MANIFEST.write_text(json.dumps(m, indent=0, sort_keys=True))
+    MANIFEST.write_text(json.dumps(m, indent=0, sort_keys=True), encoding="utf-8")
 
 
 def _file_key(f) -> str:
@@ -219,7 +224,7 @@ def extract_text(path: Path) -> str:
     if path.suffix.lower() == ".xlsx":
         return xlsx_rows(path)
     if path.suffix.lower() == ".ipynb":
-        nb = json.loads(path.read_text(errors="ignore"))
+        nb = json.loads(path.read_text(errors="ignore", encoding="utf-8"))
         parts = []
         for cell in nb.get("cells", []):
             src = cell.get("source", "")
@@ -228,7 +233,7 @@ def extract_text(path: Path) -> str:
                 continue
             parts.append(f"```python\n{src}\n```" if cell.get("cell_type") == "code" else src)
         return strip_data_uris("\n\n".join(parts))
-    return strip_data_uris(path.read_text(errors="ignore"))
+    return strip_data_uris(path.read_text(errors="ignore", encoding="utf-8"))
 
 
 def _sectioned(title: str, text: str, max_chars: int = 1200) -> str:
@@ -278,7 +283,7 @@ def ingest_bytes(name, raw: Path, slug, client, out_name=None) -> tuple[str, str
     md_cache = MD / f"{recipe()}-{h}.md"
     out = NOTES / slug / ((out_name or Path(name).stem) + ".md")
     if ext not in TEXT_EXT and md_cache.exists():   # text extraction is free — always re-chunk
-        out.write_text(md_cache.read_text())
+        out.write_text(md_cache.read_text(encoding="utf-8"), encoding="utf-8")
         return "cached", h
     header = f"---\nsource: {name}\ncourse: {slug}\nsha256: {h}\n---\n\n"
     try:
@@ -296,8 +301,8 @@ def ingest_bytes(name, raw: Path, slug, client, out_name=None) -> tuple[str, str
         # literal string "UNREADABLE" and it was never retried.
         if ext not in TEXT_EXT and (not body.strip() or body.strip() == "UNREADABLE"):
             return "fail", h
-        md_cache.write_text(header + body)
-        out.write_text(header + body)
+        md_cache.write_text(header + body, encoding="utf-8")
+        out.write_text(header + body, encoding="utf-8")
         return "new", h
     except Exception as e:
         print(f"          FAILED {name}: {type(e).__name__} {str(e)[:70]}")
@@ -378,7 +383,7 @@ def ingest_site(url, slug, client, counts):
     text = _sectioned("course-website", strip_html(body))
     note = NOTES / slug / "course-website.md"
     note.write_text(f"---\nsource: {url}\ncourse: {slug}\n---\n\n"
-                    f"Retrieved from {url}\n\n{text}\n")
+                    f"Retrieved from {url}\n\n{text}\n", encoding="utf-8")
     print(f"  wrote course-website.md ({len(text)} chars)")
 
     files = site_links(url, body)
@@ -433,7 +438,7 @@ def ingest_assignments(course, slug, client, counts):
             print(f"  {st:6} (prompt) {f.display_name}")
     for base in (NOTES / slug, Path("vault") / slug / "updates"):
         base.mkdir(parents=True, exist_ok=True)
-        (base / "assignments.md").write_text("\n".join(desc_md))
+        (base / "assignments.md").write_text("\n".join(desc_md), encoding="utf-8")
     print("  wrote assignments.md")
 
 
@@ -483,7 +488,8 @@ def ingest_course(course_id: int, limit=None):
         key = _file_key(f)
         known = manifest.get(key)
         if ext not in TEXT_EXT and known and (MD / f"{recipe()}-{known}.md").exists():
-            out.write_text((MD / f"{recipe()}-{known}.md").read_text())
+            out.write_text((MD / f"{recipe()}-{known}.md").read_text(encoding="utf-8"),
+                           encoding="utf-8")
             counts["cached"] += 1
             print(f"  cached {f.display_name} (no download)")
             continue

@@ -169,7 +169,7 @@ def main():
 
     out = out[:a.n]
     OUT = out_path(a.course)
-    OUT.write_text(json.dumps(out, indent=1))
+    OUT.write_text(json.dumps(out, indent=1), encoding="utf-8")
     avg = sum(o["leakage"] for o in out) / max(len(out), 1)
     print(f"\nwrote {OUT}: {len(out)} queries, mean vocabulary overlap {avg:.2f}")
     print("Synthetic. Good for comparing configurations, optimistic in absolute terms.")

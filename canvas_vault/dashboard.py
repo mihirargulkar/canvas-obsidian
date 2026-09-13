@@ -30,7 +30,7 @@ def overview(days=14):
     else:
         md.append("- (nothing due)")
     Path("vault").mkdir(parents=True, exist_ok=True)
-    (Path("vault") / "Dashboard.md").write_text("\n".join(md) + "\n")
+    (Path("vault") / "Dashboard.md").write_text("\n".join(md) + "\n", encoding="utf-8")
     print(f"wrote vault/Dashboard.md — {len(rows)} upcoming across all classes")
 
 
@@ -50,7 +50,7 @@ def course_dashboard(course, days=14, data=None):
     md += ["", "See [[updates/announcements]] and [[updates/syllabus]] for full text.", ""]
     out = Path("vault") / slug / "Dashboard.md"
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text("\n".join(md))
+    out.write_text("\n".join(md), encoding="utf-8")
     print(f"wrote {out}")
 
 

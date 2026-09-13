@@ -85,6 +85,10 @@ def canon(name: str) -> str:
     return re.sub(r"\s+", " ", name).strip().casefold()
 
 
+_WIN_RESERVED = {"CON", "PRN", "AUX", "NUL", *(f"COM{i}" for i in range(1, 10)),
+                 *(f"LPT{i}" for i in range(1, 10))}
+
+
 def safe_filename(name: str) -> str:
     """Path-safe stem for a concept note.
 
@@ -92,7 +96,11 @@ def safe_filename(name: str) -> str:
     enforces it, and a long one raises ENAMETOOLONG mid-write (most filesystems
     cap a component at 255 bytes, fewer once non-ASCII is encoded).
     """
-    cleaned = re.sub(r'[\\/:*?"<>|]', "-", name).strip().strip(".")
+    cleaned = re.sub(r'[\\/:*?"<>|]', "-", name).strip().strip(". ")
+    # Windows refuses these as filenames whatever the extension, and the error
+    # it raises names the path rather than the reason. Cheap to sidestep.
+    if cleaned.split(".")[0].upper() in _WIN_RESERVED:
+        cleaned = "_" + cleaned
     return cleaned[:120].strip() or "unnamed"
 
 
@@ -136,15 +144,15 @@ def pass1(slug):
     print(f"pass 1 [{slug}]: extracting concepts from {len(notes)} lecture note(s)")
     failed = 0
     for p in notes:
-        text = p.read_text()
+        text = p.read_text(encoding="utf-8")
         h = hashlib.sha256(text.encode()).hexdigest()
         cache = XCACHE / f"{recipe}-{h}.json"
         if cache.exists():
-            out[p.stem] = json.loads(cache.read_text())
+            out[p.stem] = json.loads(cache.read_text(encoding="utf-8"))
             continue
         try:
             concepts = extract_note(client, text)
-            cache.write_text(json.dumps(concepts, indent=2))
+            cache.write_text(json.dumps(concepts, indent=2), encoding="utf-8")
             out[p.stem] = concepts
             print(f"  new  {p.name} ({len(concepts)} concepts)")
         except Exception as e:
@@ -244,7 +252,8 @@ def pass2(slug, per_lecture: dict, complete: bool = True):
     (vault / "lectures").mkdir(parents=True, exist_ok=True)
     for p in notes_dir(slug).glob("*.md"):
         if is_lecture(p):
-            (vault / "lectures" / p.name).write_text(p.read_text())
+            (vault / "lectures" / p.name).write_text(
+                p.read_text(encoding="utf-8"), encoding="utf-8")
 
     # WRITE FIRST, PURGE AFTER. The purge used to run before these writes, so any
     # failure in the loop below (a pathological concept name, ENOSPC, permissions)
@@ -259,7 +268,7 @@ def pass2(slug, per_lecture: dict, complete: bool = True):
             body += ["## Related", *[f"- [[{l}]]" for l in links], ""]
         body += ["## Appears in", *[f"- [[{s}]]" for s in sorted(n["lectures"])], ""]
         stem = safe_filename(n["name"])
-        (vault / "concepts" / f"{stem}.md").write_text("\n".join(fm + body))
+        (vault / "concepts" / f"{stem}.md").write_text("\n".join(fm + body), encoding="utf-8")
         written.add(stem)
 
     # Drop notes from earlier runs that are no longer extracted, or they linger as
@@ -280,7 +289,7 @@ def pass2(slug, per_lecture: dict, complete: bool = True):
 
 
 def _parse_concept(path):
-    t = path.read_text()
+    t = path.read_text(encoding="utf-8")
     name = re.search(r"^#\s+(.+)$", t, re.M)
     name = name.group(1).strip() if name else path.stem
     lects = re.search(r"lectures: \[(.*?)\]", t)

@@ -110,7 +110,7 @@ def render(slug, out, width, height, label_degree, title=None):
 
     out = Path(out)
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text("\n".join(svg))
+    out.write_text("\n".join(svg), encoding="utf-8")
     print(f"wrote {out} — {len(nodes)} concepts, {len(edges)} links, {len(color)} lectures")
 
 

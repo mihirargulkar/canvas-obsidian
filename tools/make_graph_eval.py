@@ -101,7 +101,7 @@ def main():
     pairs, seen = [], set()
     for note in notes:
         try:
-            got = generate(client, note.read_text())
+            got = generate(client, note.read_text(encoding="utf-8"))
         except Exception as e:
             print(f"  {note.stem[:34]:34} {type(e).__name__} — skipped")
             continue
@@ -122,7 +122,7 @@ def main():
             break
 
     pairs = pairs[:a.n]
-    OUT.write_text(json.dumps(pairs, indent=1))
+    OUT.write_text(json.dumps(pairs, indent=1), encoding="utf-8")
     print(f"\nwrote {OUT}: {len(pairs)} pairs from {len({p['lecture'] for p in pairs})} lectures")
     print("Generated from the notes, never from the graph. Score with eval_graph.py,")
     print("and read it as lift over the random-pair baseline, not as a raw percentage.")

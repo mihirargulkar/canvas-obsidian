@@ -414,3 +414,33 @@ def test_quiet_sentinel_matches_what_summarise_returns():
     src = inspect.getsource(sync)          # whole module: the check has moved once already
     assert "changes.NOTHING_NEW" in src
     assert '"No changes"' not in src, "no literal may re-introduce the drift"
+
+
+def test_every_text_io_declares_utf8():
+    """Path.read_text/write_text default to the locale encoding, which is cp1252
+    on most Windows installs. 26 of this repo's own notes contain characters
+    cp1252 cannot encode (math transcription emits θ, ∇ and friends), so
+    ingesting a lecture on Windows raised UnicodeEncodeError. This cannot be
+    caught by running the suite on macOS, where the default is already utf-8,
+    so it is asserted statically."""
+    import ast
+    offenders = []
+    for path in [*pathlib.Path("canvas_vault").glob("*.py"),
+                 *pathlib.Path("tools").glob("*.py")]:
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+        for node in ast.walk(tree):
+            if (isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute)
+                    and node.func.attr in ("read_text", "write_text")
+                    and not any(k.arg == "encoding" for k in node.keywords)):
+                offenders.append(f"{path}:{node.lineno}")
+    assert not offenders, f"text I/O without encoding=: {offenders}"
+
+
+def test_windows_reserved_filenames_are_escaped():
+    """Windows refuses CON/PRN/AUX/NUL/COM1../LPT1.. as filenames whatever the
+    extension, and the error names the path rather than the reason."""
+    assert extract.safe_filename("CON") != "CON"
+    assert extract.safe_filename("aux") != "aux"
+    assert extract.safe_filename("COM1") != "COM1"
+    assert extract.safe_filename("Convolution") == "Convolution", "only exact names"
+    assert extract.safe_filename("Gradient Descent ") == "Gradient Descent"

@@ -19,8 +19,19 @@ git clone https://github.com/mihirargulkar/canvas-obsidian && cd canvas-obsidian
 ./setup.sh
 ```
 
+On Windows, same thing in PowerShell:
+
+```powershell
+git clone https://github.com/mihirargulkar/canvas-obsidian; cd canvas-obsidian
+powershell -ExecutionPolicy Bypass -File setup.ps1
+```
+
 The script sets up a virtualenv, installs everything, asks for your Canvas token and a
 Gemini API key, then offers to run the first sync. Safe to re-run.
+
+Windows paths differ from the examples below: python lives at `.venv\Scripts\python`
+rather than `.venv/bin/python`, and Claude Desktop's config is at
+`%APPDATA%\Claude\claude_desktop_config.json`. Everything else is the same.
 
 Install is about 170MB. Search runs on static embeddings plus BM25, no PyTorch. If
 you want slightly better ranking you can `pip install sentence-transformers` and it
@@ -50,7 +61,11 @@ After that, re-running is cheap and tells you what's new. To keep it current wit
 thinking about it:
 
 ```bash
-tools/install-daily-sync.sh      # macOS, runs every morning at 07:30
+tools/install-daily-sync.sh      # macOS/Linux, runs every morning at 07:30
+```
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tools\install-daily-sync.ps1   # Windows
 ```
 
 ## Using it with Claude or Gemini

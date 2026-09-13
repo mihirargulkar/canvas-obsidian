@@ -51,7 +51,7 @@ def load_graph(vault):
     """Return (node_canon->display, adjacency set of frozenset{a,b})."""
     nodes, adj = {}, set()
     for f in vault.glob("*.md"):
-        txt = f.read_text()
+        txt = f.read_text(encoding="utf-8")
         name = re.search(r"^#\s+(.+)$", txt, re.M)
         name = name.group(1).strip() if name else f.stem
         nc = canon(name)
@@ -122,7 +122,7 @@ def random_baseline(nodes, adj, trials=400, seed=3):
 def load_pairs(path):
     """Generated pairs if present, else the hand written ones."""
     if path and Path(path).exists():
-        rows = json.loads(Path(path).read_text())
+        rows = json.loads(Path(path).read_text(encoding="utf-8"))
         return [(r["a"], r["b"]) for r in rows], f"{path} (generated, n={len(rows)})"
     return GOOD_PAIRS, f"built-in hand written (n={len(GOOD_PAIRS)})"
 

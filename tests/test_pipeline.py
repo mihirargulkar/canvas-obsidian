@@ -569,3 +569,34 @@ def test_cached_connection_attribute_is_gone():
     import pytest as _p
     with _p.raises(AttributeError, match="cached connection"):
         VectorStore.db.fget(object())
+
+
+# --- windows parity -----------------------------------------------------------
+
+def test_both_platforms_have_setup_and_scheduler():
+    """A Windows user hitting a repo whose only entry point is a bash script has
+    no way in. Keep the pairs together so one does not quietly rot."""
+    root = pathlib.Path(__file__).parent.parent
+    for posix, windows in [("setup.sh", "setup.ps1"),
+                           ("tools/install-daily-sync.sh", "tools/install-daily-sync.ps1")]:
+        assert (root / posix).exists() and (root / windows).exists(), f"{posix}/{windows}"
+
+
+def test_powershell_scripts_are_plain_ascii():
+    """Smart quotes and en-dashes pasted into a .ps1 break PowerShell parsing in
+    ways whose error message points at the wrong line."""
+    root = pathlib.Path(__file__).parent.parent
+    for name in ("setup.ps1", "tools/install-daily-sync.ps1"):
+        text = (root / name).read_text(encoding="utf-8")
+        bad = [c for c in text if ord(c) > 126]
+        assert not bad, f"{name} contains non-ascii: {set(bad)}"
+
+
+def test_soffice_lookup_covers_windows():
+    """LibreOffice on Windows installs to either Program Files root, or per-user
+    under LOCALAPPDATA. Missing one means .pptx slides silently can't be read."""
+    from canvas_vault import ingest
+    joined = " ".join(ingest.SOFFICE_CANDIDATES)
+    assert "Program Files\\LibreOffice" in joined
+    assert "Program Files (x86)" in joined
+    assert any("soffice.exe" in c for c in ingest.SOFFICE_CANDIDATES)

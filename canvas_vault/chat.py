@@ -110,7 +110,7 @@ def _collect_chunks():
     courses = [d for d in sorted(NOTES_ROOT.glob("*")) if d.is_dir()]
     for cdir in courses:
         for p in sorted(cdir.glob("*.md")):
-            for cid, text, meta in chunks_from_note(p.read_text(), p.stem, cdir.name):
+            for cid, text, meta in chunks_from_note(p.read_text(encoding="utf-8"), p.stem, cdir.name):
                 ids.append(cid); docs.append(text); metas.append(meta)
     return ids, docs, metas, [c.name for c in courses]
 

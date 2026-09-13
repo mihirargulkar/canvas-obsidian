@@ -18,14 +18,14 @@ def _load() -> dict:
     if not STATE.exists():
         return {}
     try:
-        return json.loads(STATE.read_text())
+        return json.loads(STATE.read_text(encoding="utf-8"))
     except (json.JSONDecodeError, OSError):
         return {}          # corrupt state is not worth crashing a sync over
 
 
 def _save(state: dict):
     STATE.parent.mkdir(parents=True, exist_ok=True)
-    STATE.write_text(json.dumps(state, indent=0, sort_keys=True))
+    STATE.write_text(json.dumps(state, indent=0, sort_keys=True), encoding="utf-8")
 
 
 def diff_course(slug, announcements, assignments, first_run_silent=True, complete=True):
